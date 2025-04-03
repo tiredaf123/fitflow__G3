@@ -25,6 +25,14 @@ import LegWorkout from '../screens/Workout/LegWorkout';
 import AbsWorkout from '../screens/Workout/AbsWorkout';
 import AchievementsScreen from '../screens/HomeScreen/AchievementsScreen';
 import ProfileScreen from '../screens/HomeScreen/ProfileScreen';
+import PersonalScreen from '../screens/HomeScreen/SubScreen/PersonalScreen';
+import GeneralScreen from '../screens/HomeScreen/SubScreen/GeneralScreen';
+import NotificationScreen from '../screens/HomeScreen/SubScreen/NotificationScreen';
+import HelpScreen from '../screens/HomeScreen/SubScreen/HelpScreen';
+import HireCoachScreen from '../screens/HomeScreen/SubScreen/HireCoachScreen';
+import AboutScreen from '../screens/HomeScreen/SubScreen/AboutScreen';
+import TermsAndConditionsScreen from '../screens/HomeScreen/SubScreen/TermsAndConditionsScreen';
+
 
 const Stack = createStackNavigator();
 
@@ -68,6 +76,13 @@ const AppNavigator = () => {
             <Stack.Screen name="IntroPage6" component={IntroPage6} />
             <Stack.Screen name="AchievementsScreen" component={AchievementsScreen} />
             <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+            <Stack.Screen name="Personal" component={PersonalScreen} />
+            <Stack.Screen name="General" component={GeneralScreen} />
+            <Stack.Screen name="Notification" component={NotificationScreen} />
+            <Stack.Screen name="Help" component={HelpScreen} />
+            <Stack.Screen name="HireCoach" component={HireCoachScreen} />
+            <Stack.Screen name="About" component={AboutScreen} />
+            <Stack.Screen name="Terms" component={TermsAndConditionsScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </View>
