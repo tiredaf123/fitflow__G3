@@ -32,6 +32,7 @@ import HelpScreen from '../screens/HomeScreen/SubScreen/HelpScreen';
 import HireCoachScreen from '../screens/HomeScreen/SubScreen/HireCoachScreen';
 import AboutScreen from '../screens/HomeScreen/SubScreen/AboutScreen';
 import TermsAndConditionsScreen from '../screens/HomeScreen/SubScreen/TermsAndConditionsScreen';
+import AdminPanel from '../Admin/AdminPanel';
 
 
 const Stack = createStackNavigator();
@@ -83,6 +84,7 @@ const AppNavigator = () => {
             <Stack.Screen name="HireCoach" component={HireCoachScreen} />
             <Stack.Screen name="About" component={AboutScreen} />
             <Stack.Screen name="Terms" component={TermsAndConditionsScreen} />
+            <Stack.Screen name="AdminPanel" component={AdminPanel} />
           </Stack.Navigator>
         </NavigationContainer>
       </View>
