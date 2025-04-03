@@ -1,12 +1,32 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Dimensions, ImageBackground } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Dimensions,
+  ImageBackground,
+  Alert,
+} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 
-const { width, height } = Dimensions.get('window'); 
+const { width, height } = Dimensions.get('window');
 
 const Login_Page = () => {
   const navigation = useNavigation();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = () => {
+    if (username === 'admin' && password === 'admin123') {
+      navigation.navigate('AdminPanel');
+    } else {
+      navigation.navigate('IntroPage4');
+    }
+  };
 
   return (
     <ImageBackground source={require('../assets/ExerciseImages/9.png')} style={styles.backgroundImage}>
@@ -14,11 +34,24 @@ const Login_Page = () => {
         <Text style={styles.title}>Access Your{"\n"}Fitness World</Text>
 
         <View style={styles.inputContainer}>
-          <TextInput style={styles.input} placeholder="Username" placeholderTextColor="#444" />
-          <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#444" secureTextEntry />
+          <TextInput
+            style={styles.input}
+            placeholder="Username"
+            placeholderTextColor="#444"
+            onChangeText={setUsername}
+            value={username}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            placeholderTextColor="#444"
+            secureTextEntry
+            onChangeText={setPassword}
+            value={password}
+          />
         </View>
 
-        <TouchableOpacity style={styles.loginButton} onPress={() => navigation.navigate('IntroPage4')}>
+        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
           <Text style={styles.loginButtonText}>Login</Text>
         </TouchableOpacity>
 
@@ -115,7 +148,6 @@ const styles = StyleSheet.create({
     width: width * 0.12,
     height: width * 0.12,
     borderRadius: 100,
-  
   },
   signupText: {
     marginTop: height * 0.03,
