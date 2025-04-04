@@ -16,7 +16,7 @@ const ArmsWorkout = () => {
   return (
     <ScrollView style={styles.container}>
       <ImageBackground
-        source={require('../../assets/ExerciseImages/13.png')}
+        source={require('../../assets/ExerciseImages/2.png')}
         style={styles.imageBackground}
         imageStyle={{ borderRadius: 15 }}
       >
