@@ -17,10 +17,11 @@ import { useTheme } from '../../navigation/ThemeProvider';
 
 const { width } = Dimensions.get('window');
 
-const HomeScreen = () => {
+const HomeScreen = ({ route }) => {
     const navigation = useNavigation();
     const { isDarkMode } = useTheme();
-    const [hydrationCount, setHydrationCount] = useState(0);
+    const { selectedGoal } = route.params || {};
+
     const [flippedCardId, setFlippedCardId] = useState(null);
     const flipAnimations = useRef({}).current;
 
@@ -28,11 +29,6 @@ const HomeScreen = () => {
         container: {
             flex: 1,
             backgroundColor: isDarkMode ? '#1e1e1e' : '#F0F0F0',
-        },
-        logoText: {
-            fontSize: 28,
-            fontWeight: 'bold',
-            color: isDarkMode ? '#FEC400' : '#FF6B00',
         },
         greetingText: {
             fontSize: 24,
@@ -43,19 +39,16 @@ const HomeScreen = () => {
             fontSize: 14,
             color: isDarkMode ? '#AAA' : '#666',
         },
-        summaryBox: {
-            backgroundColor: isDarkMode ? '#0D0D0D' : '#E0E0E0',
-            padding: 15,
-            borderRadius: 12,
-            alignItems: 'center',
-            width: '30%',
-        },
-        summaryValue: {
-            fontSize: 20,
-            fontWeight: 'bold',
-            color: isDarkMode ? '#FEC400' : '#FF6B00',
-        },
     };
+
+    const workoutLibrary = [
+        { id: 'workout-1', name: 'Morning Yoga', goal: 'Improve Flexibility', image: require('../../assets/Images/yoga.png'), caloriesBurned: '100-150 kcal for 20-30 min' },
+        { id: 'workout-2', name: 'HIIT Training', goal: 'Lose Weight', image: require('../../assets/Images/hiit.png') },
+        { id: 'workout-3', name: 'Strength Training', goal: 'Build Muscles', image: require('../../assets/Images/strength.png') },
+        { id: 'workout-4', name: 'Cardio Blast', goal: 'Lose Weight', image: require('../../assets/Images/cardio.png') },
+        { id: 'workout-5', name: 'Pilates', goal: 'Tone & Define', image: require('../../assets/Images/pilates.png') },
+        { id: 'workout-6', name: 'Stretching', goal: 'Improve Flexibility', image: require('../../assets/Images/stretching.png') },
+    ];
 
     const dietFoods = [
         { id: 'diet-1', name: 'Salad Bowl', image: require('../../assets/Images/salad.png'), calories: 150, protein: '3g' },
@@ -63,13 +56,6 @@ const HomeScreen = () => {
         { id: 'diet-3', name: 'Fruit Mix', image: require('../../assets/Images/fruits.png'), calories: 120, protein: '2g' },
         { id: 'diet-4', name: 'Oatmeal', image: require('../../assets/Images/oatmeal.png'), calories: 180, protein: '5g' },
         { id: 'diet-5', name: 'Smoothie', image: require('../../assets/Images/smoothie.png'), calories: 200, protein: '8g' },
-    ];
-
-    const workoutRecommendations = [
-        { id: 'workout-1', name: 'Morning Yoga', image: require('../../assets/Images/yoga.png'), caloriesBurned: '100-150 kcal for 20-30 min' },
-        { id: 'workout-2', name: 'HIIT Training', image: require('../../assets/Images/hiit.png') },
-        { id: 'workout-3', name: 'Strength Training', image: require('../../assets/Images/strength.png') },
-        { id: 'workout-4', name: 'Cardio Blast', image: require('../../assets/Images/cardio.png') },
     ];
 
     const getFlipAnimation = (id) => {
@@ -113,11 +99,15 @@ const HomeScreen = () => {
         }
     };
 
+    const filteredWorkouts = selectedGoal
+        ? workoutLibrary.filter((item) => item.goal === selectedGoal)
+        : workoutLibrary;
+
     return (
         <View style={themeStyles.container}>
             <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
                 <View style={styles.navbar}>
-                    <Text style={themeStyles.logoText}>FitnessApp</Text>
+                    <Text style={styles.title}>FitnessApp</Text>
                     <TouchableOpacity>
                         <Icon name="notifications" size={28} color={isDarkMode ? '#FFF' : '#000'} />
                     </TouchableOpacity>
@@ -126,23 +116,8 @@ const HomeScreen = () => {
                 <View style={styles.profileWrapper}>
                     <Image source={require('../../assets/Images/profile.png')} style={styles.profileImage} />
                     <View>
-                        <Text style={themeStyles.greetingText}>Good Morning, User!</Text>
-                        <Text style={themeStyles.subText}>Stay consistent and reach your goals!</Text>
-                    </View>
-                </View>
-
-                <View style={styles.summaryRow}>
-                    <View style={themeStyles.summaryBox}>
-                        <Text style={themeStyles.summaryValue}>1200</Text>
-                        <Text style={themeStyles.subText}>Calories Burned</Text>
-                    </View>
-                    <View style={themeStyles.summaryBox}>
-                        <Text style={themeStyles.summaryValue}>8500</Text>
-                        <Text style={themeStyles.subText}>Steps</Text>
-                    </View>
-                    <View style={themeStyles.summaryBox}>
-                        <Text style={themeStyles.summaryValue}>45m</Text>
-                        <Text style={themeStyles.subText}>Workout</Text>
+                        <Text style={themeStyles.greetingText}>Hello, Legend!</Text>
+                        {selectedGoal && <Text style={themeStyles.subText}>Your goal: {selectedGoal}</Text>}
                     </View>
                 </View>
 
@@ -158,7 +133,6 @@ const HomeScreen = () => {
                             inputRange: [0, 1],
                             outputRange: ['180deg', '360deg'],
                         });
-                        const isFlipped = flippedCardId === item.id;
 
                         return (
                             <TouchableOpacity key={item.id} onPress={() => handleFlip(item.id)}>
@@ -190,9 +164,9 @@ const HomeScreen = () => {
                     })}
                 </ScrollView>
 
-                <Text style={styles.sectionTitle}>Today's Workout Recommendations 🏋️</Text>
+                <Text style={styles.sectionTitle}>Workout Recommendations 🏋️</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollRow}>
-                    {workoutRecommendations.map((item) => {
+                    {filteredWorkouts.map((item) => {
                         const anim = getFlipAnimation(item.id);
                         const frontInterpolate = anim.interpolate({
                             inputRange: [0, 1],
@@ -202,7 +176,6 @@ const HomeScreen = () => {
                             inputRange: [0, 1],
                             outputRange: ['180deg', '360deg'],
                         });
-                        const isFlipped = flippedCardId === item.id;
 
                         return (
                             <TouchableOpacity key={item.id} onPress={() => handleFlip(item.id)}>
@@ -234,15 +207,23 @@ const HomeScreen = () => {
                         );
                     })}
                 </ScrollView>
+
+                {/* ✅ Clean "Change Goal" Button */}
+                <View style={styles.buttonGroup}>
+                    <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => navigation.navigate('GoalSelection')}
+                    >
+                        <Icon name="track-changes" size={22} color="#FEC400" />
+                        <Text style={styles.actionButtonText}>Change Fitness Goal</Text>
+                    </TouchableOpacity>
+                </View>
             </ScrollView>
+
             <BottomTabBar />
         </View>
     );
 };
-
-// styles remain the same
-
-
 
 const styles = StyleSheet.create({
     navbar: {
@@ -251,6 +232,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 20,
         paddingVertical: 15,
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#FEC400',
     },
     profileWrapper: {
         flexDirection: 'row',
@@ -264,18 +250,12 @@ const styles = StyleSheet.create({
         borderRadius: 30,
         marginRight: 15,
     },
-    summaryRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginHorizontal: 20,
-        marginTop: 20,
-    },
     sectionTitle: {
         fontSize: 22,
         fontWeight: 'bold',
         marginLeft: 20,
         marginTop: 30,
-        color: '#333',
+        color: '#FEC400',
     },
     scrollRow: {
         paddingVertical: 20,
@@ -295,11 +275,6 @@ const styles = StyleSheet.create({
         padding: 15,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowOffset: { width: 1, height: 1 },
-        shadowRadius: 5,
-     
     },
     cardBack: {
         backgroundColor: '#FFEDD5',
@@ -318,6 +293,26 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#444',
         textAlign: 'center',
+    },
+    buttonGroup: {
+        marginTop: 30,
+        alignItems: 'center',
+    },
+    actionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#1E1E1E',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#FEC400',
+    },
+    actionButtonText: {
+        color: '#FEC400',
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginLeft: 10,
     },
 });
 

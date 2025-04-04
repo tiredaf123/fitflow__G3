@@ -20,10 +20,10 @@ const GoalSelection = () => {
                 <Text style={styles.title}>What's Your Goal?</Text>
                 <View style={styles.goalList}>
                     {goals.map((goal, index) => (
-                        <TouchableOpacity 
-                            key={index} 
+                        <TouchableOpacity
+                            key={index}
                             style={styles.goalButton}
-                            onPress={() => navigation.navigate('WeightSelector')}
+                            onPress={() => navigation.navigate('HomeScreen', { selectedGoal: goal.name })}
                         >
                             <Icon name={goal.icon} size={24} color="white" style={{ marginRight: 12 }} />
                             <Text style={styles.goalText}>{goal.name}</Text>
@@ -33,9 +33,6 @@ const GoalSelection = () => {
                 <View style={styles.navigationButtons}>
                     <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                         <Text style={styles.buttonText}>Back</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.nextButton} onPress={() => navigation.navigate('HomePage')}>
-                        <Text style={styles.buttonText}>Next</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -55,11 +52,6 @@ const styles = StyleSheet.create({
         padding: 30,
         backgroundColor: '#1E1E1E',
         borderRadius: 25,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.3,
-        shadowRadius: 10,
-        elevation: 10,
     },
     title: {
         fontSize: 26,
@@ -88,8 +80,7 @@ const styles = StyleSheet.create({
     },
     navigationButtons: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 20,
+        justifyContent: 'center',
     },
     backButton: {
         backgroundColor: 'transparent',
@@ -98,16 +89,9 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         borderWidth: 1.5,
         borderColor: '#FEC400',
-        marginRight: 10,
-    },
-    nextButton: {
-        backgroundColor: '#FEC400',
-        paddingVertical: 12,
-        paddingHorizontal: 30,
-        borderRadius: 12,
     },
     buttonText: {
-        color: '#0D0D0D',
+        color: '#FEC400',
         fontSize: 16,
         fontWeight: 'bold',
     }
