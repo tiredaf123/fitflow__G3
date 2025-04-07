@@ -33,7 +33,7 @@ const BottomTabBar = () => {
                     <Text style={[styles.tabText, themeStyles.tabText]}>Dashboard</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.tabButton} onPress={() => navigation.navigate('WorkoutsScreen')}>
+                <TouchableOpacity style={styles.tabButton} onPress={() => navigation.navigate('WorkoutScreen')}>
                     <Icon name="fitness-center" size={28} color={themeStyles.tabText.color} />
                     <Text style={[styles.tabText, themeStyles.tabText]}>Workouts</Text>
                 </TouchableOpacity>

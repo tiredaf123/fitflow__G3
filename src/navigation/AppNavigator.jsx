@@ -1,10 +1,10 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { View, Text, Switch, StyleSheet } from 'react-native';
-import { useTheme } from '../navigation/ThemeProvider';  // Notice: No need to import ThemeProvider here
+import { View } from 'react-native';
+import { useTheme } from '../navigation/ThemeProvider';
 
-// Import your screens
+// Screens
 import Welcome from '../screens/Welcome';
 import AgeSelection from '../screens/AgeSelection';
 import GenderSelection from '../screens/GenderSelection';
@@ -14,9 +14,8 @@ import SignUp_Page from '../auth/SignUp_Page';
 import Login_Page from '../auth/Login_Page';
 import GoalSelection from '../screens/GoalSelection';
 import HomePage from '../screens/HomeScreen/HomePage';
-import DashboardScreen from '../screens/HomeScreen/DashboardScreen';
 import { IntroPage1, IntroPage2, IntroPage3 } from '../screens/IntroScreen';
-import WorkoutsScreen from '../screens/Workout/WorkoutScreen';
+import WorkoutScreen from '../screens/Workout/WorkoutScreen';
 import { IntroPage4, IntroPage5, IntroPage6 } from '../screens/IntroScreen2';
 import ChestWorkout from '../screens/Workout/ChestWorkout';
 import ArmsWorkout from '../screens/Workout/ArmsWorkout';
@@ -34,6 +33,8 @@ import AboutScreen from '../screens/HomeScreen/SubScreen/AboutScreen';
 import TermsAndConditionsScreen from '../screens/HomeScreen/SubScreen/TermsAndConditionsScreen';
 import AdminPanel from '../Admin/AdminPanel';
 
+// Drawer
+import MainDrawerNavigator from './MainDrawerNavigator';
 
 const Stack = createStackNavigator();
 
@@ -48,46 +49,49 @@ const AppNavigator = () => {
   };
 
   return (
-      <View style={themeStyles.container}>
-        
-        <NavigationContainer>
-          <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Welcome">
-            <Stack.Screen name="Welcome" component={Welcome} />
-            <Stack.Screen name="SignUp_Page" component={SignUp_Page} />
-            <Stack.Screen name="Login_Page" component={Login_Page} />
-            <Stack.Screen name="GenderSelection" component={GenderSelection} />
-            <Stack.Screen name="AgeSelection" component={AgeSelection} />
-            <Stack.Screen name="HeightSelector" component={HeightSelector} />
-            <Stack.Screen name="WeightSelection" component={WeightSelection} />
-            <Stack.Screen name="GoalSelection" component={GoalSelection} />
-            <Stack.Screen name="HomeScreen" component={HomePage} />
+    <View style={themeStyles.container}>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Welcome">
+          {/* Onboarding & Auth */}
+          <Stack.Screen name="Welcome" component={Welcome} />
+          <Stack.Screen name="SignUp_Page" component={SignUp_Page} />
+          <Stack.Screen name="Login_Page" component={Login_Page} />
+          <Stack.Screen name="GenderSelection" component={GenderSelection} />
+          <Stack.Screen name="AgeSelection" component={AgeSelection} />
+          <Stack.Screen name="HeightSelector" component={HeightSelector} />
+          <Stack.Screen name="WeightSelection" component={WeightSelection} />
+          <Stack.Screen name="GoalSelection" component={GoalSelection} />
 
-            <Stack.Screen name="DashboardScreen" component={DashboardScreen} />
-            <Stack.Screen name="WorkoutsScreen" component={WorkoutsScreen} />
-            <Stack.Screen name="ChestWorkout" component={ChestWorkout} />
-            <Stack.Screen name="ArmsWorkout" component={ArmsWorkout} />
-            <Stack.Screen name="BackWorkout" component={BackWorkout} />
-            <Stack.Screen name="LegWorkout" component={LegWorkout} />
-            <Stack.Screen name="AbsWorkout" component={AbsWorkout} />
-            <Stack.Screen name="IntroPage1" component={IntroPage1} />
-            <Stack.Screen name="IntroPage2" component={IntroPage2} />
-            <Stack.Screen name="IntroPage3" component={IntroPage3} />
-            <Stack.Screen name="IntroPage4" component={IntroPage4} />
-            <Stack.Screen name="IntroPage5" component={IntroPage5} />
-            <Stack.Screen name="IntroPage6" component={IntroPage6} />
-            <Stack.Screen name="AchievementsScreen" component={AchievementsScreen} />
-            <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
-            <Stack.Screen name="Personal" component={PersonalScreen} />
-            <Stack.Screen name="General" component={GeneralScreen} />
-            <Stack.Screen name="Notification" component={NotificationScreen} />
-            <Stack.Screen name="Help" component={HelpScreen} />
-            <Stack.Screen name="HireCoach" component={HireCoachScreen} />
-            <Stack.Screen name="About" component={AboutScreen} />
-            <Stack.Screen name="Terms" component={TermsAndConditionsScreen} />
-            <Stack.Screen name="AdminPanel" component={AdminPanel} />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </View>
+          {/* Main Drawer after login */}
+          <Stack.Screen name="DashboardScreen" component={MainDrawerNavigator} />
+
+          {/* Others not in drawer */}
+          <Stack.Screen name="HomeScreen" component={HomePage} />
+          <Stack.Screen name="WorkoutScreen" component={WorkoutScreen} />
+          <Stack.Screen name="ChestWorkout" component={ChestWorkout} />
+          <Stack.Screen name="ArmsWorkout" component={ArmsWorkout} />
+          <Stack.Screen name="BackWorkout" component={BackWorkout} />
+          <Stack.Screen name="LegWorkout" component={LegWorkout} />
+          <Stack.Screen name="AbsWorkout" component={AbsWorkout} />
+          <Stack.Screen name="IntroPage1" component={IntroPage1} />
+          <Stack.Screen name="IntroPage2" component={IntroPage2} />
+          <Stack.Screen name="IntroPage3" component={IntroPage3} />
+          <Stack.Screen name="IntroPage4" component={IntroPage4} />
+          <Stack.Screen name="IntroPage5" component={IntroPage5} />
+          <Stack.Screen name="IntroPage6" component={IntroPage6} />
+          <Stack.Screen name="AchievementsScreen" component={AchievementsScreen} />
+          <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+          <Stack.Screen name="Personal" component={PersonalScreen} />
+          <Stack.Screen name="General" component={GeneralScreen} />
+          <Stack.Screen name="Notification" component={NotificationScreen} />
+          <Stack.Screen name="Help" component={HelpScreen} />
+          <Stack.Screen name="HireCoach" component={HireCoachScreen} />
+          <Stack.Screen name="About" component={AboutScreen} />
+          <Stack.Screen name="Terms" component={TermsAndConditionsScreen} />
+          <Stack.Screen name="AdminPanel" component={AdminPanel} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </View>
   );
 };
 

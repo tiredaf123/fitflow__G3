@@ -5,7 +5,7 @@ import BottomTabBar from '../../components/BottomTabBar';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../navigation/ThemeProvider';
 
-const WorkoutsScreen = () => {
+const WorkoutScreen = () => {
     const navigation = useNavigation();
     const { isDarkMode } = useTheme();
 
@@ -103,4 +103,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default WorkoutsScreen;
+export default WorkoutScreen;
