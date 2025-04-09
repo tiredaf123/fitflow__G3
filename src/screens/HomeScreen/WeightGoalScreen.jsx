@@ -8,40 +8,7 @@ const WeightGoalScreen = () => {
     const navigation = useNavigation();
     const { isDarkMode } = useTheme();
 
-    const styles = getStyles(isDarkMode);
-
-    return (
-        <View style={styles.container}>
-            {/* Back Navigation */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <MaterialIcon name="arrow-back" size={28} color={isDarkMode ? '#fff' : '#000'} />
-                </TouchableOpacity>
-                <Text style={styles.title}>My Weight Goal & Plan</Text>
-                <View style={styles.hiddenIconSpacer} />
-            </View>
-
-            {/* Goal Info */}
-            <View style={styles.section}>
-                <Text style={styles.label}>Current Weight:</Text>
-                <Text style={styles.value}>65 kg</Text>
-
-                <Text style={[styles.label, styles.marginTop16]}>Goal Weight:</Text>
-                <Text style={styles.value}>55 kg</Text>
-
-                <Text style={[styles.label, styles.marginTop16]}>Plan:</Text>
-                <Text style={styles.planText}>
-                    • Eat at a 500 kcal deficit daily{'\n'}
-                    • Do strength training 3x/week{'\n'}
-                    • Cardio 2x/week
-                </Text>
-            </View>
-        </View>
-    );
-};
-
-const getStyles = (isDarkMode) =>
-    StyleSheet.create({
+    const styles = StyleSheet.create({
         container: {
             flex: 1,
             padding: 20,
@@ -73,16 +40,36 @@ const getStyles = (isDarkMode) =>
             fontSize: 18,
             fontWeight: 'bold',
         },
-        marginTop16: {
-            marginTop: 16,
-        },
-        hiddenIconSpacer: {
-            width: 28,
-        },
-        planText: {
-            color: isDarkMode ? '#ccc' : '#555',
-            fontSize: 16,
-        },
     });
+
+    return (
+        <View style={styles.container}>
+            {/* Back Navigation */}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <MaterialIcon name="arrow-back" size={28} color={isDarkMode ? '#fff' : '#000'} />
+                </TouchableOpacity>
+                <Text style={styles.title}>My Weight Goal & Plan</Text>
+                <View style={{ width: 28 }} />
+            </View>
+
+            {/* Goal Info */}
+            <View style={styles.section}>
+                <Text style={styles.label}>Current Weight:</Text>
+                <Text style={styles.value}>65 kg</Text>
+
+                <Text style={[styles.label, { marginTop: 16 }]}>Goal Weight:</Text>
+                <Text style={styles.value}>55 kg</Text>
+
+                <Text style={[styles.label, { marginTop: 16 }]}>Plan:</Text>
+                <Text style={styles.label}>
+                    • Eat at a 500 kcal deficit daily{'\n'}
+                    • Do strength training 3x/week{'\n'}
+                    • Cardio 2x/week
+                </Text>
+            </View>
+        </View>
+    );
+};
 
 export default WeightGoalScreen;
