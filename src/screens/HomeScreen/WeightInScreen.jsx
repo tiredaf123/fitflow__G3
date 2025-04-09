@@ -8,52 +8,13 @@ const WeightInScreen = () => {
     const navigation = useNavigation();
     const { isDarkMode } = useTheme();
 
-    const styles = getStyles(isDarkMode);
-
     const weightHistory = [
         { id: '1', date: 'Apr 7, 2025', weight: '65 kg' },
         { id: '2', date: 'Apr 2, 2025', weight: '66.2 kg' },
         { id: '3', date: 'Mar 25, 2025', weight: '67 kg' },
     ];
 
-    return (
-        <View style={styles.container}>
-            {/* Header with Back Button */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <MaterialIcon name="arrow-back" size={28} color={isDarkMode ? '#fff' : '#000'} />
-                </TouchableOpacity>
-                <Text style={styles.title}>Weight In</Text>
-                <View style={styles.placeholderIcon} />
-            </View>
-
-            {/* Current Weight */}
-            <View style={styles.section}>
-                <Text style={styles.label}>Current Weight</Text>
-                <Text style={styles.value}>65 kg</Text>
-                <Text style={styles.date}>Last recorded: Apr 7, 2025</Text>
-            </View>
-
-            {/* History List */}
-            <View style={styles.section}>
-                <Text style={styles.label}>Weight History</Text>
-                <FlatList
-                    data={weightHistory}
-                    keyExtractor={item => item.id}
-                    renderItem={({ item }) => (
-                        <View style={styles.historyItem}>
-                            <Text style={styles.historyText}>{item.weight}</Text>
-                            <Text style={styles.historyDate}>{item.date}</Text>
-                        </View>
-                    )}
-                />
-            </View>
-        </View>
-    );
-};
-
-const getStyles = (isDarkMode) =>
-    StyleSheet.create({
+    const styles = StyleSheet.create({
         container: {
             flex: 1,
             padding: 20,
@@ -69,9 +30,6 @@ const getStyles = (isDarkMode) =>
             fontSize: 20,
             fontWeight: 'bold',
             color: isDarkMode ? '#fff' : '#000',
-        },
-        placeholderIcon: {
-            width: 28,
         },
         section: {
             backgroundColor: isDarkMode ? '#2A2A2A' : '#F5F5F5',
@@ -108,5 +66,41 @@ const getStyles = (isDarkMode) =>
             color: isDarkMode ? '#aaa' : '#888',
         },
     });
+
+    return (
+        <View style={styles.container}>
+            {/* Header with Back Button */}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <MaterialIcon name="arrow-back" size={28} color={isDarkMode ? '#fff' : '#000'} />
+                </TouchableOpacity>
+                <Text style={styles.title}>Weight In</Text>
+                <View style={{ width: 28 }} />
+            </View>
+
+            {/* Current Weight */}
+            <View style={styles.section}>
+                <Text style={styles.label}>Current Weight</Text>
+                <Text style={styles.value}>65 kg</Text>
+                <Text style={styles.date}>Last recorded: Apr 7, 2025</Text>
+            </View>
+
+            {/* History List */}
+            <View style={styles.section}>
+                <Text style={styles.label}>Weight History</Text>
+                <FlatList
+                    data={weightHistory}
+                    keyExtractor={item => item.id}
+                    renderItem={({ item }) => (
+                        <View style={styles.historyItem}>
+                            <Text style={styles.historyText}>{item.weight}</Text>
+                            <Text style={styles.historyDate}>{item.date}</Text>
+                        </View>
+                    )}
+                />
+            </View>
+        </View>
+    );
+};
 
 export default WeightInScreen;
