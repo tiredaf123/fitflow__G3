@@ -32,9 +32,13 @@ import HireCoachScreen from '../screens/HomeScreen/SubScreen/HireCoachScreen';
 import AboutScreen from '../screens/HomeScreen/SubScreen/AboutScreen';
 import TermsAndConditionsScreen from '../screens/HomeScreen/SubScreen/TermsAndConditionsScreen';
 import AdminPanel from '../Admin/AdminPanel';
-
+import CalenderScreen from '../screens/HomeScreen/CalenderScreen';
+import WeightInScreen from '../screens/HomeScreen/WeightInScreen';
+import WeightGoalScreen from '../screens/HomeScreen/WeightGoalScreen';
 // Drawer
 import MainDrawerNavigator from './MainDrawerNavigator';
+import CalendarScreen from '../screens/HomeScreen/CalenderScreen';
+import FoodManagerScreen from '../screens/HomeScreen/FoodManagerScreen';
 
 const Stack = createStackNavigator();
 
@@ -89,6 +93,10 @@ const AppNavigator = () => {
           <Stack.Screen name="About" component={AboutScreen} />
           <Stack.Screen name="Terms" component={TermsAndConditionsScreen} />
           <Stack.Screen name="AdminPanel" component={AdminPanel} />
+          <Stack.Screen name="Calendar" component={CalendarScreen} />
+            <Stack.Screen name="FoodManager" component={FoodManagerScreen} />
+            <Stack.Screen name="WeightGoal" component={WeightGoalScreen} />
+            <Stack.Screen name="WeightIn" component={WeightInScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </View>
