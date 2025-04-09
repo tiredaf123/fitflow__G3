@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Dimensions, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -10,7 +10,6 @@ const { width } = Dimensions.get('window');
 const HomeScreen = () => {
     const navigation = useNavigation();
     const { isDarkMode } = useTheme();
-    const [hydrationCount, setHydrationCount] = useState(0);
 
     const themeStyles = {
         container: {
@@ -42,37 +41,14 @@ const HomeScreen = () => {
             color: isDarkMode ? '#FEC400' : '#FF6B00',
             fontSize: 20,
             fontWeight: 'bold',
-        },
-        sectionTitle: {
-            fontSize: 22,
-            fontWeight: 'bold',
-            marginLeft: 20,
-            marginTop: 30,
-            color: isDarkMode ? '#FFF' : '#333',
-        },
+        }
     };
-
-    const dietFoods = [
-        { id: 1, name: "Salad Bowl", image: require('../../assets/Images/salad.png') },
-        { id: 2, name: "Grilled Chicken", image: require('../../assets/Images/chicken.png') },
-        { id: 3, name: "Fruit Mix", image: require('../../assets/Images/fruits.png') },
-        { id: 4, name: "Oatmeal", image: require('../../assets/Images/oatmeal.png') },
-        { id: 5, name: "Smoothie", image: require('../../assets/Images/smoothie.png') },
-    ];
-
-    const workoutRecommendations = [
-        { id: 1, name: "Morning Yoga", image: require('../../assets/Images/yoga.png') },
-        { id: 2, name: "HIIT Training", image: require('../../assets/Images/hiit.png') },
-        { id: 3, name: "Strength Training", image: require('../../assets/Images/strength.png') },
-        { id: 4, name: "Cardio Blast", image: require('../../assets/Images/cardio.png') },
-    ];
 
     return (
         <View style={themeStyles.container}>
-            <ScrollView 
-                showsVerticalScrollIndicator={false} 
-                contentContainerStyle={{ paddingBottom: 100 }}
-            >                
+            <ScrollView showsVerticalScrollIndicator={false}>
+                
+                {/* Top Navbar */}
                 <View style={styles.navbar}>
                     <Text style={themeStyles.logo}>FitnessApp</Text>
                     <TouchableOpacity>
@@ -80,6 +56,7 @@ const HomeScreen = () => {
                     </TouchableOpacity>
                 </View>
 
+                {/* Greeting & Daily Summary */}
                 <View style={styles.greetingContainer}>
                     <View style={styles.profileContainer}>
                         <Image source={require('../../assets/Images/profile.png')} style={styles.profileImage} />
@@ -104,39 +81,9 @@ const HomeScreen = () => {
                         </View>
                     </View>
                 </View>
-
-                <Text style={themeStyles.sectionTitle}>Hydration Tracker 💧</Text>
-                <View style={styles.hydrationTracker}>
-                    <TouchableOpacity onPress={() => setHydrationCount(hydrationCount + 1)}>
-                        <Image source={require('../../assets/Images/water-glass.png')} style={styles.hydrationIcon} />
-                    </TouchableOpacity>
-                    <Text style={styles.hydrationText}>{hydrationCount} Glasses</Text>
-                    <TouchableOpacity onPress={() => setHydrationCount(Math.max(hydrationCount - 1, 0))}>
-                        <Icon name="remove-circle-outline" size={30} color="#0277BD" />
-                    </TouchableOpacity>
-                </View>
-
-                <Text style={themeStyles.sectionTitle}>Recommended Diet Plans 🍏</Text>
-                <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.dietScroll}>
-                    {dietFoods.map((food) => (
-                        <View key={food.id} style={styles.foodCard}>
-                            <Image source={food.image} style={styles.foodImage} />
-                            <Text style={styles.foodText}>{food.name}</Text>
-                        </View>
-                    ))}
-                </ScrollView>
-
-                <Text style={themeStyles.sectionTitle}>Today's Workout Recommendations 🏋️</Text>
-                <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.dietScroll}>
-                    {workoutRecommendations.map((workout) => (
-                        <View key={workout.id} style={styles.foodCard}>
-                            <Image source={workout.image} style={styles.foodImage} />
-                            <Text style={styles.foodText}>{workout.name}</Text>
-                        </View>
-                    ))}
-                </ScrollView>
             </ScrollView>
 
+            {/* BottomTabBar */}
             <BottomTabBar />
         </View>
     );
@@ -146,9 +93,7 @@ const styles = StyleSheet.create({
     navbar: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 15,
+        margin: 20,
     },
     profileContainer: {
         flexDirection: 'row',
@@ -164,57 +109,9 @@ const styles = StyleSheet.create({
     },
     summaryContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginHorizontal: 20,
-        marginTop: 20,
-    },
-    hydrationTracker: {
-        flexDirection: 'row',
         justifyContent: 'space-around',
-        alignItems: 'center',
-        marginHorizontal: 20,
         marginTop: 20,
-        backgroundColor: '#E3F2FD',
-        padding: 15,
-        borderRadius: 12,
-    },
-    hydrationText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#0277BD',
-    },
-    hydrationIcon: {
-        width: 30,
-        height: 30,
-    },
-    dietScroll: {
-        paddingVertical: 15,
-        paddingLeft: 20,
-    },
-    foodCard: {
-        width: 130,
-        backgroundColor: '#FFF',
-        borderRadius: 12,
-        marginRight: 15,
-        padding: 15,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowOffset: { width: 2, height: 2 },
-        shadowRadius: 5,
-        elevation: 4,
-    },
-    foodImage: {
-        width: 90,
-        height: 90,
-        borderRadius: 8,
-    },
-    foodText: {
-        marginTop: 8,
-        fontSize: 15,
-        fontWeight: 'bold',
-        color: '#444',
-    },
+    }
 });
 
 export default HomeScreen;
