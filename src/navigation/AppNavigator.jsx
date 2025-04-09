@@ -2,14 +2,17 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { View, Text, Switch, StyleSheet } from 'react-native';
-import { useTheme } from '../navigation/ThemeProvider';  // Notice: No need to import ThemeProvider here
+import { useTheme } from '../navigation/ThemeProvider';
+
+
+  // Notice: No need to import ThemeProvider here
 
 // Import your screens
 import Welcome from '../screens/Welcome';
 import AgeSelection from '../screens/AgeSelection';
 import GenderSelection from '../screens/GenderSelection';
 import HeightSelector from '../screens/HeightSelector';
-import WeightSelection from '../screens/WeightSelection';
+import WeightSelection from '../screens/WeightSelection'
 import SignUp_Page from '../auth/SignUp_Page';
 import Login_Page from '../auth/Login_Page';
 import GoalSelection from '../screens/GoalSelection';
@@ -25,16 +28,22 @@ import LegWorkout from '../screens/Workout/LegWorkout';
 import AbsWorkout from '../screens/Workout/AbsWorkout';
 import AchievementsScreen from '../screens/HomeScreen/AchievementsScreen';
 import ProfileScreen from '../screens/HomeScreen/ProfileScreen';
-import PersonalScreen from '../screens/HomeScreen/SubScreen/PersonalScreen';
-import GeneralScreen from '../screens/HomeScreen/SubScreen/GeneralScreen';
-import NotificationScreen from '../screens/HomeScreen/SubScreen/NotificationScreen';
-import HelpScreen from '../screens/HomeScreen/SubScreen/HelpScreen';
-import HireCoachScreen from '../screens/HomeScreen/SubScreen/HireCoachScreen';
-import AboutScreen from '../screens/HomeScreen/SubScreen/AboutScreen';
-import TermsAndConditionsScreen from '../screens/HomeScreen/SubScreen/TermsAndConditionsScreen';
+import CalendarScreen from '../screens/HomeScreen/CalendarScreen'; // adjust path if needed
+
+import FoodManagerScreen from '../screens/HomeScreen/FoodManagerScreen';
+import WeightGoalScreen from '../screens/HomeScreen/WeightGoalScreen';
+import WeightInScreen from '../screens/HomeScreen/WeightInScreen';
+
+
+
+
+
+
+
 
 
 const Stack = createStackNavigator();
+
 
 const AppNavigator = () => {
   const { isDarkMode } = useTheme();
@@ -76,13 +85,14 @@ const AppNavigator = () => {
             <Stack.Screen name="IntroPage6" component={IntroPage6} />
             <Stack.Screen name="AchievementsScreen" component={AchievementsScreen} />
             <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
-            <Stack.Screen name="Personal" component={PersonalScreen} />
-            <Stack.Screen name="General" component={GeneralScreen} />
-            <Stack.Screen name="Notification" component={NotificationScreen} />
-            <Stack.Screen name="Help" component={HelpScreen} />
-            <Stack.Screen name="HireCoach" component={HireCoachScreen} />
-            <Stack.Screen name="About" component={AboutScreen} />
-            <Stack.Screen name="Terms" component={TermsAndConditionsScreen} />
+            <Stack.Screen name="Calendar" component={CalendarScreen} />
+            <Stack.Screen name="FoodManager" component={FoodManagerScreen} />
+            <Stack.Screen name="WeightGoal" component={WeightGoalScreen} />
+            <Stack.Screen name="WeightIn" component={WeightInScreen} />
+
+
+
+
           </Stack.Navigator>
         </NavigationContainer>
       </View>

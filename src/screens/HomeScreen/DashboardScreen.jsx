@@ -4,9 +4,11 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import BottomTabBar from '../../components/BottomTabBar';
 import { useTheme } from '../../navigation/ThemeProvider';
+import { useNavigation } from '@react-navigation/native';
 
 const DashboardScreen = () => {
     const { isDarkMode } = useTheme();
+    const navigation = useNavigation();
 
     const themeStyles = {
         container: { flex: 1, backgroundColor: isDarkMode ? '#1a1a1a' : '#F0F0F0' },
@@ -30,12 +32,23 @@ const DashboardScreen = () => {
                     <Text style={[{ fontSize: 22, textAlign: 'center', flex: 1 }, themeStyles.text]}>Dashboard</Text>
                 </View>
 
-                {/* Calendar Navigation */}
-                <View style={[{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 10, marginBottom: 20 }, themeStyles.navbar]}>
+                {/* Calendar Navigation (Touchable) */}
+                <TouchableOpacity
+                    onPress={() => navigation.navigate('Calendar')}
+                    style={[{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        paddingVertical: 10,
+                        paddingHorizontal: 15,
+                        borderRadius: 10,
+                        marginBottom: 20
+                    }, themeStyles.navbar]}
+                >
                     <MaterialIcon name="chevron-left" size={28} color={themeStyles.text.color} />
                     <Text style={[{ fontSize: 18 }, themeStyles.text]}>Today</Text>
                     <MaterialIcon name="chevron-right" size={28} color={themeStyles.text.color} />
-                </View>
+                </TouchableOpacity>
 
                 {/* Calorie Budget Section */}
                 <View style={themeStyles.section}>
@@ -73,24 +86,22 @@ const DashboardScreen = () => {
 
                 {/* Weight, Goals, and Food Management */}
                 {[
-                    { name: "balance-scale", text: "Weight In", value: "65", subtext: "Last recorded on Jan 8" },
-                    { name: "bullseye", text: "My Weight Goal & Plan" },
-                    { name: "cutlery", text: "Manage my Foods" }
+{ name: "balance-scale", text: "Weight In", value: "65", subtext: "Last recorded on Apr 7", screen: "WeightIn" },
+{ name: "bullseye", text: "My Weight Goal & Plan", screen: "WeightGoal" },
+                    { name: "cutlery", text: "Manage my Foods", screen: "FoodManager" },
                 ].map((item, index) => (
                     <TouchableOpacity
-                        key={index}
-                        style={[
-                            {
-                                flexDirection: 'row',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                padding: 15,
-                                borderRadius: 12,
-                                marginBottom: 12
-                            },
-                            { backgroundColor: themeStyles.cardBackground }
-                        ]}
-                    >
+    key={index}
+    onPress={() => item.screen && navigation.navigate(item.screen)}
+    style={[{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 15,
+        borderRadius: 12,
+        marginBottom: 12
+    }, { backgroundColor: themeStyles.cardBackground }]}>
+
                         <Icon name={item.name} size={20} color={themeStyles.text.color} />
                         <View style={{ flex: 1, marginLeft: 10 }}>
                             <Text style={[{ fontSize: 16 }, themeStyles.text]}>{item.text}</Text>
