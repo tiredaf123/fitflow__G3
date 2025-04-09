@@ -69,32 +69,34 @@ const FoodManagerScreen = () => {
     },
   });
 
-  const renderMealSection = (mealType, data) => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{mealType.charAt(0).toUpperCase() + mealType.slice(1)}</Text>
-      {data.items.map((item, idx) => (
-        <Text key={idx} style={styles.itemText}>• {item}</Text>
-      ))}
-      <Text style={styles.nutritionText}>Calories: {data.calories} kcal</Text>
-      <Text style={styles.nutritionText}>Protein: {data.protein} g</Text>
-    </View>
-  );
+  const MealSection = ({ mealType, data }) => {
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>
+          {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
+        </Text>
+        {data.items.map((item, idx) => (
+          <Text key={idx} style={styles.itemText}>{`\u2022 ${item}`}</Text>
+        ))}
+        <Text style={styles.nutritionText}>{`Calories: ${data.calories} kcal`}</Text>
+        <Text style={styles.nutritionText}>{`Protein: ${data.protein} g`}</Text>
+      </View>
+    );
+  };
 
   return (
     <ScrollView style={styles.container}>
-      {/* Header */}
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <MaterialIcon name="arrow-back" size={28} color={isDarkMode ? '#fff' : '#000'} />
         </TouchableOpacity>
         <Text style={styles.headerText}>Manage My Foods</Text>
-        <View style={{ width: 28 }} /> {/* Symmetry placeholder */}
+        <View style={{ width: 28 }} />
       </View>
 
-      {/* Food Sections */}
-      {renderMealSection('breakfast', foodData.breakfast)}
-      {renderMealSection('lunch', foodData.lunch)}
-      {renderMealSection('dinner', foodData.dinner)}
+      <MealSection mealType="breakfast" data={foodData.breakfast} />
+      <MealSection mealType="lunch" data={foodData.lunch} />
+      <MealSection mealType="dinner" data={foodData.dinner} />
     </ScrollView>
   );
 };
