@@ -23,7 +23,7 @@ const GoalSelection = () => {
                         <TouchableOpacity 
                             key={index} 
                             style={styles.goalButton}
-                            onPress={() => navigation.navigate('WeightSelector')}
+                            onPress={() => navigation.navigate('Subscription')}
                         >
                             <Icon name={goal.icon} size={24} color="white" style={{ marginRight: 12 }} />
                             <Text style={styles.goalText}>{goal.name}</Text>
@@ -34,7 +34,7 @@ const GoalSelection = () => {
                     <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                         <Text style={styles.buttonText}>Back</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.nextButton} onPress={() => navigation.navigate('HomePage')}>
+                    <TouchableOpacity style={styles.nextButton} onPress={() => navigation.navigate('Subscription')}>
                         <Text style={styles.buttonText}>Next</Text>
                     </TouchableOpacity>
                 </View>

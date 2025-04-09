@@ -32,6 +32,9 @@ import HelpScreen from '../screens/HomeScreen/SubScreen/HelpScreen';
 import HireCoachScreen from '../screens/HomeScreen/SubScreen/HireCoachScreen';
 import AboutScreen from '../screens/HomeScreen/SubScreen/AboutScreen';
 import TermsAndConditionsScreen from '../screens/HomeScreen/SubScreen/TermsAndConditionsScreen';
+import SubscriptionScreen from '../screens/SubscriptionScreen'; 
+import PaymentScreen from '../screens/PaymentScreen';
+
 
 
 const Stack = createStackNavigator();
@@ -59,8 +62,9 @@ const AppNavigator = () => {
             <Stack.Screen name="HeightSelector" component={HeightSelector} />
             <Stack.Screen name="WeightSelection" component={WeightSelection} />
             <Stack.Screen name="GoalSelection" component={GoalSelection} />
+            <Stack.Screen name="Subscription" component={SubscriptionScreen} />
+            <Stack.Screen name="Payment" component={PaymentScreen} />
             <Stack.Screen name="HomeScreen" component={HomePage} />
-
             <Stack.Screen name="DashboardScreen" component={DashboardScreen} />
             <Stack.Screen name="WorkoutsScreen" component={WorkoutsScreen} />
             <Stack.Screen name="ChestWorkout" component={ChestWorkout} />
