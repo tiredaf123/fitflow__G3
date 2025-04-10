@@ -39,6 +39,10 @@ import WeightGoalScreen from '../screens/HomeScreen/WeightGoalScreen';
 import MainDrawerNavigator from './MainDrawerNavigator';
 import CalendarScreen from '../screens/HomeScreen/CalenderScreen';
 import FoodManagerScreen from '../screens/HomeScreen/FoodManagerScreen';
+import Challenge from '../components/SideBar/Challenge';
+import Progress from '../components/SideBar/Progress';
+import Classes from '../components/SideBar/Classes';
+import Nutrition from '../components/SideBar/Nutrition';
 
 const Stack = createStackNavigator();
 
@@ -97,6 +101,11 @@ const AppNavigator = () => {
             <Stack.Screen name="FoodManager" component={FoodManagerScreen} />
             <Stack.Screen name="WeightGoal" component={WeightGoalScreen} />
             <Stack.Screen name="WeightIn" component={WeightInScreen} />
+            <Stack.Screen name="Challenge" component={Challenge} />
+<Stack.Screen name="Progress" component={Progress} />
+<Stack.Screen name="Classes" component={Classes} />
+<Stack.Screen name="Nutrition" component={Nutrition} />
+
         </Stack.Navigator>
       </NavigationContainer>
     </View>
