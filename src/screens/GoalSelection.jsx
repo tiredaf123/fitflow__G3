@@ -23,7 +23,7 @@ const GoalSelection = () => {
                         <TouchableOpacity
                             key={index}
                             style={styles.goalButton}
-                            onPress={() => navigation.navigate('Subscription')}
+                            onPress={() => navigation.navigate('HomeScreen', { selectedGoal: goal.name })}
                         >
                             <Icon name={goal.icon} size={24} color="white" style={{ marginRight: 12 }} />
                             <Text style={styles.goalText}>{goal.name}</Text>
@@ -55,11 +55,6 @@ const styles = StyleSheet.create({
         padding: 30,
         backgroundColor: '#1E1E1E',
         borderRadius: 25,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.3,
-        shadowRadius: 10,
-        elevation: 10,
     },
     title: {
         fontSize: 26,
@@ -88,8 +83,7 @@ const styles = StyleSheet.create({
     },
     navigationButtons: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 20,
+        justifyContent: 'center',
     },
     backButton: {
         backgroundColor: 'transparent',

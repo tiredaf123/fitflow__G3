@@ -10,24 +10,21 @@ import {
 import { useTheme } from '../../navigation/ThemeProvider';
 
 const ArmsWorkout = () => {
-  const { isDarkMode } = useTheme();
-  const styles = getStyles(isDarkMode);
-
-  return (
-    <ScrollView style={styles.container}>
-      <ImageBackground
-        source={require('../../assets/ExerciseImages/13.png')}
-        style={styles.imageBackground}
-        imageStyle={{ borderRadius: 15 }}
-      >
-        <View style={styles.overlay}>
-          <Text style={styles.title}>Arms Workout</Text>
-          <Text style={styles.subTitle}>6 exercises | 40 mins</Text>
-          <TouchableOpacity style={styles.startButton}>
-            <Text style={styles.startButtonText}>Start Workout</Text>
-          </TouchableOpacity>
-        </View>
-      </ImageBackground>
+    return (
+        <ScrollView style={styles.container}>
+            <ImageBackground
+                source={require('../../assets/ExerciseImages/13.png')}
+                style={styles.imageBackground}
+                imageStyle={{ borderRadius: 15 }}
+            >
+                <View style={styles.overlay}>
+                    <Text style={styles.title}>Arms Workout</Text>
+                    <Text style={styles.subTitle}>6 exercises | 40 mins</Text>
+                    <TouchableOpacity style={styles.startButton}>
+                        <Text style={styles.startButtonText}>Start Workout</Text>
+                    </TouchableOpacity>
+                </View>
+            </ImageBackground>
 
       <View style={styles.exerciseList}>
         {[

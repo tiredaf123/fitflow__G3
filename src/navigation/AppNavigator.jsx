@@ -2,12 +2,9 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { View, Text, Switch, StyleSheet } from 'react-native';
-import { useTheme } from '../navigation/ThemeProvider';
+import { useTheme } from '../navigation/ThemeProvider';  // Notice: No need to import ThemeProvider here
 
-
-  // Notice: No need to import ThemeProvider here
-
-// Import your screens
+// Screens
 import Welcome from '../screens/Welcome';
 import AgeSelection from '../screens/AgeSelection';
 import GenderSelection from '../screens/GenderSelection';
@@ -17,9 +14,8 @@ import SignUp_Page from '../auth/SignUp_Page';
 import Login_Page from '../auth/Login_Page';
 import GoalSelection from '../screens/GoalSelection';
 import HomePage from '../screens/HomeScreen/HomePage';
-import DashboardScreen from '../screens/HomeScreen/DashboardScreen';
 import { IntroPage1, IntroPage2, IntroPage3 } from '../screens/IntroScreen';
-import WorkoutsScreen from '../screens/Workout/WorkoutScreen';
+import WorkoutScreen from '../screens/Workout/WorkoutScreen';
 import { IntroPage4, IntroPage5, IntroPage6 } from '../screens/IntroScreen2';
 import ChestWorkout from '../screens/Workout/ChestWorkout';
 import ArmsWorkout from '../screens/Workout/ArmsWorkout';
@@ -28,21 +24,6 @@ import LegWorkout from '../screens/Workout/LegWorkout';
 import AbsWorkout from '../screens/Workout/AbsWorkout';
 import AchievementsScreen from '../screens/HomeScreen/AchievementsScreen';
 import ProfileScreen from '../screens/HomeScreen/ProfileScreen';
-import PersonalScreen from '../screens/HomeScreen/SubScreen/PersonalScreen';
-import GeneralScreen from '../screens/HomeScreen/SubScreen/GeneralScreen';
-import NotificationScreen from '../screens/HomeScreen/SubScreen/NotificationScreen';
-import HelpScreen from '../screens/HomeScreen/SubScreen/HelpScreen';
-import HireCoachScreen from '../screens/HomeScreen/SubScreen/HireCoachScreen';
-import AboutScreen from '../screens/HomeScreen/SubScreen/AboutScreen';
-import TermsAndConditionsScreen from '../screens/HomeScreen/SubScreen/TermsAndConditionsScreen';
-import SubscriptionScreen from '../screens/SubscriptionScreen'; 
-import PaymentScreen from '../screens/PaymentScreen';
-import CalendarScreen from '../screens/HomeScreen/CalendarScreen'; // adjust path if needed
-import FoodManagerScreen from '../screens/HomeScreen/FoodManagerScreen';
-import WeightGoalScreen from '../screens/HomeScreen/WeightGoalScreen';
-import WeightInScreen from '../screens/HomeScreen/WeightInScreen';
-
-
 
 const Stack = createStackNavigator();
 
@@ -70,9 +51,8 @@ const AppNavigator = () => {
             <Stack.Screen name="HeightSelector" component={HeightSelector} />
             <Stack.Screen name="WeightSelection" component={WeightSelection} />
             <Stack.Screen name="GoalSelection" component={GoalSelection} />
-            <Stack.Screen name="Subscription" component={SubscriptionScreen} />
-            <Stack.Screen name="Payment" component={PaymentScreen} />
             <Stack.Screen name="HomeScreen" component={HomePage} />
+
             <Stack.Screen name="DashboardScreen" component={DashboardScreen} />
             <Stack.Screen name="WorkoutsScreen" component={WorkoutsScreen} />
             <Stack.Screen name="ChestWorkout" component={ChestWorkout} />
@@ -88,14 +68,6 @@ const AppNavigator = () => {
             <Stack.Screen name="IntroPage6" component={IntroPage6} />
             <Stack.Screen name="AchievementsScreen" component={AchievementsScreen} />
             <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
-            <Stack.Screen name="Calendar" component={CalendarScreen} />
-            <Stack.Screen name="FoodManager" component={FoodManagerScreen} />
-            <Stack.Screen name="WeightGoal" component={WeightGoalScreen} />
-            <Stack.Screen name="WeightIn" component={WeightInScreen} />
-
-
-
-
           </Stack.Navigator>
         </NavigationContainer>
       </View>
