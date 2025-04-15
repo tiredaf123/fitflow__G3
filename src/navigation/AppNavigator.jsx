@@ -28,17 +28,19 @@ import LegWorkout from '../screens/Workout/LegWorkout';
 import AbsWorkout from '../screens/Workout/AbsWorkout';
 import AchievementsScreen from '../screens/HomeScreen/AchievementsScreen';
 import ProfileScreen from '../screens/HomeScreen/ProfileScreen';
+import PersonalScreen from '../screens/HomeScreen/SubScreen/PersonalScreen';
+import GeneralScreen from '../screens/HomeScreen/SubScreen/GeneralScreen';
+import NotificationScreen from '../screens/HomeScreen/SubScreen/NotificationScreen';
+import HelpScreen from '../screens/HomeScreen/SubScreen/HelpScreen';
+import HireCoachScreen from '../screens/HomeScreen/SubScreen/HireCoachScreen';
+import AboutScreen from '../screens/HomeScreen/SubScreen/AboutScreen';
+import TermsAndConditionsScreen from '../screens/HomeScreen/SubScreen/TermsAndConditionsScreen';
+import SubscriptionScreen from '../screens/SubscriptionScreen'; 
+import PaymentScreen from '../screens/PaymentScreen';
 import CalendarScreen from '../screens/HomeScreen/CalendarScreen'; // adjust path if needed
-
 import FoodManagerScreen from '../screens/HomeScreen/FoodManagerScreen';
 import WeightGoalScreen from '../screens/HomeScreen/WeightGoalScreen';
 import WeightInScreen from '../screens/HomeScreen/WeightInScreen';
-
-
-
-
-
-
 
 
 
@@ -68,8 +70,9 @@ const AppNavigator = () => {
             <Stack.Screen name="HeightSelector" component={HeightSelector} />
             <Stack.Screen name="WeightSelection" component={WeightSelection} />
             <Stack.Screen name="GoalSelection" component={GoalSelection} />
+            <Stack.Screen name="Subscription" component={SubscriptionScreen} />
+            <Stack.Screen name="Payment" component={PaymentScreen} />
             <Stack.Screen name="HomeScreen" component={HomePage} />
-
             <Stack.Screen name="DashboardScreen" component={DashboardScreen} />
             <Stack.Screen name="WorkoutsScreen" component={WorkoutsScreen} />
             <Stack.Screen name="ChestWorkout" component={ChestWorkout} />
