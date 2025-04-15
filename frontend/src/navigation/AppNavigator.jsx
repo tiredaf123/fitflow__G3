@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { View } from 'react-native';
-import { useTheme } from '../navigation/ThemeProvider';
+import { useTheme } from './ThemeProvider';
 
 // Screens
 import Welcome from '../screens/Welcome';
