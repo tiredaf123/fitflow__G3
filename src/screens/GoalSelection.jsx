@@ -20,8 +20,8 @@ const GoalSelection = () => {
                 <Text style={styles.title}>What's Your Goal?</Text>
                 <View style={styles.goalList}>
                     {goals.map((goal, index) => (
-                        <TouchableOpacity 
-                            key={index} 
+                        <TouchableOpacity
+                            key={index}
                             style={styles.goalButton}
                             onPress={() => navigation.navigate('Subscription')}
                         >
