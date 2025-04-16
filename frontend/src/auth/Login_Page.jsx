@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import { BASE_URL } from '../config/config'; // Make sure this exists
 
 const { width, height } = Dimensions.get('window');
 
@@ -20,11 +21,48 @@ const Login_Page = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    if (username === 'admin' && password === 'admin123') {
-      navigation.navigate('AdminPanel');
-    } else {
-      navigation.navigate('IntroPage4');
+  const handleLogin = async () => {
+    if (!username || !password) {
+      Alert.alert('Error', 'Please enter both username and password');
+      return;
+    }
+
+    try {
+      // Admin login check first
+      if (username === 'admin') {
+        const res = await fetch(`${BASE_URL}/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          navigation.navigate('AdminPanel');
+        } else {
+          Alert.alert('Admin Login Failed', data.message || 'Incorrect credentials');
+        }
+      } else {
+        // Normal user login
+        const res = await fetch(`${BASE_URL}/manual-users/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          // navigate to user flow
+          navigation.navigate('IntroPage4', { user: data.user });
+        } else {
+          Alert.alert('Login Failed', data.message || 'Incorrect credentials');
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Error', 'Could not connect to the server.');
     }
   };
 
@@ -78,17 +116,8 @@ const Login_Page = () => {
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: width * 0.08,
-  },
+  backgroundImage: { flex: 1, width: '100%', height: '100%' },
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: width * 0.08 },
   title: {
     fontSize: width * 0.075,
     fontWeight: 'bold',
@@ -98,10 +127,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  inputContainer: {
-    width: '100%',
-    alignItems: 'center',
-  },
+  inputContainer: { width: '100%', alignItems: 'center' },
   input: {
     width: '90%',
     paddingVertical: height * 0.015,
@@ -133,27 +159,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFF',
   },
-  socialContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: height * 0.02,
-  },
+  socialContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: height * 0.02 },
   socialButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
     padding: 10,
     borderRadius: 100,
     marginHorizontal: width * 0.02,
   },
-  socialIcon: {
-    width: width * 0.12,
-    height: width * 0.12,
-    borderRadius: 100,
-  },
-  signupText: {
-    marginTop: height * 0.03,
-    fontSize: width * 0.045,
-    color: '#FFF',
-  },
+  socialIcon: { width: width * 0.12, height: width * 0.12, borderRadius: 100 },
+  signupText: { marginTop: height * 0.03, fontSize: width * 0.045, color: '#FFF' },
   signupButton: {
     backgroundColor: '#ffcc00',
     paddingVertical: height * 0.015,
@@ -161,11 +175,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginTop: height * 0.015,
   },
-  signupButtonText: {
-    fontSize: width * 0.05,
-    fontWeight: 'bold',
-    color: '#000',
-  },
+  signupButtonText: { fontSize: width * 0.05, fontWeight: 'bold', color: '#000' },
 });
 
 export default Login_Page;

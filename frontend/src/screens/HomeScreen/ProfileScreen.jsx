@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,16 +13,44 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../navigation/ThemeProvider';
 import BottomTabBar from '../../components/BottomTabBar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BASE_URL } from '../../config/config';
 
 const ProfileScreen = () => {
   const { isDarkMode, toggleTheme } = useTheme();
   const navigation = useNavigation();
 
-  const handleLogout = () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Logout', onPress: () => console.log('Logged out') },
-    ]);
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = await AsyncStorage.getItem('token');
+      try {
+        const res = await fetch(`${BASE_URL}/profile/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setEmail(data?.email || '');
+          setUsername(data?.username || '');
+        }
+      } catch (err) {
+        console.error('Failed to fetch user profile', err);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch(`${BASE_URL}/manual-users/logout`, { method: 'POST' });
+      await AsyncStorage.removeItem('token');
+      navigation.reset({ index: 0, routes: [{ name: 'Login_Page' }] });
+    } catch (err) {
+      console.error('Logout failed', err);
+      Alert.alert('Error', 'Logout failed. Please try again.');
+    }
   };
 
   const themeStyles = {
@@ -56,8 +84,8 @@ const ProfileScreen = () => {
           <TouchableOpacity style={styles.editButton}>
             <Icon name="edit" size={20} color="#FFF" />
           </TouchableOpacity>
-          <Text style={[styles.name, themeStyles.text]}>Shane</Text>
-          <Text style={[styles.email, themeStyles.text]}>shane.sine@gmail.com</Text>
+          <Text style={[styles.name, themeStyles.text]}>{username}</Text>
+          <Text style={[styles.email, themeStyles.text]}>{email}</Text>
         </View>
 
         {/* Basic Settings */}
