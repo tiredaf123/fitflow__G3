@@ -6,7 +6,7 @@ import {
   StyleSheet,
   Dimensions,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import WheelPicker from "react-native-wheely";
 
 const { width } = Dimensions.get('window');
@@ -15,6 +15,17 @@ const HeightSelector = () => {
   const [selectedHeight, setSelectedHeight] = useState(175);
   const heightOptions = Array.from({ length: 101 }, (_, i) => 100 + i);
   const navigation = useNavigation();
+  const route = useRoute();
+
+  const { gender, age } = route.params; // 👈 received from AgeSelection
+
+  const handleNext = () => {
+    navigation.navigate("WeightSelection", {
+      gender,
+      age,
+      height: selectedHeight,
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -22,11 +33,8 @@ const HeightSelector = () => {
       <Text style={styles.subtitle}>"CM"</Text>
 
       <View style={styles.wheelWrapper}>
-        {/* Selected Indicator */}
         <View style={styles.selectedIndicatorTop} />
         <View style={styles.selectedIndicatorBottom} />
-
-        {/* Height Selector */}
         <View style={styles.wheelContainer}>
           <WheelPicker
             selectedIndex={selectedHeight - 100}
@@ -39,18 +47,18 @@ const HeightSelector = () => {
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={styles.backButton} 
+        <TouchableOpacity
+          style={styles.backButton}
           activeOpacity={0.8}
           onPress={() => navigation.goBack()}
         >
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.nextButton} 
+        <TouchableOpacity
+          style={styles.nextButton}
           activeOpacity={0.8}
-          onPress={() => navigation.navigate("WeightSelection", { height: selectedHeight })}
+          onPress={handleNext}
         >
           <Text style={styles.nextButtonText}>Next</Text>
         </TouchableOpacity>
@@ -102,7 +110,7 @@ const styles = StyleSheet.create({
   },
   selectedIndicatorTop: {
     position: "absolute",
-    top: "40%", // Adjusted for perfect centering
+    top: "40%",
     width: 150,
     height: 2,
     backgroundColor: "#FEC400",
@@ -110,7 +118,7 @@ const styles = StyleSheet.create({
   },
   selectedIndicatorBottom: {
     position: "absolute",
-    top: "58%", // Adjusted for perfect centering
+    top: "58%",
     width: 150,
     height: 2,
     backgroundColor: "#FEC400",

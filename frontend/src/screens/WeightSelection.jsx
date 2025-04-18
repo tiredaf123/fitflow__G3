@@ -7,7 +7,7 @@ import {
   Dimensions,
   FlatList,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const { width } = Dimensions.get("window");
@@ -17,7 +17,10 @@ const WeightSelector = () => {
   const [selectedWeight, setSelectedWeight] = useState(65);
   const weightOptions = Array.from({ length: 81 }, (_, i) => 40 + i);
   const navigation = useNavigation();
+  const route = useRoute();
   const flatListRef = useRef(null);
+
+  const { gender, age, height } = route.params; // 👈 Receive passed data
 
   const handleScroll = (event) => {
     const index = Math.round(event.nativeEvent.contentOffset.x / ITEM_WIDTH);
@@ -26,6 +29,15 @@ const WeightSelector = () => {
 
   const scrollToIndex = (index) => {
     flatListRef.current.scrollToIndex({ animated: true, index });
+  };
+
+  const handleNext = () => {
+    navigation.navigate('GoalSelection', {
+      gender,
+      age,
+      height,
+      weight: selectedWeight,
+    });
   };
 
   return (
@@ -79,7 +91,7 @@ const WeightSelector = () => {
         <TouchableOpacity
           style={styles.nextButton}
           activeOpacity={0.8}
-          onPress={() => navigation.navigate('GoalSelection')}
+          onPress={handleNext}
         >
           <Text style={styles.nextButtonText}>Next</Text>
         </TouchableOpacity>
