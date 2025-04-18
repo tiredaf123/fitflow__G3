@@ -1,6 +1,6 @@
 // controllers/profileController.js
 
-import UserProfile from '../models/Profile.js';
+import UserProfile from '../models/profile.js';
 import WeightEntry from '../models/WeightEntry.js';
 
 // @desc    Get current user's profile
