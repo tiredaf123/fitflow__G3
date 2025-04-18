@@ -28,7 +28,7 @@ import LegWorkout from '../screens/Workout/LegWorkout';
 import AbsWorkout from '../screens/Workout/AbsWorkout';
 import AchievementsScreen from '../screens/HomeScreen/AchievementsScreen';
 import ProfileScreen from '../screens/HomeScreen/ProfileScreen';
-import CalendarScreen from '../screens/HomeScreen/CalendarScreen'; // adjust path if needed
+import CalendarScreen from '../screens/HomeScreen/CalenderScreen.jsx'; // adjust path if needed
 
 import FoodManagerScreen from '../screens/HomeScreen/FoodManagerScreen';
 import WeightGoalScreen from '../screens/HomeScreen/WeightGoalScreen';
@@ -47,7 +47,7 @@ const Stack = createStackNavigator();
 
 const AppNavigator = () => {
   const { isDarkMode } = useTheme();
-
+console.log(isDarkMode);
   const themeStyles = {
     container: {
       flex: 1,
