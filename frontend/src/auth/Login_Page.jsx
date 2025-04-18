@@ -8,11 +8,12 @@ import {
   StyleSheet,
   Dimensions,
   ImageBackground,
-  Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { BASE_URL } from '../config/config'; // Make sure this exists
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
+import { BASE_URL } from '../config/config';
 
 const { width, height } = Dimensions.get('window');
 
@@ -21,48 +22,35 @@ const Login_Page = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
+  const showToast = (type, text1, text2) => {
+    Toast.show({ type, text1, text2 });
+  };
+
   const handleLogin = async () => {
     if (!username || !password) {
-      Alert.alert('Error', 'Please enter both username and password');
+      showToast('error', 'Missing Info', 'Please enter both username and password');
       return;
     }
 
     try {
-      // Admin login check first
-      if (username === 'admin') {
-        const res = await fetch(`${BASE_URL}/admin/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
-        });
+      const res = await fetch(`${BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
 
-        const data = await res.json();
+      const data = await res.json();
 
-        if (res.ok) {
-          navigation.navigate('AdminPanel');
-        } else {
-          Alert.alert('Admin Login Failed', data.message || 'Incorrect credentials');
-        }
+      if (res.ok) {
+        await AsyncStorage.setItem('token', data.token);
+        showToast('success', 'Login Successful', 'Welcome back!');
+        navigation.reset({ index: 0, routes: [{ name: 'HomeScreen' }] });
       } else {
-        // Normal user login
-        const res = await fetch(`${BASE_URL}/manual-users/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-          // navigate to user flow
-          navigation.navigate('IntroPage4', { user: data.user });
-        } else {
-          Alert.alert('Login Failed', data.message || 'Incorrect credentials');
-        }
+        showToast('error', 'Login Failed', data.message || 'Incorrect credentials');
       }
     } catch (err) {
-      console.error(err);
-      Alert.alert('Error', 'Could not connect to the server.');
+      console.error('Login error:', err);
+      showToast('error', 'Network Error', 'Could not connect to the server.');
     }
   };
 

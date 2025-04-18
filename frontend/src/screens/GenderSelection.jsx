@@ -1,37 +1,40 @@
+// GenderSelection.jsx
+
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated, Image
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { useNavigation } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
 
-const GenderSelection = ({ navigation }) => {
+const GenderSelection = () => {
   const [selectedGender, setSelectedGender] = useState(null);
+  const navigation = useNavigation();
   const scaleAnim = new Animated.Value(1);
 
   const handlePress = (gender) => {
     setSelectedGender(gender);
-
-    // Animate selection with a slight bounce
     Animated.sequence([
       Animated.timing(scaleAnim, { toValue: 0.9, duration: 100, useNativeDriver: true }),
       Animated.timing(scaleAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
     ]).start();
   };
 
+  const handleNext = () => {
+    if (selectedGender) {
+      navigation.navigate('AgeSelection', { gender: selectedGender });
+    }
+  };
+
   return (
     <LinearGradient colors={['#1e1e1e', '#1e1e1e']} style={styles.container}>
-      
       <Text style={styles.heading}>Select Your Gender</Text>
 
-      {/* Gender Selection Buttons */}
       <View style={styles.genderContainer}>
         <TouchableOpacity
-          style={[
-            styles.genderBox,
-            selectedGender === 'Male' && styles.selectedGender
-          ]}
+          style={[styles.genderBox, selectedGender === 'Male' && styles.selectedGender]}
           onPress={() => handlePress('Male')}
         >
           <Image 
@@ -44,10 +47,7 @@ const GenderSelection = ({ navigation }) => {
         <Text style={styles.orText}>OR</Text>
 
         <TouchableOpacity
-          style={[
-            styles.genderBox,
-            selectedGender === 'Female' && styles.selectedGender
-          ]}
+          style={[styles.genderBox, selectedGender === 'Female' && styles.selectedGender]}
           onPress={() => handlePress('Female')}
         >
           <Image 
@@ -58,20 +58,17 @@ const GenderSelection = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Info Text */}
       <Text style={styles.infoText}>Your gender is important for calorie calculation.</Text>
 
-      {/* Next Button */}
       <TouchableOpacity
         style={[styles.nextButton, selectedGender ? styles.activeButton : styles.disabledButton]}
         disabled={!selectedGender}
-        onPress={() => navigation.navigate('AgeSelection')}
+        onPress={handleNext}
       >
         <LinearGradient colors={['#FFD700', '#FF9800']} style={styles.buttonGradient}>
           <Text style={styles.nextButtonText}>Next</Text>
         </LinearGradient>
       </TouchableOpacity>
-
     </LinearGradient>
   );
 };
@@ -117,12 +114,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
   },
   genderImage: {
-    width: width * 0.15, // Proper scaling
+    width: width * 0.15,
     height: width * 0.15,
     resizeMode: 'contain',
   },
   selectedImage: {
-    transform: [{ scale: 1.1 }], // Slight zoom effect
+    transform: [{ scale: 1.1 }],
   },
   genderText: {
     fontSize: width * 0.045,

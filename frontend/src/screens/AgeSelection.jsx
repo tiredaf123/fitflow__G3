@@ -7,7 +7,7 @@ import {
   Dimensions,
   FlatList,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const { width } = Dimensions.get("window");
@@ -15,13 +15,23 @@ const ITEM_WIDTH = 70;
 
 const AgeSelection = () => {
   const [selectedAge, setSelectedAge] = useState(25);  // Default Age
-  const ageOptions = Array.from({ length: 83 }, (_, i) => 18 + i);  // Ages from 18 to 100
+  const ageOptions = Array.from({ length: 83 }, (_, i) => 18 + i);  // 18 to 100
   const navigation = useNavigation();
+  const route = useRoute();
+
   const flatListRef = useRef(null);
+  const { gender } = route.params; // 👈 Get gender from previous screen
 
   const handleScroll = (event) => {
     const index = Math.round(event.nativeEvent.contentOffset.x / ITEM_WIDTH);
     setSelectedAge(ageOptions[index]);
+  };
+
+  const handleNext = () => {
+    navigation.navigate('HeightSelector', {
+      gender,
+      age: selectedAge,
+    });
   };
 
   return (
@@ -31,7 +41,6 @@ const AgeSelection = () => {
 
       {/* Age Selector */}
       <View style={styles.wheelWrapper}>
-        {/* Indicator Arrow */}
         <View style={styles.indicator}>
           <Icon name="arrow-drop-down" size={30} color="#FEC400" />
         </View>
@@ -79,7 +88,7 @@ const AgeSelection = () => {
         <TouchableOpacity
           style={styles.nextButton}
           activeOpacity={0.8}
-          onPress={() => navigation.navigate('HeightSelector', { age: selectedAge })}
+          onPress={handleNext}
         >
           <Text style={styles.nextButtonText}>Next</Text>
         </TouchableOpacity>

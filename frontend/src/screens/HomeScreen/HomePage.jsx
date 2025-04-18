@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     marginLeft: 20,
-    marginTop: 30,
+    marginTop: 15,
     color: '#FEC400',
   },
   scrollRow: {
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   cardText: {
-    marginTop: 8,
+    marginTop: 2,
     fontSize: 14,
     fontWeight: 'bold',
     color: '#333',
@@ -259,6 +259,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#FEC400',
+    marginBottom: 100,
 
    
   },
