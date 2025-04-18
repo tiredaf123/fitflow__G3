@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,27 @@ const AbsWorkout = () => {
   const { isDarkMode } = useTheme();
   const styles = getStyles(isDarkMode);
 
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [secondsElapsed, setSecondsElapsed] = useState(0);
+
+  useEffect(() => {
+    let interval;
+    if (isTimerRunning) {
+      interval = setInterval(() => {
+        setSecondsElapsed((prev) => prev + 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerRunning]);
+
+  const formatTime = (secs) => {
+    const mins = Math.floor(secs / 60);
+    const seconds = secs % 60;
+    return `${String(mins).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+
   return (
     <ScrollView style={styles.container}>
       <ImageBackground
@@ -23,9 +44,18 @@ const AbsWorkout = () => {
         <View style={styles.overlay}>
           <Text style={styles.title}>Abs Workout</Text>
           <Text style={styles.subTitle}>6 exercises | 35 mins</Text>
-          <TouchableOpacity style={styles.startButton}>
-            <Text style={styles.startButtonText}>Start Workout</Text>
+          
+
+          <TouchableOpacity
+            style={styles.startButton}
+            onPress={() => setIsTimerRunning((prev) => !prev)}
+          >
+            <Text style={styles.startButtonText}>
+              {isTimerRunning ? 'Pause Timer' : 'Start Workout'}
+            </Text>
           </TouchableOpacity>
+
+          <Text style={styles.timerText}>{formatTime(secondsElapsed)}</Text>
         </View>
       </ImageBackground>
 
@@ -55,7 +85,7 @@ const getStyles = (isDarkMode) =>
       backgroundColor: isDarkMode ? '#1A1A1A' : '#F5F5F5',
     },
     imageBackground: {
-      height: 250,
+      height: 300,
       margin: 20,
       borderRadius: 15,
     },
@@ -87,6 +117,12 @@ const getStyles = (isDarkMode) =>
       fontSize: 18,
       color: '#000',
       fontWeight: 'bold',
+    },
+    timerText: {
+      fontSize: 24,
+      color: '#fff',
+      marginTop: 10,
+      fontWeight: '600',
     },
     exerciseList: {
       marginTop: 20,
