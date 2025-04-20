@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,23 +9,33 @@ import {
 } from 'react-native';
 import { useTheme } from '../../navigation/ThemeProvider';
 
+const EXERCISES = [
+  'Crunches',
+  'Plank',
+  'Mountain Climbers',
+  'Cable Crunches',
+  'Side Plank',
+  'Flutter',
+];
+
 const AbsWorkout = () => {
   const { isDarkMode } = useTheme();
   const styles = getStyles(isDarkMode);
 
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [secondsElapsed, setSecondsElapsed] = useState(0);
+  const intervalRef = useRef(null);
 
   useEffect(() => {
-    let interval;
     if (isTimerRunning) {
-      interval = setInterval(() => {
+      intervalRef.current = setInterval(() => {
         setSecondsElapsed((prev) => prev + 1);
       }, 1000);
     } else {
-      clearInterval(interval);
+      clearInterval(intervalRef.current);
     }
-    return () => clearInterval(interval);
+
+    return () => clearInterval(intervalRef.current);
   }, [isTimerRunning]);
 
   const formatTime = (secs) => {
@@ -34,21 +44,20 @@ const AbsWorkout = () => {
     return `${String(mins).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
+  const handleTimerToggle = () => setIsTimerRunning((prev) => !prev);
+
   return (
     <ScrollView style={styles.container}>
       <ImageBackground
         source={require('../../assets/ExerciseImages/3.png')}
         style={styles.imageBackground}
-        imageStyle={{ borderRadius: 15 }}
+        imageStyle={styles.imageStyle}
       >
         <View style={styles.overlay}>
           <Text style={styles.title}>Abs Workout</Text>
           <Text style={styles.subTitle}>6 exercises | 35 mins</Text>
 
-          <TouchableOpacity
-            style={styles.startButton}
-            onPress={() => setIsTimerRunning((prev) => !prev)}
-          >
+          <TouchableOpacity style={styles.startButton} onPress={handleTimerToggle}>
             <Text style={styles.startButtonText}>
               {isTimerRunning ? 'Pause Timer' : 'Start Workout'}
             </Text>
@@ -59,14 +68,7 @@ const AbsWorkout = () => {
       </ImageBackground>
 
       <View style={styles.exerciseList}>
-        {[
-          'Crunches',
-          'Plank',
-          'Mountain Climbers',
-          'Cable Crunches',
-          'Side Plank',
-          'Flutter',
-        ].map((exercise, index) => (
+        {EXERCISES.map((exercise, index) => (
           <TouchableOpacity key={index} style={styles.exerciseItem}>
             <Text style={styles.exerciseText}>{exercise}</Text>
             <Text style={styles.setsText}>3 sets of 12 reps</Text>
@@ -88,12 +90,16 @@ const getStyles = (isDarkMode) =>
       margin: 20,
       borderRadius: 15,
     },
+    imageStyle: {
+      borderRadius: 15,
+    },
     overlay: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       borderRadius: 15,
+      padding: 20,
     },
     title: {
       fontSize: 28,
