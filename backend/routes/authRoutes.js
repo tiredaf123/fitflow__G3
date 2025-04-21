@@ -1,3 +1,4 @@
+
 import express from 'express';
 import { signup, login, logout, getCurrentUser } from '../controllers/authController.js';
 import protect from '../middleware/authMiddleware.js';

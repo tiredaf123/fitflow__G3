@@ -3,30 +3,33 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-// ✅ Ensure JWT_SECRET is defined
+// JWT_SECRET from environment variables or fallback to default
 const JWT_SECRET = process.env.JWT_SECRET || 'default_jwt_secret';
 
 if (!process.env.JWT_SECRET) {
   console.warn('⚠️ Warning: JWT_SECRET is not defined in .env file. Using fallback default.');
 }
 
-// ✅ Helper to generate token
+// Helper function to generate token
 const generateToken = (id) => {
-  return jwt.sign({ id }, JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ id }, JWT_SECRET, { expiresIn: '7d' }); // Token expires in 7 days
 };
 
-// User Signup
+// User Signup Route
 export const signup = async (req, res) => {
   const { fullName, username, email, password } = req.body;
 
   try {
+    // Check if the username already exists
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.status(400).json({ message: 'Username already exists' });
     }
 
+    // Hash the password before saving
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create the new user
     const user = await User.create({
       fullName,
       username,
@@ -34,7 +37,10 @@ export const signup = async (req, res) => {
       password: hashedPassword,
     });
 
+    // Generate JWT token after successful signup
     const token = generateToken(user._id);
+
+    // Send back the token and user data
     res.status(201).json({ token, user });
   } catch (err) {
     console.error('Signup error:', err);
@@ -42,18 +48,23 @@ export const signup = async (req, res) => {
   }
 };
 
-// User Login
+// User Login Route
 export const login = async (req, res) => {
   const { username, password } = req.body;
 
   try {
+    // Check if the user exists
     const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
+    // Compare entered password with hashed password in the DB
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
 
+    // Generate JWT token for authenticated user
     const token = generateToken(user._id);
+
+    // Send token and user data in the response
     res.status(200).json({ token, user });
   } catch (err) {
     console.error('Login error:', err);
@@ -61,12 +72,14 @@ export const login = async (req, res) => {
   }
 };
 
-// Get Current Authenticated User
+// Get Current Authenticated User Route
 export const getCurrentUser = async (req, res) => {
   try {
+    // Retrieve the user using the user ID attached to the JWT token (via auth middleware)
     const user = await User.findById(req.user.id).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
 
+    // Send user data in the response
     res.status(200).json(user);
   } catch (err) {
     console.error('Get current user error:', err);
@@ -74,7 +87,7 @@ export const getCurrentUser = async (req, res) => {
   }
 };
 
-// Logout (frontend concern for token-based apps)
+// Logout Route (for token-based apps, it's mostly handled on frontend)
 export const logout = async (req, res) => {
   try {
     res.status(200).json({ message: 'Logout successful' });
