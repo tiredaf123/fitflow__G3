@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { useTheme } from '../../navigation/ThemeProvider';
 import { useNavigation } from '@react-navigation/native';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import moment from 'moment';
 
 const CalendarScreen = () => {
   const { isDarkMode } = useTheme();
@@ -13,31 +14,26 @@ const CalendarScreen = () => {
   const [notes, setNotes] = useState('');
   const [allNotes, setAllNotes] = useState({});
   const [userId, setUserId] = useState('');
-  const [token, setToken] = useState('');  // To store token
+  const [token, setToken] = useState('');
+  const [membershipDeadline, setMembershipDeadline] = useState('');
+  const [countdown, setCountdown] = useState(null);
 
-  // Fetch and log the token when the component is mounted
   useEffect(() => {
     const checkToken = async () => {
       const storedToken = await AsyncStorage.getItem('token');
-      console.log('Stored Token:', storedToken); // Check the stored token
-      setToken(storedToken);  // Store token in state
+      setToken(storedToken);
     };
 
-    checkToken(); // Run when component mounts
+    checkToken();
   }, []);
 
-  // Fetch user ID based on token
   useEffect(() => {
     const fetchUserId = async () => {
-      if (!token) return;  // Only proceed if token is available
-
+      if (!token) return;
       try {
         const res = await fetch('http://10.0.2.2:5000/api/auth/me', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
-
         const data = await res.json();
         setUserId(data._id);
       } catch (err) {
@@ -45,66 +41,84 @@ const CalendarScreen = () => {
       }
     };
 
-    fetchUserId(); // Fetch userId when token is set
-  }, [token]); // Re-run when token changes
+    fetchUserId();
+  }, [token]);
 
-  // Fetch all notes when userId changes
   useEffect(() => {
     const fetchNotes = async () => {
-      if (!userId || !token) return;  // Only proceed if userId and token are available
-
+      if (!userId || !token) return;
       try {
         const res = await fetch(`http://10.0.2.2:5000/api/calendar/${userId}`, {
           method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
-    
         const result = await res.json();
-        if (!res.ok) {
-          console.error('❌ Error fetching notes:', result?.message || 'Unknown error');
-          return;
-        }
-    
         if (Array.isArray(result)) {
-          console.log('Fetched Notes:', result); // This should log an array of notes
           const notesObject = result.reduce((acc, note) => {
             acc[note.date] = note.note;
             return acc;
           }, {});
-          setAllNotes(notesObject); // Or however you want to store the notes
-        } else {
-          console.error('❌ Unexpected response format:', result);
+          setAllNotes(notesObject);
         }
       } catch (err) {
-        console.error('❌ Error fetching notes:', err instanceof Error ? err.message : err);
+        console.error('❌ Error fetching notes:', err);
       }
     };
 
-    fetchNotes(); // Trigger fetching notes
-  }, [userId, token]); // Run whenever userId or token changes
+    fetchNotes();
+  }, [userId, token]);
 
-  // Save the note
-  const handleSaveNotes = async () => {
-    if (!selected) return;
-    if (!notes || notes.trim() === '') {
-      console.warn('⚠️ Cannot save an empty note.');
-      return;
-    }
-    if (!token) {
-      console.warn('❌ No token found.');
-      return;
-    }
-
-    const noteData = {
-      date: selected,
-      note: notes,
+  useEffect(() => {
+    const fetchMembershipDeadline = async () => {
+      if (!userId || !token) return;
+      try {
+        const res = await fetch(`http://10.0.2.2:5000/api/profile/membership`, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setMembershipDeadline(data.membershipDeadline);
+      } catch (err) {
+        console.error('❌ Error fetching membership deadline:', err);
+      }
     };
 
-    try {
-      console.log('Sending token:', token);  // Log token to check
+    fetchMembershipDeadline();
+  }, [userId, token]);
 
+  // Live countdown logic in hours, minutes, seconds
+  useEffect(() => {
+    const updateCountdown = () => {
+      if (membershipDeadline) {
+        const now = moment();
+        const deadline = moment(membershipDeadline);
+        const diffInSeconds = deadline.diff(now, 'seconds');
+
+        if (diffInSeconds <= 0) {
+          setCountdown('EXPIRED');
+        } else {
+          const hours = Math.floor(diffInSeconds / 3600);
+          const minutes = Math.floor((diffInSeconds % 3600) / 60);
+          const seconds = diffInSeconds % 60;
+
+          setCountdown(`${hours}h ${minutes}m ${seconds}s`);
+        }
+      }
+    };
+
+    updateCountdown(); // Initial run
+
+    const interval = setInterval(updateCountdown, 1000); // Update every second
+
+    return () => clearInterval(interval); // Cleanup the interval on unmount
+  }, [membershipDeadline]);
+
+  const handleSaveNotes = async () => {
+    if (!selected || !notes.trim() || !token) return;
+
+    const noteData = { date: selected, note: notes };
+
+    try {
       const res = await fetch('http://10.0.2.2:5000/api/calendar', {
         method: 'POST',
         headers: {
@@ -116,23 +130,44 @@ const CalendarScreen = () => {
 
       const result = await res.json();
 
-      if (!res.ok) {
-        console.error('❌ Backend error:', result?.message || 'Unknown error');
-      } else {
-        console.log('✅ Saved successfully:', result);
+      if (res.ok) {
         setAllNotes((prev) => ({ ...prev, [selected]: notes }));
         setNotes('');
-        
-        // Save to AsyncStorage
         const updatedNotes = { ...allNotes, [selected]: notes };
-        await AsyncStorage.setItem('notes', JSON.stringify(updatedNotes)); // Save updated notes to AsyncStorage
+        await AsyncStorage.setItem('notes', JSON.stringify(updatedNotes));
+      } else {
+        console.error('❌ Backend error:', result);
       }
     } catch (err) {
-      console.error('❌ Network/JS error:', err instanceof Error ? err.message : err);
+      console.error('❌ Network error:', err);
     }
   };
 
-  // Prepare the calendar's marked dates
+  const handleDeleteNote = async () => {
+    if (!selected || !token) return;
+
+    try {
+      const res = await fetch(`http://10.0.2.2:5000/api/calendar/${userId}/${selected}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        const updatedNotes = { ...allNotes };
+        delete updatedNotes[selected];
+        setAllNotes(updatedNotes);
+        setNotes('');
+        setSelected('');
+        Alert.alert('Success', 'Note deleted successfully!');
+      } else {
+        console.error('❌ Error deleting note');
+        Alert.alert('Error', 'Failed to delete the note.');
+      }
+    } catch (err) {
+      console.error('❌ Network error:', err);
+    }
+  };
+
   const getMarkedDates = () => {
     const marked = {};
 
@@ -143,12 +178,36 @@ const CalendarScreen = () => {
       };
     });
 
+    if (membershipDeadline) {
+      const deadline = moment(membershipDeadline).format('YYYY-MM-DD');
+      marked[deadline] = {
+        ...marked[deadline],
+        customStyles: {
+          container: {
+            backgroundColor: '#cc0000', // Red background for expiration
+            borderRadius: 50,
+          },
+          text: {
+            color: 'white',
+            fontWeight: 'bold',
+          },
+        },
+      };
+    }
+
     if (selected) {
       marked[selected] = {
         ...marked[selected],
-        selected: true,
-        selectedColor: isDarkMode ? '#00BFFF' : '#FF6B00',
-        selectedTextColor: '#fff',
+        customStyles: {
+          container: {
+            backgroundColor: isDarkMode ? '#00BFFF' : '#FF6B00',
+            borderRadius: 50,
+          },
+          text: {
+            color: 'white',
+            fontWeight: '600',
+          },
+        },
       };
     }
 
@@ -156,20 +215,13 @@ const CalendarScreen = () => {
   };
 
   const theme = {
-    backgroundColor: isDarkMode ? '#1a1a1a' : '#ffffff',
     calendarBackground: isDarkMode ? '#1a1a1a' : '#ffffff',
-    textSectionTitleColor: isDarkMode ? '#ccc' : '#000',
-    selectedDayBackgroundColor: isDarkMode ? '#00BFFF' : '#FF6B00',
-    selectedDayTextColor: '#ffffff',
-    todayTextColor: isDarkMode ? '#00BFFF' : '#FF6B00',
     dayTextColor: isDarkMode ? '#fff' : '#000',
-    textDisabledColor: '#555',
+    selectedDayBackgroundColor: '#4444ff',
+    todayTextColor: isDarkMode ? '#00BFFF' : '#FF6B00',
     arrowColor: isDarkMode ? '#00BFFF' : '#FF6B00',
-    monthTextColor: isDarkMode ? '#fff' : '#000',
+    textSectionTitleColor: isDarkMode ? '#ccc' : '#000',
     dotColor: isDarkMode ? '#00BFFF' : '#FF6B00',
-    textDayFontWeight: '500',
-    textMonthFontWeight: 'bold',
-    textDayHeaderFontWeight: '600',
   };
 
   return (
@@ -185,9 +237,10 @@ const CalendarScreen = () => {
       <Calendar
         onDayPress={(day) => {
           setSelected(day.dateString);
-          setNotes(allNotes[day.dateString] || ''); // Show the notes for the selected date
+          setNotes(allNotes[day.dateString] || '');
         }}
         markedDates={getMarkedDates()}
+        markingType="custom"
         theme={theme}
       />
 
@@ -208,8 +261,19 @@ const CalendarScreen = () => {
           >
             <Text style={{ color: '#fff' }}>Save Note</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleDeleteNote}
+            style={[styles.button, { backgroundColor: 'red', marginTop: 10 }]}
+          >
+            <Text style={{ color: '#fff' }}>Delete Note</Text>
+          </TouchableOpacity>
         </View>
       )}
+
+      <Text style={[styles.membershipText, { color: isDarkMode ? '#ff6b6b' : '#cc0000' }]}>
+        {countdown === 'EXPIRED' ? 'Membership has expired' : `Membership expires in: ${countdown}`}
+      </Text>
     </View>
   );
 };
@@ -242,6 +306,12 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  membershipText: {
+    marginTop: 30,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 

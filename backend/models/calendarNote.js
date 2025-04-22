@@ -1,4 +1,3 @@
-
 import mongoose from 'mongoose';
 
 const CalendarNoteSchema = new mongoose.Schema(
@@ -12,11 +11,10 @@ const CalendarNoteSchema = new mongoose.Schema(
       type: String, // Format: 'YYYY-MM-DD'
       required: true,
       validate: {
-        validator: function(value) {
-          // Regular expression to validate YYYY-MM-DD format
+        validator: function (value) {
           return /^\d{4}-\d{2}-\d{2}$/.test(value);
         },
-        message: props => `${props.value} is not a valid date format! Use 'YYYY-MM-DD'.`,
+        message: (props) => `${props.value} is not a valid date format! Use 'YYYY-MM-DD'.`,
       },
     },
     note: {
@@ -27,7 +25,7 @@ const CalendarNoteSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Adding a compound index to ensure a unique combination of userId and date
+// Ensure each user has one note per day
 CalendarNoteSchema.index({ userId: 1, date: 1 }, { unique: true });
 
 const CalendarNote = mongoose.model('CalendarNote', CalendarNoteSchema);
