@@ -35,6 +35,7 @@ import AdminPanel from '../Admin/AdminPanel';
 import CalenderScreen from '../screens/HomeScreen/CalenderScreen';
 import WeightInScreen from '../screens/HomeScreen/WeightInScreen';
 import WeightGoalScreen from '../screens/HomeScreen/WeightGoalScreen';
+import StreakScreen from '../screens/HomeScreen/SubScreen/StreakScreen';
 // Drawer
 import MainDrawerNavigator from './MainDrawerNavigator';
 import CalendarScreen from '../screens/HomeScreen/CalenderScreen';
@@ -69,10 +70,8 @@ const AppNavigator = () => {
           <Stack.Screen name="HeightSelector" component={HeightSelector} />
           <Stack.Screen name="WeightSelection" component={WeightSelection} />
           <Stack.Screen name="GoalSelection" component={GoalSelection} />
-
           {/* Main Drawer after login */}
           <Stack.Screen name="DashboardScreen" component={MainDrawerNavigator} />
-
           {/* Others not in drawer */}
           <Stack.Screen name="HomeScreen" component={HomePage} />
           <Stack.Screen name="WorkoutScreen" component={WorkoutScreen} />
@@ -98,13 +97,14 @@ const AppNavigator = () => {
           <Stack.Screen name="Terms" component={TermsAndConditionsScreen} />
           <Stack.Screen name="AdminPanel" component={AdminPanel} />
           <Stack.Screen name="Calendar" component={CalendarScreen} />
-            <Stack.Screen name="FoodManager" component={FoodManagerScreen} />
-            <Stack.Screen name="WeightGoal" component={WeightGoalScreen} />
-            <Stack.Screen name="WeightIn" component={WeightInScreen} />
-            <Stack.Screen name="Challenge" component={Challenge} />
-<Stack.Screen name="Progress" component={Progress} />
-<Stack.Screen name="Classes" component={Classes} />
-<Stack.Screen name="Nutrition" component={Nutrition} />
+          <Stack.Screen name="FoodManager" component={FoodManagerScreen} />
+          <Stack.Screen name="WeightGoal" component={WeightGoalScreen} />
+          <Stack.Screen name="WeightIn" component={WeightInScreen} />
+          <Stack.Screen name="Challenge" component={Challenge} />
+          <Stack.Screen name="Progress" component={Progress} />
+          <Stack.Screen name="Classes" component={Classes} />
+          <Stack.Screen name="Nutrition" component={Nutrition} />
+          <Stack.Screen name="Streak" component={StreakScreen} />
 
         </Stack.Navigator>
       </NavigationContainer>

@@ -26,6 +26,25 @@ const Login_Page = () => {
     Toast.show({ type, text1, text2 });
   };
 
+  // ---- START: STREAK TRACKER ----
+  const updateLoginStreak = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const storedDate = await AsyncStorage.getItem('last_login_date');
+    const storedStreak = parseInt(await AsyncStorage.getItem('login_streak')) || 0;
+
+    if (storedDate !== today) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterDateStr = yesterday.toISOString().split('T')[0];
+
+      let newStreak = (storedDate === yesterDateStr) ? storedStreak + 1 : 1;
+
+      await AsyncStorage.setItem('login_streak', newStreak.toString());
+      await AsyncStorage.setItem('last_login_date', today);
+    }
+  };
+  // ---- END: STREAK TRACKER ----
+
   const handleLogin = async () => {
     if (!username || !password) {
       showToast('error', 'Missing Info', 'Please enter both username and password');
@@ -43,6 +62,11 @@ const Login_Page = () => {
 
       if (res.ok) {
         await AsyncStorage.setItem('token', data.token);
+
+        // ---- START: STREAK TRACKER CALL ----
+        await updateLoginStreak();
+        // ---- END: STREAK TRACKER CALL ----
+
         showToast('success', 'Login Successful', 'Welcome back!');
         navigation.reset({ index: 0, routes: [{ name: 'HomeScreen' }] });
       } else {

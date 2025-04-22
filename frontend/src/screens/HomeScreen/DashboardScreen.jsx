@@ -147,7 +147,7 @@ const DashboardScreen = () => {
             screen: 'WeightIn'
           },
           { name: 'bullseye', text: 'My Weight Goal & Plan', screen: 'WeightGoal' },
-          { name: 'cutlery', text: 'Manage my Foods', screen: 'FoodManager', extraMargin: true },
+          { name: 'cutlery', text: 'Manage my Foods', screen: 'FoodManager' },
         ].map((item, index) => (
           <TouchableOpacity
             key={index}
@@ -158,7 +158,7 @@ const DashboardScreen = () => {
               alignItems: 'center',
               padding: 15,
               borderRadius: 12,
-              marginBottom: item.extraMargin ? 120 : 10,
+              marginBottom: 10,
             }, { backgroundColor: themeStyles.cardBackground }]}
           >
             <Icon name={item.name} size={20} color={themeStyles.text.color} />
@@ -173,6 +173,29 @@ const DashboardScreen = () => {
             {item.value && <Text style={{ color: themeStyles.iconColor, fontSize: 16 }}>{item.value}</Text>}
           </TouchableOpacity>
         ))}
+
+        {/* ---- START: STREAK CARD ---- */}
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Streak')}
+          style={[{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: 15,
+            borderRadius: 12,
+            marginBottom: 120,
+          }, { backgroundColor: themeStyles.cardBackground }]}
+        >
+          <Icon name="fire" size={20} color={themeStyles.text.color} />
+          <View style={{ flex: 1, marginLeft: 10 }}>
+            <Text style={[{ fontSize: 16 }, themeStyles.text]}>My Login Streak</Text>
+            <Text style={[{ fontSize: 12, marginTop: 2 }, themeStyles.text]}>
+              Track your daily fitness commitment
+            </Text>
+          </View>
+          <MaterialIcon name="chevron-right" size={24} color={themeStyles.iconColor} />
+        </TouchableOpacity>
+        {/* ---- END: STREAK CARD ---- */}
       </ScrollView>
 
       <BottomTabBar />
