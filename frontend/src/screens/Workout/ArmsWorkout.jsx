@@ -6,8 +6,37 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Modal,
 } from 'react-native';
 import { useTheme } from '../../navigation/ThemeProvider';
+import { WebView } from 'react-native-webview';
+
+const exerciseData = [
+  {
+    name: 'Bicep Curls',
+    video: 'https://www.youtube.com/embed/ykJmrZ5v0Oo', // 🔗 YouTube link
+  },
+  {
+    name: 'Preacher Curl',
+    video: 'https://www.youtube.com/embed/IaZGv2ZC4Q4', // 🔗 YouTube link
+  },
+  {
+    name: 'Overhead Press',
+    video: 'https://www.youtube.com/embed/2yjwXTZQDDI', // 🔗 YouTube link
+  },
+  {
+    name: 'Bench Dip',
+    video: 'https://www.youtube.com/embed/6kALZikXxLc', // 🔗 YouTube link
+  },
+  {
+    name: 'Skull Crusher',
+    video: 'https://www.youtube.com/embed/d_KZxkY_0cM', // 🔗 YouTube link
+  },
+  {
+    name: 'Triceps Pushdown',
+    video: 'https://www.youtube.com/embed/2-LAMcpzODU', // 🔗 YouTube link
+  },
+];
 
 const ArmsWorkout = () => {
   const { isDarkMode } = useTheme();
@@ -15,6 +44,7 @@ const ArmsWorkout = () => {
 
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [secondsElapsed, setSecondsElapsed] = useState(0);
+  const [videoUrl, setVideoUrl] = useState(null);
 
   useEffect(() => {
     let interval;
@@ -59,20 +89,36 @@ const ArmsWorkout = () => {
       </ImageBackground>
 
       <View style={styles.exerciseList}>
-        {[
-          'Bicep Curls',
-          'Preacher Curl',
-          'Overhead Press',
-          'Bench Dip',
-          'Skull Crusher',
-          'Triceps Pushdown',
-        ].map((exercise, index) => (
-          <TouchableOpacity key={index} style={styles.exerciseItem}>
-            <Text style={styles.exerciseText}>{exercise}</Text>
-            <Text style={styles.setsText}>3 sets of 12 reps</Text>
-          </TouchableOpacity>
+        {exerciseData.map((exercise, index) => (
+          <View key={index} style={styles.exerciseItem}>
+            <View>
+              <Text style={styles.exerciseText}>{exercise.name}</Text>
+              <Text style={styles.setsText}>3 sets of 12 reps</Text>
+            </View>
+            <TouchableOpacity onPress={() => setVideoUrl(exercise.video)}>
+              <Text style={styles.watchVideo}>▶</Text>
+            </TouchableOpacity>
+          </View>
         ))}
       </View>
+
+      <Modal visible={!!videoUrl} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity
+              onPress={() => setVideoUrl(null)}
+              style={styles.closeButton}
+            >
+              <Text style={styles.closeText}>Close</Text>
+            </TouchableOpacity>
+            <WebView
+              source={{ uri: videoUrl }}
+              style={{ flex: 1 }}
+              allowsFullscreenVideo
+            />
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -94,6 +140,7 @@ const getStyles = (isDarkMode) =>
       alignItems: 'center',
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       borderRadius: 15,
+      padding: 20,
     },
     title: {
       fontSize: 28,
@@ -143,6 +190,32 @@ const getStyles = (isDarkMode) =>
     setsText: {
       color: '#FFCC00',
       fontSize: 14,
+    },
+    watchVideo: {
+      color: '#FFCC00',
+      fontWeight: 'bold',
+    },
+    modalContainer: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.9)',
+      justifyContent: 'center',
+      padding: 20,
+    },
+    modalContent: {
+      flex: 1,
+      backgroundColor: '#000',
+      borderRadius: 10,
+      overflow: 'hidden',
+    },
+    closeButton: {
+      padding: 10,
+      backgroundColor: '#FFCC00',
+      alignItems: 'center',
+    },
+    closeText: {
+      color: '#000',
+      fontWeight: 'bold',
+      fontSize: 16,
     },
   });
 

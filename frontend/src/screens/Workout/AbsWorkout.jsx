@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,16 +6,36 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Modal,
 } from 'react-native';
 import { useTheme } from '../../navigation/ThemeProvider';
+import { WebView } from 'react-native-webview';
 
-const EXERCISES = [
-  'Crunches',
-  'Plank',
-  'Mountain Climbers',
-  'Cable Crunches',
-  'Side Plank',
-  'Flutter',
+const exerciseData = [
+  {
+    name: 'Crunches',
+    video: 'https://www.youtube.com/embed/l4kQd9eWclE', // YouTube link
+  },
+  {
+    name: 'Plank',
+    video: 'https://www.youtube.com/embed/ASdvN_XEl_c', // YouTube link
+  },
+  {
+    name: 'Mountain Climbers',
+    video: 'https://www.youtube.com/embed/cnyTQDSE884', // YouTube link
+  },
+  {
+    name: 'Cable Crunches',
+    video: 'https://www.youtube.com/embed/k9Hd9ogZqKM', // YouTube link
+  },
+  {
+    name: 'Side Plank',
+    video: 'https://www.youtube.com/embed/K2VljzCC16g', // YouTube link
+  },
+  {
+    name: 'Flutter',
+    video: 'https://www.youtube.com/embed/K1VgfT4YjWY', // YouTube link
+  },
 ];
 
 const AbsWorkout = () => {
@@ -24,18 +44,18 @@ const AbsWorkout = () => {
 
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [secondsElapsed, setSecondsElapsed] = useState(0);
-  const intervalRef = useRef(null);
+  const [videoUrl, setVideoUrl] = useState(null);
 
   useEffect(() => {
+    let interval;
     if (isTimerRunning) {
-      intervalRef.current = setInterval(() => {
+      interval = setInterval(() => {
         setSecondsElapsed((prev) => prev + 1);
       }, 1000);
     } else {
-      clearInterval(intervalRef.current);
+      clearInterval(interval);
     }
-
-    return () => clearInterval(intervalRef.current);
+    return () => clearInterval(interval);
   }, [isTimerRunning]);
 
   const formatTime = (secs) => {
@@ -44,20 +64,21 @@ const AbsWorkout = () => {
     return `${String(mins).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
-  const handleTimerToggle = () => setIsTimerRunning((prev) => !prev);
-
   return (
     <ScrollView style={styles.container}>
       <ImageBackground
         source={require('../../assets/ExerciseImages/3.png')}
         style={styles.imageBackground}
-        imageStyle={styles.imageStyle}
+        imageStyle={{ borderRadius: 15 }}
       >
         <View style={styles.overlay}>
           <Text style={styles.title}>Abs Workout</Text>
           <Text style={styles.subTitle}>6 exercises | 35 mins</Text>
 
-          <TouchableOpacity style={styles.startButton} onPress={handleTimerToggle}>
+          <TouchableOpacity
+            style={styles.startButton}
+            onPress={() => setIsTimerRunning((prev) => !prev)}
+          >
             <Text style={styles.startButtonText}>
               {isTimerRunning ? 'Pause Timer' : 'Start Workout'}
             </Text>
@@ -68,13 +89,36 @@ const AbsWorkout = () => {
       </ImageBackground>
 
       <View style={styles.exerciseList}>
-        {EXERCISES.map((exercise, index) => (
-          <TouchableOpacity key={index} style={styles.exerciseItem}>
-            <Text style={styles.exerciseText}>{exercise}</Text>
-            <Text style={styles.setsText}>3 sets of 12 reps</Text>
-          </TouchableOpacity>
+        {exerciseData.map((exercise, index) => (
+          <View key={index} style={styles.exerciseItem}>
+            <View>
+              <Text style={styles.exerciseText}>{exercise.name}</Text>
+              <Text style={styles.setsText}>3 sets of 12 reps</Text>
+            </View>
+            <TouchableOpacity onPress={() => setVideoUrl(exercise.video)}>
+              <Text style={styles.videoLink}>▶</Text>
+            </TouchableOpacity>
+          </View>
         ))}
       </View>
+
+      <Modal visible={!!videoUrl} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity
+              onPress={() => setVideoUrl(null)}
+              style={styles.closeButton}
+            >
+              <Text style={styles.closeText}>Close</Text>
+            </TouchableOpacity>
+            <WebView
+              style={{ flex: 1, borderRadius: 10 }}
+              source={{ uri: videoUrl }}
+              allowsFullscreenVideo
+            />
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -90,16 +134,12 @@ const getStyles = (isDarkMode) =>
       margin: 20,
       borderRadius: 15,
     },
-    imageStyle: {
-      borderRadius: 15,
-    },
     overlay: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       borderRadius: 15,
-      padding: 20,
     },
     title: {
       fontSize: 28,
@@ -149,6 +189,33 @@ const getStyles = (isDarkMode) =>
     setsText: {
       color: '#FFCC00',
       fontSize: 14,
+    },
+    videoLink: {
+      color: '#FFCC00',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    modalContainer: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.9)',
+      justifyContent: 'center',
+      padding: 20,
+    },
+    modalContent: {
+      flex: 1,
+      backgroundColor: '#000',
+      borderRadius: 10,
+      overflow: 'hidden',
+    },
+    closeButton: {
+      padding: 10,
+      backgroundColor: '#FFCC00',
+      alignItems: 'center',
+    },
+    closeText: {
+      color: '#000',
+      fontWeight: 'bold',
+      fontSize: 16,
     },
   });
 
