@@ -2,12 +2,11 @@ import Trainer from '../models/Trainer.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-
 // POST /api/trainers
 export const createTrainer = async (req, res) => {
   try {
-    console.log('req.body:', req.body); // ADD THIS LINE
-    console.log('req.file:', req.file); // ADD THIS LINE
+    console.log('req.body:', req.body);
+    console.log('req.file:', req.file);
     const { username, password, bio, specialties } = req.body;
 
     if (!username || !password) {
@@ -20,8 +19,7 @@ export const createTrainer = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    // Construct the full image URL
-    const imageUrl = req.file ? `${process.env.SERVER_URL}/uploads/profile/${req.file.filename}` : '';
+    const imageUrl = req.file ? `/api/uploads/profile/${req.file.filename}` : '';
 
     const newTrainer = new Trainer({
       username,
@@ -38,6 +36,7 @@ export const createTrainer = async (req, res) => {
     res.status(500).json({ message: 'Failed to create trainer', error: err.message });
   }
 };
+
 // POST /api/trainers/login
 export const loginTrainer = async (req, res) => {
   const { username, password } = req.body;

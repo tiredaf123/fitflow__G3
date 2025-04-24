@@ -8,6 +8,9 @@ import {
   StyleSheet,
   Dimensions,
   ImageBackground,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
@@ -63,52 +66,61 @@ const Login_Page = () => {
 
   return (
     <ImageBackground source={require('../assets/ExerciseImages/9.png')} style={styles.backgroundImage}>
-      <LinearGradient colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.8)']} style={styles.container}>
-        <Text style={styles.title}>Access Your{"\n"}Fitness World</Text>
+      <LinearGradient colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.8)']} style={styles.overlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+            <View style={styles.container}>
+              <Text style={styles.title}>Access Your{"\n"}Fitness World</Text>
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Username"
-            placeholderTextColor="#444"
-            onChangeText={setUsername}
-            value={username}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor="#444"
-            secureTextEntry
-            onChangeText={setPassword}
-            value={password}
-          />
-        </View>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Username"
+                  placeholderTextColor="#444"
+                  onChangeText={setUsername}
+                  value={username}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  placeholderTextColor="#444"
+                  secureTextEntry
+                  onChangeText={setPassword}
+                  value={password}
+                />
+              </View>
 
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>Login</Text>
-        </TouchableOpacity>
+              <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+                <Text style={styles.loginButtonText}>Login</Text>
+              </TouchableOpacity>
 
-        <TouchableOpacity style={styles.trainerLoginTopRight} onPress={() => navigation.navigate('Trainer_LoginPage')}>
-          <Text style={styles.trainerLoginTopRightText}>Trainer Login</Text>
-        </TouchableOpacity>
+              <Text style={styles.orText}>or sign in with</Text>
+              <View style={styles.socialContainer}>
+                <TouchableOpacity style={styles.socialButton}>
+                  <Image source={require('../assets/Images/google.png')} style={styles.socialIcon} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.socialButton}>
+                  <Image source={require('../assets/Images/apple.png')} style={styles.socialIcon} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.socialButton}>
+                  <Image source={require('../assets/Images/twitter.png')} style={styles.socialIcon} />
+                </TouchableOpacity>
+              </View>
 
-        <Text style={styles.orText}>or sign in with</Text>
-        <View style={styles.socialContainer}>
-          <TouchableOpacity style={styles.socialButton}>
-            <Image source={require('../assets/Images/google.png')} style={styles.socialIcon} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.socialButton}>
-            <Image source={require('../assets/Images/apple.png')} style={styles.socialIcon} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.socialButton}>
-            <Image source={require('../assets/Images/twitter.png')} style={styles.socialIcon} />
-          </TouchableOpacity>
-        </View>
+              <Text style={styles.signupText}>Don't have an account?</Text>
+              <TouchableOpacity style={styles.signupButton} onPress={() => navigation.navigate('SignUp_Page')}>
+                <Text style={styles.signupButtonText}>SIGN UP</Text>
+              </TouchableOpacity>
 
-        <Text style={styles.signupText}>Don't have an account?</Text>
-        <TouchableOpacity style={styles.signupButton} onPress={() => navigation.navigate('SignUp_Page')}>
-          <Text style={styles.signupButtonText}>SIGN UP</Text>
-        </TouchableOpacity>
+              {/* NEW Trainer Login Button */}
+              <TouchableOpacity
+                style={styles.trainerLoginButton}
+                onPress={() => navigation.navigate('Trainer_LoginPage')}>
+                <Text style={styles.trainerLoginText}>LOGIN AS TRAINER</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </LinearGradient>
     </ImageBackground>
   );
@@ -116,7 +128,11 @@ const Login_Page = () => {
 
 const styles = StyleSheet.create({
   backgroundImage: { flex: 1, width: '100%', height: '100%' },
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: width * 0.08 },
+  overlay: {
+    flex: 1,
+    paddingHorizontal: width * 0.08,
+  },
+  container: { alignItems: 'center', paddingBottom: 40 },
   title: {
     fontSize: width * 0.075,
     fontWeight: 'bold',
@@ -125,6 +141,7 @@ const styles = StyleSheet.create({
     marginBottom: height * 0.04,
     textTransform: 'uppercase',
     letterSpacing: 1,
+    marginTop: 100,
   },
   inputContainer: { width: '100%', alignItems: 'center' },
   input: {
@@ -158,15 +175,27 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFF',
   },
-  socialContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: height * 0.02 },
+  socialContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: height * 0.02,
+  },
   socialButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
     padding: 10,
     borderRadius: 100,
     marginHorizontal: width * 0.02,
   },
-  socialIcon: { width: width * 0.12, height: width * 0.12, borderRadius: 100 },
-  signupText: { marginTop: height * 0.03, fontSize: width * 0.045, color: '#FFF' },
+  socialIcon: {
+    width: width * 0.12,
+    height: width * 0.12,
+    borderRadius: 100,
+  },
+  signupText: {
+    marginTop: height * 0.03,
+    fontSize: width * 0.045,
+    color: '#FFF',
+  },
   signupButton: {
     backgroundColor: '#ffcc00',
     paddingVertical: height * 0.015,
@@ -174,20 +203,22 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginTop: height * 0.015,
   },
-  signupButtonText: { fontSize: width * 0.05, fontWeight: 'bold', color: '#000' },
-  trainerLoginTopRight: {
-    position: 'absolute',
-    top: 40,
-    right: 30,
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    backgroundColor: '#fff',
-    borderRadius: 20,
-  },
-  trainerLoginTopRightText: {
-    color: '#000',
+  signupButtonText: {
+    fontSize: width * 0.05,
     fontWeight: 'bold',
-    fontSize: 16,
+    color: '#000',
+  },
+  trainerLoginButton: {
+    backgroundColor: '#FFF',
+    paddingVertical: height * 0.015,
+    paddingHorizontal: width * 0.3,
+    borderRadius: 25,
+    marginTop: height * 0.015,
+  },
+  trainerLoginText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000',
   },
 });
 
