@@ -43,8 +43,15 @@ const Login_Page = () => {
 
       if (res.ok) {
         await AsyncStorage.setItem('token', data.token);
+        await AsyncStorage.setItem('isAdmin', data.isAdmin ? 'true' : 'false');
+
         showToast('success', 'Login Successful', 'Welcome back!');
-        navigation.reset({ index: 0, routes: [{ name: 'HomeScreen' }] });
+
+        if (data.isAdmin) {
+          navigation.reset({ index: 0, routes: [{ name: 'AdminPanel' }] });
+        } else {
+          navigation.reset({ index: 0, routes: [{ name: 'HomeScreen' }] });
+        }
       } else {
         showToast('error', 'Login Failed', data.message || 'Incorrect credentials');
       }
@@ -79,6 +86,10 @@ const Login_Page = () => {
 
         <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
           <Text style={styles.loginButtonText}>Login</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.trainerLoginTopRight} onPress={() => navigation.navigate('Trainer_LoginPage')}>
+          <Text style={styles.trainerLoginTopRightText}>Trainer Login</Text>
         </TouchableOpacity>
 
         <Text style={styles.orText}>or sign in with</Text>
@@ -164,6 +175,20 @@ const styles = StyleSheet.create({
     marginTop: height * 0.015,
   },
   signupButtonText: { fontSize: width * 0.05, fontWeight: 'bold', color: '#000' },
+  trainerLoginTopRight: {
+    position: 'absolute',
+    top: 40,
+    right: 30,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+  },
+  trainerLoginTopRightText: {
+    color: '#000',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });
 
 export default Login_Page;

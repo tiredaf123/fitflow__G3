@@ -1,15 +1,53 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+} from 'react-native';
 import { DrawerContentScrollView } from '@react-navigation/drawer';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import { useTheme } from '../navigation/ThemeProvider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BASE_URL } from '../config/config';
 
 const CustomDrawer = (props) => {
   const { isDarkMode } = useTheme();
   const textColor = isDarkMode ? '#fff' : '#000';
   const backgroundColor = isDarkMode ? '#1a1a1a' : '#fff';
+
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [photoURL, setPhotoURL] = useState('');
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        if (!token) return;
+
+        const res = await fetch(`${BASE_URL}/profile/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          setFullName(data?.fullName || data?.username || '');
+          setEmail(data?.email || '');
+          setPhotoURL(data?.photoURL || '');
+        }
+      } catch (err) {
+        console.error('Failed to load drawer user data:', err);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   const MenuItem = ({ iconName, label, screen, IconComponent = Ionicons }) => (
     <TouchableOpacity
@@ -23,27 +61,66 @@ const CustomDrawer = (props) => {
   );
 
   return (
-    <DrawerContentScrollView contentContainerStyle={{ flex: 1, backgroundColor, paddingHorizontal: 15, paddingTop: 20 }}>
+    <DrawerContentScrollView
+      contentContainerStyle={{
+        flex: 1,
+        backgroundColor,
+        paddingHorizontal: 15,
+        paddingTop: 20,
+      }}
+    >
       {/* Profile Section */}
       <View style={styles.profile}>
-        <Image source={{ uri: 'https://via.placeholder.com/60' }} style={styles.avatar} />
-        <Text style={[styles.name, { color: textColor }]}>Michael Smith</Text>
-        <Text style={[styles.email, { color: textColor }]}>michaelsmith@gmail.com</Text>
+        <Image
+          source={
+            photoURL
+              ? { uri: photoURL }
+              : require('../assets/Images/profile.png')
+          }
+          style={styles.avatar}
+        />
+        <Text style={[styles.name, { color: textColor }]}>
+          {fullName || 'User'}
+        </Text>
+        <Text style={[styles.email, { color: textColor }]}>
+          {email || 'Loading...'}
+        </Text>
       </View>
 
       {/* Section: Fitness and Activities */}
-      <Text style={[styles.sectionTitle, { color: textColor }]}>Fitness and Activities</Text>
-      <MenuItem iconName="bullseye" label="Challenge" screen="Challenge" IconComponent={MaterialCommunityIcons} />
-      <MenuItem iconName="chart-line" label="Progress" screen="Progress" IconComponent={MaterialCommunityIcons} />
-      <MenuItem iconName="account-group" label="Classes" screen="Classes" IconComponent={MaterialCommunityIcons} />
+      <Text style={[styles.sectionTitle, { color: textColor }]}>
+        Fitness and Activities
+      </Text>
+      <MenuItem
+        iconName="bullseye"
+        label="Challenge"
+        screen="Challenge"
+        IconComponent={MaterialCommunityIcons}
+      />
+      <MenuItem
+        iconName="chart-line"
+        label="Progress"
+        screen="Progress"
+        IconComponent={MaterialCommunityIcons}
+      />
 
       {/* Section: Health and Nutrition */}
-      <Text style={[styles.sectionTitle, { color: textColor }]}>Health and Nutrition</Text>
-      <MenuItem iconName="food-apple" label="Nutrition" screen="Nutrition" IconComponent={MaterialCommunityIcons} />
+      <Text style={[styles.sectionTitle, { color: textColor }]}>
+        Health and Nutrition
+      </Text>
+      <MenuItem
+        iconName="food-apple"
+        label="Nutrition"
+        screen="Nutrition"
+        IconComponent={MaterialCommunityIcons}
+      />
 
       {/* Log Out */}
       <View style={styles.logoutSection}>
-        <TouchableOpacity onPress={() => props.navigation.navigate('Login_Page')} style={styles.menuItem}>
+        <TouchableOpacity
+          onPress={() => props.navigation.navigate('Login_Page')}
+          style={styles.menuItem}
+        >
           <Ionicons name="log-out-outline" size={20} color={textColor} />
           <Text style={[styles.menuText, { color: textColor }]}>Log out</Text>
         </TouchableOpacity>
