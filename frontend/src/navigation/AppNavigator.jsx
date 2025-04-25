@@ -23,6 +23,7 @@ import BackWorkout from '../screens/Workout/BackWorkout';
 import LegWorkout from '../screens/Workout/LegWorkout';
 import AbsWorkout from '../screens/Workout/AbsWorkout';
 import AchievementsScreen from '../screens/HomeScreen/AchievementsScreen';
+
 import ProfileScreen from '../screens/HomeScreen/ProfileScreen';
 import PersonalScreen from '../screens/HomeScreen/SubScreen/PersonalScreen';
 import GeneralScreen from '../screens/HomeScreen/SubScreen/GeneralScreen';
@@ -43,6 +44,12 @@ import Challenge from '../components/SideBar/Challenge';
 import Progress from '../components/SideBar/Progress';
 import Classes from '../components/SideBar/Classes';
 import Nutrition from '../components/SideBar/Nutrition';
+import MessageClient from '../screens/HomeScreen/Trainer/MessageClient';
+import AddWorkout from '../screens/HomeScreen/Trainer/AddWorkout';
+import Notification from '../screens/HomeScreen/Trainer/NotificationScreen';
+
+import TrainerDashboard from '../screens/HomeScreen/Trainer/TrainerDashboard'; 
+
 
 const Stack = createStackNavigator();
 
@@ -105,7 +112,10 @@ const AppNavigator = () => {
 <Stack.Screen name="Progress" component={Progress} />
 <Stack.Screen name="Classes" component={Classes} />
 <Stack.Screen name="Nutrition" component={Nutrition} />
-
+<Stack.Screen name="TrainerDashboard" component={TrainerDashboard} />
+        <Stack.Screen name="MessageClient" component={MessageClient} />
+        <Stack.Screen name="AddWorkout" component={AddWorkout} />
+        <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </View>
