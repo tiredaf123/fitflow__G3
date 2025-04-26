@@ -38,6 +38,7 @@
     "react-native-svg": "^15.11.2",
     "react-native-toast-message": "^2.1.5",
     "react-native-vector-icons": "^10.2.0",
+    "react-native-webview": "^13.13.5",
     "react-native-wheely": "^0.6.0"
   },
   "devDependencies": {
