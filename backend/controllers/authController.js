@@ -1,5 +1,3 @@
-// controllers/authController.js
-
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
@@ -50,59 +48,37 @@ export const signup = async (req, res) => {
   }
 };
 
-// User Login Route
+// User Login Route (Modified for testing 3-day streak)
 export const login = async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    // Find user
     const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Verify password
-    if (!(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
 
-    // Handle login streak
+    // 🔧 FOR TESTING: Force 3-day login streak
     const today = new Date();
-    const last = user.lastLoginDate;
-    let streak = user.loginStreak || 1;
-
-    if (last) {
-      const diffMs = today - new Date(last);
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      if (diffDays === 1) {
-        streak += 1;
-      } else if (diffDays > 1) {
-        streak = 1;
-      } // if diffDays===0, same-day login, keep streak
-    } else {
-      streak = 1;
-    }
-
-    // Update user streak info
     user.lastLoginDate = today;
-    user.loginStreak = streak;
+    user.loginStreak = 3;
     await user.save();
 
-    // Award 3-day streak achievement
-    if (streak === 3) {
-      const exists = await Achievement.findOne({
+    // 💥 Always give 3-day login streak achievement
+    const exists = await Achievement.findOne({
+      userId: user._id,
+      title: '3-Day Login Streak!',
+    });
+    if (!exists) {
+      await Achievement.create({
         userId: user._id,
         title: '3-Day Login Streak!',
+        description: 'Logged in 3 days in a row. Keep it going! 🔥',
+        date: today,
       });
-      if (!exists) {
-        await Achievement.create({
-          userId: user._id,
-          title: '3-Day Login Streak!',
-          description: 'Logged in 3 days in a row. Keep it going! 🔥',
-          date: new Date(),
-        });
-      }
     }
 
-    // Generate token & respond
     const token = generateToken(user._id);
     res.status(200).json({ token, user });
   } catch (err) {

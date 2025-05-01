@@ -13,7 +13,11 @@ const userSchema = new mongoose.Schema({
   },
   photoURL: String,
   isAdmin: { type: Boolean, default: false },
-  membershipDeadline: { type: Date, default: null },  // 🆕 This line added
+  membershipDeadline: { type: Date, default: null },
+
+  // ✅ For login streak tracking
+  lastLoginDate: { type: Date },
+  loginStreak: { type: Number, default: 0 },
 }, { timestamps: true });
 
 export default mongoose.model('User', userSchema);
