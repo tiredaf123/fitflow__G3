@@ -53,8 +53,36 @@ export const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
 
+    // ✅ Streak calculation logic
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterDateStr = yesterday.toISOString().split('T')[0];
+
+    if (user.lastLoginDate !== today) {
+      if (user.lastLoginDate === yesterDateStr) {
+        user.loginStreak += 1;
+      } else {
+        user.loginStreak = 1;
+      }
+      user.lastLoginDate = today;
+      await user.save();
+    }
+
     const token = generateToken(user._id);
-    res.status(200).json({ token, user });
+
+    // ✅ Include streak info in response
+    res.status(200).json({
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        fullName: user.fullName,
+        loginStreak: user.loginStreak,
+        lastLoginDate: user.lastLoginDate,
+        // Include more fields if needed
+      }
+    });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ message: 'Login failed', error: err.message });
