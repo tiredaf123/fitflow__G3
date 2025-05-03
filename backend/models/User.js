@@ -13,6 +13,17 @@ const userSchema = new mongoose.Schema({
   },
   photoURL: String,
   isAdmin: { type: Boolean, default: false },
+
+  // ✅ Add these for login streak tracking
+  lastLoginDate: {
+    type: String, // Format: 'YYYY-MM-DD'
+    default: null,
+  },
+  loginStreak: {
+    type: Number,
+    default: 0,
+  },
+
 }, { timestamps: true });
 
 export default mongoose.model('User', userSchema);
