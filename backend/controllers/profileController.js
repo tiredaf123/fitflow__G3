@@ -1,11 +1,11 @@
 // controllers/profileController.js
-
+import User from '../models/User.js';
 import UserProfile from '../models/profile.js';
 import WeightEntry from '../models/WeightEntry.js';
+import { cloudinary } from '../utils/cloudinary.js';
+import streamifier from 'streamifier';
 
-// @desc    Get current user's profile
-// @route   GET /api/profile/me
-// @access  Private
+// ✅ Get current user's profile
 export const getMe = async (req, res) => {
   try {
     const profile = await UserProfile.findOne({ userId: req.user._id });
@@ -33,9 +33,7 @@ export const getMe = async (req, res) => {
   }
 };
 
-// @desc    Save or update profile info (onboarding)
-// @route   POST /api/profile/save
-// @access  Private
+// ✅ Save or update profile info
 export const saveProfileData = async (req, res) => {
   const { gender, age, height, weight, goal } = req.body;
 
@@ -67,9 +65,7 @@ export const saveProfileData = async (req, res) => {
   }
 };
 
-// @desc    Update profile directly
-// @route   PUT /api/profile/update
-// @access  Private
+// ✅ Update profile directly
 export const updateProfile = async (req, res) => {
   const { gender, age, height, weight, goal } = req.body;
 
@@ -87,9 +83,7 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-// @desc    Save a new weight entry
-// @route   POST /api/profile/weight
-// @access  Private
+// ✅ Save a new weight entry
 export const saveWeight = async (req, res) => {
   const { weight, date } = req.body;
 
@@ -109,24 +103,59 @@ export const saveWeight = async (req, res) => {
   }
 };
 
-// @desc    Get current weight and weight history
-// @route   GET /api/profile/weight
-// @access  Private
+// ✅ Get current weight and weight history
 export const getWeightData = async (req, res) => {
   try {
     const entries = await WeightEntry.find({ userId: req.user._id }).sort({ date: -1 });
 
     const currentWeight = entries.length > 0 ? {
       weight: entries[0].weight,
-      date: entries[0].date
+      date: entries[0].date,
     } : null;
 
-    res.status(200).json({
-      currentWeight,
-      history: entries
-    });
+    res.status(200).json({ currentWeight, history: entries });
   } catch (err) {
     console.error('GET WEIGHT ERROR:', err);
     res.status(500).json({ message: 'Failed to fetch weight history', error: err.message });
+  }
+};
+
+// ✅ Upload profile photo using Cloudinary
+export const uploadProfilePhoto = async (req, res) => {
+  if (!req.file || !req.file.buffer) {
+    return res.status(400).json({ message: 'No image uploaded' });
+  }
+
+  try {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'fitflow-profile-images',
+        resource_type: 'image',
+        transformation: [{ width: 400, height: 400, crop: 'limit' }],
+      },
+      async (error, result) => {
+        if (error) {
+          console.error('Cloudinary upload error:', error);
+          return res.status(500).json({ message: 'Cloudinary upload failed' });
+        }
+
+        const user = await User.findByIdAndUpdate(
+          req.user._id,
+          { photoURL: result.secure_url },
+          { new: true }
+        );
+
+        if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({ photoURL: result.secure_url });
+      }
+    );
+
+    streamifier.createReadStream(req.file.buffer).pipe(stream);
+  } catch (err) {
+    console.error('UPLOAD PROFILE ERROR:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };

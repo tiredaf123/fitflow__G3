@@ -13,7 +13,9 @@ const protect = async (req, res, next) => {
     try {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, JWT_SECRET);
-      req.user = await User.findById(decoded.id).select('-password');
+
+      // Fix: Use decoded.userId instead of decoded.id
+      req.user = await User.findById(decoded.userId).select('-password');
       next();
     } catch (err) {
       console.error('TOKEN ERROR:', err);
