@@ -1,5 +1,5 @@
 // screens/TrainerDashboard.js
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,32 +7,75 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 const { width } = Dimensions.get('window');
+
+// ✅ Update base URL for Android emulator
+const BASE_URL = 'http://10.0.2.2:5000';
 
 const TrainerDashboard = () => {
   const navigation = useNavigation();
 
-  const [trainerName] = useState('Alex Strong');
-  const [clients] = useState([
-    { name: 'John Doe', status: 'In Session' },
-    { name: 'Jane Smith', status: 'Scheduled' },
-  ]);
-  const [schedule] = useState([
-    { time: '10:00 AM', client: 'John Doe' },
-    { time: '1:00 PM', client: 'Jane Smith' },
-  ]);
-  const [workouts] = useState([
-    { title: 'Push Day Routine' },
-    { title: 'Cardio Blast' },
-  ]);
+  const [trainerName] = useState('Alex Strong'); // Static for now
+  const [clients, setClients] = useState([]);
+  const [workouts, setWorkouts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedClientId, setSelectedClientId] = useState(null);
+
+  useEffect(() => {
+    const fetchTrainerData = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        const headers = { Authorization: `Bearer ${token}` };
+
+        const clientsRes = await axios.get(`${BASE_URL}/api/profile/clients`, { headers });
+        setClients(clientsRes.data);
+
+        if (clientsRes.data.length > 0) {
+          setSelectedClientId(clientsRes.data[0]._id);
+          const workoutRes = await axios.get(`${BASE_URL}/api/workouts/${clientsRes.data[0]._id}`, { headers });
+          setWorkouts(workoutRes.data);
+        }
+
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching trainer data:', error.message);
+        setLoading(false);
+      }
+    };
+
+    fetchTrainerData();
+  }, []);
+
+  const handleClientPress = async (clientId) => {
+    setSelectedClientId(clientId);
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+      const res = await axios.get(`${BASE_URL}/api/workouts/${clientId}`, { headers });
+      setWorkouts(res.data);
+    } catch (err) {
+      console.error('Failed to fetch workouts for client:', err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#4CAF50" />
+        <Text>Loading Dashboard...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Header with Notifications */}
       <View style={styles.headerRow}>
         <Text style={styles.header}>Welcome, {trainerName} 👋</Text>
         <TouchableOpacity
@@ -40,51 +83,44 @@ const TrainerDashboard = () => {
           style={styles.bellButton}
         >
           <Icon name="notifications" size={26} color="#333" />
-          {/* you can add a badge count here if needed */}
         </TouchableOpacity>
       </View>
 
-      {/* Schedule Card */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>🗓️ Today's Schedule</Text>
-        {schedule.map((item, index) => (
-          <View key={index} style={styles.scheduleItem}>
-            <Text style={styles.time}>{item.time}</Text>
-            <Text style={styles.client}>with {item.client}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Clients Card */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>💼 Your Clients</Text>
         {clients.map((client, index) => (
-          <TouchableOpacity key={index} style={styles.clientItem}>
-            <Text style={styles.clientName}>{client.name}</Text>
-            <Text style={styles.clientStatus}>{client.status}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Workout Plans */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>🏋️ Workout Plans</Text>
-        {workouts.map((workout, index) => (
           <TouchableOpacity
             key={index}
-            style={styles.workoutItem}
-            onPress={() => navigation.navigate('AddWorkout')}
+            style={[
+              styles.clientItem,
+              selectedClientId === client._id && { backgroundColor: '#e7f9e9' },
+            ]}
+            onPress={() => handleClientPress(client._id)}
           >
-            <Text style={styles.workoutTitle}>{workout.title}</Text>
+            <Text style={styles.clientName}>{client.name}</Text>
+            <Text style={styles.clientStatus}>{client.status || 'Active'}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* Quick Action Buttons */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>🏋️ Workout Plans</Text>
+        {workouts.length === 0 ? (
+          <Text style={{ fontStyle: 'italic', color: '#777' }}>No plans yet</Text>
+        ) : (
+          workouts.map((workout, index) => (
+            <View key={index} style={styles.workoutItem}>
+              <Text style={styles.workoutTitle}>{workout.title}</Text>
+              <Text style={{ fontSize: 13, color: '#666' }}>{workout.description}</Text>
+            </View>
+          ))
+        )}
+      </View>
+
       <View style={styles.quickActions}>
         <TouchableOpacity
           style={styles.actionBtn}
-          onPress={() => navigation.navigate('AddWorkout')}
+          onPress={() => navigation.navigate('AddWorkout', { clientId: selectedClientId })}
         >
           <Text style={styles.actionText}>+ Add Workout</Text>
         </TouchableOpacity>
@@ -104,6 +140,11 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#F8F8F8',
     flex: 1,
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerRow: {
     flexDirection: 'row',
@@ -137,26 +178,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 10,
   },
-  scheduleItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderColor: '#eee',
-  },
-  time: {
-    fontSize: 16,
-  },
-  client: {
-    fontSize: 16,
-    fontStyle: 'italic',
-  },
   clientItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+    borderRadius: 8,
   },
   clientName: {
     fontSize: 16,
@@ -167,9 +195,12 @@ const styles = StyleSheet.create({
   },
   workoutItem: {
     paddingVertical: 8,
+    borderBottomColor: '#eee',
+    borderBottomWidth: 1,
   },
   workoutTitle: {
     fontSize: 16,
+    fontWeight: '600',
     color: '#333',
   },
   quickActions: {

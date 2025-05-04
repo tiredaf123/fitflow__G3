@@ -1,6 +1,5 @@
-// controllers/profileController.js
 import User from '../models/User.js'; // For accessing user model
-import WeightEntry from '../models/WeightEntry.js';  // Assuming you're saving weight entries
+import WeightEntry from '../models/WeightEntry.js'; // Assuming you're saving weight entries
 
 // @desc    Get current user's profile
 // @route   GET /api/profile/me
@@ -169,5 +168,19 @@ export const updateMembership = async (req, res) => {
   } catch (err) {
     console.error('UPDATE MEMBERSHIP ERROR:', err);
     res.status(500).json({ message: 'Failed to update membership', error: err.message });
+  }
+};
+
+// ==============================
+// NEW: Get All Clients for Trainer
+// ==============================
+export const getClients = async (req, res) => {
+  try {
+    // Exclude the current user (trainer) and return all other users
+    const clients = await User.find({ _id: { $ne: req.user._id } }).select('-password');
+    res.status(200).json(clients);
+  } catch (err) {
+    console.error('GET CLIENTS ERROR:', err);
+    res.status(500).json({ message: 'Failed to fetch clients', error: err.message });
   }
 };

@@ -36,6 +36,7 @@ import AdminPanel from '../Admin/AdminPanel';
 import CalenderScreen from '../screens/HomeScreen/CalenderScreen';
 import WeightInScreen from '../screens/HomeScreen/WeightInScreen';
 import WeightGoalScreen from '../screens/HomeScreen/WeightGoalScreen';
+
 // Drawer
 import MainDrawerNavigator from './MainDrawerNavigator';
 import CalendarScreen from '../screens/HomeScreen/CalenderScreen';
@@ -44,27 +45,20 @@ import Challenge from '../components/SideBar/Challenge';
 import Progress from '../components/SideBar/Progress';
 import Classes from '../components/SideBar/Classes';
 import Nutrition from '../components/SideBar/Nutrition';
-import MessageClient from '../screens/HomeScreen/Trainer/MessageClient';
-import AddWorkout from '../screens/HomeScreen/Trainer/AddWorkout';
-import Notification from '../screens/HomeScreen/Trainer/NotificationScreen';
 
-import TrainerDashboard from '../screens/HomeScreen/Trainer/TrainerDashboard'; 
-
+// Trainer screens imported from src/Trainer/
+import TrainerDashboard from '../Trainer/trainer';
+import MessageClient from '../Trainer/msgclient';
+import AddWorkout from '../Trainer/addworkout';
+import Notification from '../Trainer/notif';
 
 const Stack = createStackNavigator();
 
-const AppNavigator = () => {
+export default function AppNavigator() {
   const { isDarkMode } = useTheme();
 
-  const themeStyles = {
-    container: {
-      flex: 1,
-      backgroundColor: isDarkMode ? '#1e1e1e' : '#F0F0F0',
-    },
-  };
-
   return (
-    <View style={themeStyles.container}>
+    <View style={{ flex: 1, backgroundColor: isDarkMode ? '#1e1e1e' : '#F0F0F0' }}>
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Welcome">
           {/* Onboarding & Auth */}
@@ -77,10 +71,10 @@ const AppNavigator = () => {
           <Stack.Screen name="WeightSelection" component={WeightSelection} />
           <Stack.Screen name="GoalSelection" component={GoalSelection} />
 
-          {/* Main Drawer after login */}
+          {/* Main Drawer */}
           <Stack.Screen name="DashboardScreen" component={MainDrawerNavigator} />
 
-          {/* Others not in drawer */}
+          {/* Core Screens */}
           <Stack.Screen name="HomeScreen" component={HomePage} />
           <Stack.Screen name="WorkoutScreen" component={WorkoutScreen} />
           <Stack.Screen name="ChestWorkout" component={ChestWorkout} />
@@ -105,21 +99,21 @@ const AppNavigator = () => {
           <Stack.Screen name="Terms" component={TermsAndConditionsScreen} />
           <Stack.Screen name="AdminPanel" component={AdminPanel} />
           <Stack.Screen name="Calendar" component={CalendarScreen} />
-            <Stack.Screen name="FoodManager" component={FoodManagerScreen} />
-            <Stack.Screen name="WeightGoal" component={WeightGoalScreen} />
-            <Stack.Screen name="WeightIn" component={WeightInScreen} />
-            <Stack.Screen name="Challenge" component={Challenge} />
-<Stack.Screen name="Progress" component={Progress} />
-<Stack.Screen name="Classes" component={Classes} />
-<Stack.Screen name="Nutrition" component={Nutrition} />
-<Stack.Screen name="TrainerDashboard" component={TrainerDashboard} />
-        <Stack.Screen name="MessageClient" component={MessageClient} />
-        <Stack.Screen name="AddWorkout" component={AddWorkout} />
-        <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
+          <Stack.Screen name="FoodManager" component={FoodManagerScreen} />
+          <Stack.Screen name="WeightGoal" component={WeightGoalScreen} />
+          <Stack.Screen name="WeightIn" component={WeightInScreen} />
+          <Stack.Screen name="Challenge" component={Challenge} />
+          <Stack.Screen name="Progress" component={Progress} />
+          <Stack.Screen name="Classes" component={Classes} />
+          <Stack.Screen name="Nutrition" component={Nutrition} />
+
+          {/* Trainer Screens */}
+          <Stack.Screen name="TrainerDashboard" component={TrainerDashboard} />
+          <Stack.Screen name="MessageClient" component={MessageClient} />
+          <Stack.Screen name="AddWorkout" component={AddWorkout} />
+          <Stack.Screen name="NotificationScreen" component={Notification} />
         </Stack.Navigator>
       </NavigationContainer>
     </View>
   );
-};
-
-export default AppNavigator;
+}

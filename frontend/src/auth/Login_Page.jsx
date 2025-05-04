@@ -43,6 +43,18 @@ const Login_Page = () => {
 
       if (res.ok) {
         await AsyncStorage.setItem('token', data.token);
+
+        // Store clientId depending on backend structure
+        if (data.clientId) {
+          await AsyncStorage.setItem('clientId', data.clientId);
+        } else if (data.user && data.user._id) {
+          await AsyncStorage.setItem('clientId', data.user._id);
+        }
+
+        console.log('✅ Login Success');
+        console.log('Token:', data.token);
+        console.log('Client ID:', data.clientId || (data.user && data.user._id));
+
         showToast('success', 'Login Successful', 'Welcome back!');
         navigation.reset({ index: 0, routes: [{ name: 'HomeScreen' }] });
       } else {

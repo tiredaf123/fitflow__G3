@@ -1,30 +1,33 @@
-// routes/profileRoutes.js
-
 import express from 'express';
+import protect from '../middleware/authMiddleware.js';
 import {
   getMe,
   saveProfileData,
   updateProfile,
-  saveWeight,
   getWeightData,
+  saveWeight,
   getMembership,
-  updateMembership  // Ensure correct import
+  updateMembership,
+  getClients,           // ← Make sure this is imported
 } from '../controllers/profileController.js';
-import protect from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Profile routes
+// Profile endpoints
 router.get('/me', protect, getMe);
 router.post('/save', protect, saveProfileData);
 router.put('/update', protect, updateProfile);
 
-// Weight-related routes
-router.get('/weight', protect, getWeightData);  // ✅ fetch weight history + current
-router.post('/weight', protect, saveWeight);    // ✅ save new weight
+// Weight endpoints
+router.get('/weight', protect, getWeightData);
+router.post('/weight', protect, saveWeight);
 
-// Membership-related routes
-router.get('/membership', protect, getMembership);   // ✅ fetch membership deadline
-router.put('/membership', protect, updateMembership); // ✅ update membership deadline
+// Membership endpoints
+router.get('/membership', protect, getMembership);
+router.put('/membership', protect, updateMembership);
+
+// ——— NEW ———
+// Clients for TrainerDashboard
+router.get('/clients', protect, getClients);
 
 export default router;
