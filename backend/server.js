@@ -20,6 +20,7 @@ import authRoutes from './routes/authRoutes.js';
 import supplementRoutes from './routes/supplementRoutes.js';
 import trainerRoutes from './routes/trainerRoutes.js'; // ADD THIS LINE
 
+
 // Utils
 import createAdminUser from './utils/createAdmin.js';
 
@@ -39,7 +40,8 @@ app.use('/uploads', express.static(path.resolve('uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/supplements', supplementRoutes);
-app.use('/api/trainers', trainerRoutes); // ADD THIS LINE
+app.use('/api/trainers', trainerRoutes);
+
 
 // Port
 const PORT = process.env.PORT || 5000;
