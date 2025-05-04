@@ -13,6 +13,7 @@ import WeightSelection from '../screens/WeightSelection';
 import GoalSelection from '../screens/GoalSelection';
 import SignUp_Page from '../auth/SignUp_Page';
 import Login_Page from '../auth/Login_Page';
+import Trainer_LoginPage from '../auth/Trainer_LoginPage';
 
 // Intro Screens
 import { IntroPage1, IntroPage2, IntroPage3 } from '../screens/IntroScreen';
@@ -37,30 +38,23 @@ import PersonalScreen from '../screens/HomeScreen/SubScreen/PersonalScreen';
 import GeneralScreen from '../screens/HomeScreen/SubScreen/GeneralScreen';
 import NotificationScreen from '../screens/HomeScreen/SubScreen/NotificationScreen';
 import HelpScreen from '../screens/HomeScreen/SubScreen/HelpScreen';
-import AdminSupplementsScreen from '../Admin/AdminPanel';
 import HireCoachScreen from '../screens/HomeScreen/SubScreen/HireCoachScreen';
 import TrainerListScreen from '../screens/HomeScreen/SubScreen/TrainerListScreen';
 import AboutScreen from '../screens/HomeScreen/SubScreen/AboutScreen';
 import TermsAndConditionsScreen from '../screens/HomeScreen/SubScreen/TermsAndConditionsScreen';
 import StreakScreen from '../screens/HomeScreen/SubScreen/StreakScreen';
-import FoodManagerScreen from '../screens/HomeScreen/FoodManagerScreen';
 import CalendarScreen from '../screens/HomeScreen/CalenderScreen';
+import FoodManagerScreen from '../screens/HomeScreen/FoodManagerScreen';
 import WeightInScreen from '../screens/HomeScreen/WeightInScreen';
 import WeightGoalScreen from '../screens/HomeScreen/WeightGoalScreen';
-// Admin & SideBar
-import AdminPanel from '../Admin/AdminPanel';
-
 import SupplementsScreen from '../screens/HomeScreen/SubScreen/SupplementsScreen';
-// Drawer
-import MainDrawerNavigator from './MainDrawerNavigator';
-import CalendarScreen from '../screens/HomeScreen/CalenderScreen';
-import FoodManagerScreen from '../screens/HomeScreen/FoodManagerScreen';
 
+// Admin & Sidebar
+import AdminPanel from '../Admin/AdminPanel';
 import Challenge from '../components/SideBar/Challenge';
 import Progress from '../components/SideBar/Progress';
-
+import Classes from '../components/SideBar/Classes';
 import Nutrition from '../components/SideBar/Nutrition';
-import Trainer_LoginPage from '../auth/Trainer_LoginPage';
 
 const Stack = createStackNavigator();
 
@@ -83,6 +77,7 @@ function AppNavigator() {
           <Stack.Screen name="Welcome" component={Welcome} />
           <Stack.Screen name="SignUp_Page" component={SignUp_Page} />
           <Stack.Screen name="Login_Page" component={Login_Page} />
+          <Stack.Screen name="Trainer_LoginPage" component={Trainer_LoginPage} />
           <Stack.Screen name="GenderSelection" component={GenderSelection} />
           <Stack.Screen name="AgeSelection" component={AgeSelection} />
           <Stack.Screen name="HeightSelector" component={HeightSelector} />
@@ -121,18 +116,7 @@ function AppNavigator() {
           <Stack.Screen name="Streak" component={StreakScreen} />
           <Stack.Screen name="About" component={AboutScreen} />
           <Stack.Screen name="Terms" component={TermsAndConditionsScreen} />
-          <Stack.Screen name="AdminPanel" component={AdminPanel} />
           <Stack.Screen name="Supplements" component={SupplementsScreen} />
-          <Stack.Screen name="Calendar" component={CalendarScreen} />
-          <Stack.Screen name="FoodManager" component={FoodManagerScreen} />
-          <Stack.Screen name="WeightGoal" component={WeightGoalScreen} />
-          <Stack.Screen name="WeightIn" component={WeightInScreen} />
-          <Stack.Screen name="Challenge" component={Challenge} />
-          <Stack.Screen name="Progress" component={Progress} />
-          <Stack.Screen name="Nutrition" component={Nutrition} />
-          <Stack.Screen name="Trainer_LoginPage" component={Trainer_LoginPage} />
-
-
 
           {/* Utility & Management */}
           <Stack.Screen name="Calendar" component={CalendarScreen} />
@@ -146,6 +130,7 @@ function AppNavigator() {
           <Stack.Screen name="Progress" component={Progress} />
           <Stack.Screen name="Classes" component={Classes} />
           <Stack.Screen name="Nutrition" component={Nutrition} />
+
         </Stack.Navigator>
       </NavigationContainer>
     </View>
