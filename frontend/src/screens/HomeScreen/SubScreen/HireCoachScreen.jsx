@@ -1,201 +1,244 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
   Alert,
-  Linking,
+  ActivityIndicator,
+  Image,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import { useTheme } from '../../../navigation/ThemeProvider';
+import { BASE_URL } from '../../../config/config';
 import BottomTabBar from '../../../components/BottomTabBar';
 
 const HireCoachScreen = () => {
-  const { isDarkMode } = useTheme();
   const navigation = useNavigation();
-  const styles = getStyles(isDarkMode);
-
-  const [date, setDate] = useState(new Date());
+  const [trainers, setTrainers] = useState([]);
+  const [bookedTrainers, setBookedTrainers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showPicker, setShowPicker] = useState(false);
-  const [message, setMessage] = useState('');
-  const [chatMessages, setChatMessages] = useState([
-    { sender: 'coach', text: 'Hi! Ready to level up your fitness?' },
-  ]);
-  const [hasPaid, setHasPaid] = useState(false);
+  const [selectedTrainer, setSelectedTrainer] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
-  const handleBooking = () => {
-    Alert.alert('Booked!', `Appointment set for ${date.toLocaleString()}`);
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const token = await AsyncStorage.getItem('token');
+        const [publicRes, bookedRes] = await Promise.all([
+          fetch(`${BASE_URL}/trainers/public`),
+          fetch(`${BASE_URL}/bookings/user`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        const publicData = await publicRes.json();
+        const bookedData = await bookedRes.json();
+
+        setTrainers(Array.isArray(publicData) ? publicData : []);
+        setBookedTrainers(Array.isArray(bookedData) ? bookedData : []);
+      } catch (err) {
+        Alert.alert('Error', 'Failed to load trainers or bookings.');
+        setTrainers([]);
+        setBookedTrainers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleBooking = (trainer) => {
+    setSelectedTrainer(trainer);
+    setShowPicker(true);
   };
 
-  const handlePayment = () => {
-    Linking.openURL('https://your-payment-link.com')
-      .then(() => setHasPaid(true))
-      .catch(() => Alert.alert('Error', 'Unable to open payment link'));
+  const handleDateConfirm = async (event, date) => {
+    setShowPicker(false);
+    if (event.type === 'dismissed') return;
+
+    const appointmentDate = date || selectedDate;
+    setSelectedDate(appointmentDate);
+
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const res = await fetch(`${BASE_URL}/bookings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          trainerId: selectedTrainer._id,
+          appointmentDate,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        Alert.alert('Success', 'Booking confirmed.');
+      } else {
+        Alert.alert('Error', data.error || 'Booking failed.');
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Server error during booking.');
+    }
   };
 
-  const handleSendMessage = () => {
-    if (!hasPaid) {
-      Alert.alert('Payment Required', 'Please pay before sending messages.');
+  const handleMessage = (trainer, appointmentDate) => {
+    const today = new Date().toDateString();
+    const appointmentDay = new Date(appointmentDate).toDateString();
+    if (today !== appointmentDay) {
+      Alert.alert('Not Allowed', 'You can only message your coach on the appointment date.');
       return;
     }
-
-    if (!message) return Alert.alert('Message Empty', 'Please write something first.');
-    setChatMessages([...chatMessages, { sender: 'user', text: message }]);
-    setMessage('');
-  };
-
-  const handleCoachPress = () => {
-    Alert.alert('Membership Required', 'Buy a membership to access full features.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Buy Membership', onPress: handlePayment },
-    ]);
+    navigation.navigate('Messages', { trainer, bookingDate: appointmentDate });
   };
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.heading}>Hire a Coach</Text>
-
-        <TouchableOpacity onPress={handleCoachPress} style={styles.card}>
-          <Text style={styles.label}>Coach Name:</Text>
-          <Text style={styles.info}>Alex Johnson</Text>
-
-          <Text style={styles.label}>About:</Text>
-          <Text style={styles.info}>
-            Certified personal trainer with 8 years of experience. Specializes in strength, mobility,
-            and habit building.
+        <View style={styles.noteContainer}>
+          <Text style={styles.noteTitle}>Note:</Text>
+          <Text style={styles.noteText}>
+            Coaches provide guidance only through chat. No physical training sessions. They will
+            suggest exercises, diet, and habits tailored to your weight and goals.
           </Text>
+        </View>
 
-          <Text style={styles.label}>Rate:</Text>
-          <Text style={styles.info}>£35/hour</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.label}>Select Appointment Time</Text>
-        <TouchableOpacity style={styles.input} onPress={() => setShowPicker(true)}>
-          <Text style={{ color: isDarkMode ? '#fff' : '#000' }}>{date.toLocaleString()}</Text>
-        </TouchableOpacity>
-
-        {showPicker && (
-          <DateTimePicker
-            value={date}
-            mode="datetime"
-            display="default"
-            onChange={(event, selectedDate) => {
-              setShowPicker(false);
-              if (selectedDate) setDate(selectedDate);
-            }}
-          />
+        {bookedTrainers.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Your Booked Coaches</Text>
+            {bookedTrainers.map(({ trainer, appointmentDate }) => (
+              <View key={trainer._id} style={styles.card}>
+                <Image
+                  source={{
+                    uri: trainer.imageUrl?.startsWith('http')
+                      ? trainer.imageUrl
+                      : `${BASE_URL}/${trainer.imageUrl}`,
+                  }}
+                  style={styles.trainerImage}
+                />
+                <View style={styles.infoContainer}>
+                  <Text style={styles.name}>{trainer.username || trainer.fullName}</Text>
+                  <Text style={styles.bio}>Appointment: {new Date(appointmentDate).toDateString()}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.bookButton}
+                  onPress={() => handleMessage(trainer, appointmentDate)}
+                >
+                  <Text style={styles.bookButtonText}>Message</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </>
         )}
 
-        <TouchableOpacity style={styles.bookButton} onPress={handleBooking}>
-          <Text style={styles.bookButtonText}>Book Appointment</Text>
-        </TouchableOpacity>
+        <Text style={styles.sectionTitle}>Hire a Coach</Text>
 
-        <TouchableOpacity style={styles.payButton} onPress={handlePayment}>
-          <Text style={styles.payButtonText}>Pay Now</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.sendButton}
-          onPress={() => {
-            if (!hasPaid) {
-              Alert.alert('Payment Required', 'Please complete the payment to message the coach.');
-              return;
-            }
-            navigation.navigate('Messages');
-          }}
-        >
-          <Text style={styles.sendButtonText}>Go to Messages</Text>
-        </TouchableOpacity>
+        {loading ? (
+          <ActivityIndicator size="large" color="#00BFFF" style={{ marginTop: 40 }} />
+        ) : trainers.length === 0 ? (
+          <Text style={styles.noTrainersText}>No trainers found.</Text>
+        ) : (
+          trainers.map((trainer) => (
+            <View key={trainer._id} style={styles.card}>
+              <Image
+                source={{
+                  uri: trainer.imageUrl?.startsWith('http')
+                    ? trainer.imageUrl
+                    : `${BASE_URL}/${trainer.imageUrl}`,
+                }}
+                style={styles.trainerImage}
+              />
+              <View style={styles.infoContainer}>
+                <Text style={styles.name}>{trainer.username || trainer.fullName}</Text>
+                {trainer.bio ? <Text style={styles.bio}>{trainer.bio}</Text> : null}
+                {trainer.specialties?.length > 0 && (
+                  <Text style={styles.specialties}>
+                    Specialties: {Array.isArray(trainer.specialties) ? trainer.specialties.join(', ') : trainer.specialties}
+                  </Text>
+                )}
+              </View>
+              <TouchableOpacity
+                style={styles.bookButton}
+                onPress={() => handleBooking(trainer)}
+              >
+                <Text style={styles.bookButtonText}>Book</Text>
+              </TouchableOpacity>
+            </View>
+          ))
+        )}
       </ScrollView>
-
+      {showPicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display="default"
+          onChange={handleDateConfirm}
+          minimumDate={new Date()}
+        />
+      )}
       <BottomTabBar />
     </View>
   );
 };
 
-const getStyles = (isDarkMode) =>
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: isDarkMode ? '#1e1e1e' : '#F5F5F5',
-    },
-    scrollContent: {
-      padding: 20,
-    },
-    heading: {
-      fontSize: 22,
-      fontWeight: 'bold',
-      color: isDarkMode ? '#FFF' : '#000',
-      marginBottom: 20,
-    },
-    card: {
-      backgroundColor: isDarkMode ? '#2a2a2a' : '#fff',
-      borderRadius: 12,
-      padding: 15,
-      marginBottom: 20,
-      borderWidth: 1,
-      borderColor: isDarkMode ? '#444' : '#ccc',
-    },
-    label: {
-      fontSize: 14,
-      fontWeight: 'bold',
-      marginTop: 10,
-      color: isDarkMode ? '#CCC' : '#333',
-    },
-    info: {
-      fontSize: 16,
-      color: isDarkMode ? '#fff' : '#000',
-    },
-    input: {
-      backgroundColor: isDarkMode ? '#2a2a2a' : '#fff',
-      borderColor: isDarkMode ? '#555' : '#ccc',
-      borderWidth: 1,
-      borderRadius: 10,
-      padding: 12,
-      marginTop: 10,
-    },
-    bookButton: {
-      backgroundColor: '#00BFFF',
-      paddingVertical: 14,
-      borderRadius: 12,
-      alignItems: 'center',
-      marginTop: 20,
-    },
-    bookButtonText: {
-      color: '#fff',
-      fontSize: 16,
-      fontWeight: 'bold',
-    },
-    payButton: {
-      backgroundColor: '#FF6B00',
-      paddingVertical: 14,
-      borderRadius: 12,
-      alignItems: 'center',
-      marginTop: 15,
-    },
-    payButtonText: {
-      color: '#fff',
-      fontSize: 16,
-      fontWeight: 'bold',
-    },
-    sendButton: {
-      backgroundColor: '#28A745',
-      paddingVertical: 14,
-      borderRadius: 12,
-      alignItems: 'center',
-      marginTop: 30,
-      marginBottom: 100,
-    },
-    sendButtonText: {
-      color: '#fff',
-      fontSize: 16,
-      fontWeight: 'bold',
-    },
-  });
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F9F9F9' },
+  scrollContent: { padding: 20, paddingBottom: 100 },
+  noteContainer: {
+    backgroundColor: '#FFF8E1',
+    borderLeftWidth: 5,
+    borderLeftColor: '#FFB300',
+    padding: 12,
+    marginBottom: 20,
+    borderRadius: 8,
+  },
+  noteTitle: { fontWeight: 'bold', fontSize: 16, color: '#FF6F00', marginBottom: 6 },
+  noteText: { fontSize: 14, color: '#5D4037' },
+  sectionTitle: { fontSize: 20, fontWeight: '700', color: '#333', marginVertical: 16 },
+  noTrainersText: { fontSize: 16, color: '#999', textAlign: 'center', marginTop: 40 },
+  card: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 15,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+    alignItems: 'center',
+  },
+  trainerImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    marginRight: 15,
+    backgroundColor: '#eee',
+  },
+  infoContainer: { flex: 1 },
+  name: { fontSize: 18, fontWeight: '600', color: '#222' },
+  bio: { fontSize: 14, color: '#555', marginTop: 4 },
+  specialties: { fontSize: 13, color: '#777', marginTop: 4, fontStyle: 'italic' },
+  bookButton: {
+    backgroundColor: '#00BFFF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+  },
+  bookButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+});
 
 export default HireCoachScreen;

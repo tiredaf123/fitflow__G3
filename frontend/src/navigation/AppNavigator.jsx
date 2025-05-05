@@ -28,24 +28,23 @@ import PersonalScreen from '../screens/HomeScreen/SubScreen/PersonalScreen';
 import GeneralScreen from '../screens/HomeScreen/SubScreen/GeneralScreen';
 import NotificationScreen from '../screens/HomeScreen/SubScreen/NotificationScreen';
 import HelpScreen from '../screens/HomeScreen/SubScreen/HelpScreen';
-import AdminSupplementsScreen from '../Admin/AdminPanel';
+import AdminPanel from '../Admin/AdminPanel';
 import HireCoachScreen from '../screens/HomeScreen/SubScreen/HireCoachScreen';
 import AboutScreen from '../screens/HomeScreen/SubScreen/AboutScreen';
 import TermsAndConditionsScreen from '../screens/HomeScreen/SubScreen/TermsAndConditionsScreen';
-import AdminPanel from '../Admin/AdminPanel';
-import CalenderScreen from '../screens/HomeScreen/CalenderScreen';
+import SupplementsScreen from '../screens/HomeScreen/SubScreen/SupplementsScreen';
+import CalendarScreen from '../screens/HomeScreen/CalenderScreen';
 import WeightInScreen from '../screens/HomeScreen/WeightInScreen';
 import WeightGoalScreen from '../screens/HomeScreen/WeightGoalScreen';
-import SupplementsScreen from '../screens/HomeScreen/SubScreen/SupplementsScreen';
-// Drawer
-import MainDrawerNavigator from './MainDrawerNavigator';
-import CalendarScreen from '../screens/HomeScreen/CalenderScreen';
 import FoodManagerScreen from '../screens/HomeScreen/FoodManagerScreen';
 import Challenge from '../components/SideBar/Challenge';
 import Progress from '../components/SideBar/Progress';
-
 import Nutrition from '../components/SideBar/Nutrition';
 import Trainer_LoginPage from '../auth/Trainer_LoginPage';
+import MessagesScreen from '../screens/HomeScreen/Message/MessagesScreen';
+
+// Drawer Navigator
+import MainDrawerNavigator from './MainDrawerNavigator';
 
 const Stack = createStackNavigator();
 
@@ -62,7 +61,10 @@ const AppNavigator = () => {
   return (
     <View style={themeStyles.container}>
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Welcome">
+        <Stack.Navigator
+          initialRouteName="Welcome"
+          screenOptions={{ headerShown: false }}
+        >
           {/* Onboarding & Auth */}
           <Stack.Screen name="Welcome" component={Welcome} />
           <Stack.Screen name="SignUp_Page" component={SignUp_Page} />
@@ -76,7 +78,7 @@ const AppNavigator = () => {
           {/* Main Drawer after login */}
           <Stack.Screen name="DashboardScreen" component={MainDrawerNavigator} />
 
-          {/* Others not in drawer */}
+          {/* Other Screens */}
           <Stack.Screen name="HomeScreen" component={HomePage} />
           <Stack.Screen name="WorkoutScreen" component={WorkoutScreen} />
           <Stack.Screen name="ChestWorkout" component={ChestWorkout} />
@@ -99,22 +101,17 @@ const AppNavigator = () => {
           <Stack.Screen name="HireCoach" component={HireCoachScreen} />
           <Stack.Screen name="About" component={AboutScreen} />
           <Stack.Screen name="Terms" component={TermsAndConditionsScreen} />
-
-<Stack.Screen name="AdminPanel" component={AdminPanel} />
-
-<Stack.Screen name="Supplements" component={SupplementsScreen} />
-
+          <Stack.Screen name="AdminPanel" component={AdminPanel} />
+          <Stack.Screen name="Supplements" component={SupplementsScreen} />
           <Stack.Screen name="Calendar" component={CalendarScreen} />
-            <Stack.Screen name="FoodManager" component={FoodManagerScreen} />
-            <Stack.Screen name="WeightGoal" component={WeightGoalScreen} />
-            <Stack.Screen name="WeightIn" component={WeightInScreen} />
-            <Stack.Screen name="Challenge" component={Challenge} />
-<Stack.Screen name="Progress" component={Progress} />
-
-<Stack.Screen name="Nutrition" component={Nutrition} />
-<Stack.Screen name="Trainer_LoginPage" component={Trainer_LoginPage} />
-
-
+          <Stack.Screen name="FoodManager" component={FoodManagerScreen} />
+          <Stack.Screen name="WeightGoal" component={WeightGoalScreen} />
+          <Stack.Screen name="WeightIn" component={WeightInScreen} />
+          <Stack.Screen name="Challenge" component={Challenge} />
+          <Stack.Screen name="Progress" component={Progress} />
+          <Stack.Screen name="Nutrition" component={Nutrition} />
+          <Stack.Screen name="Trainer_LoginPage" component={Trainer_LoginPage} />
+          <Stack.Screen name="Messages" component={MessagesScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </View>

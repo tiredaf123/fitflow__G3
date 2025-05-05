@@ -163,26 +163,37 @@ const ProfileScreen = () => {
     }
   };
 
+  // Dynamic mode label
+  const modeLabel = isDarkMode ? 'Light Mode' : 'Dark Mode';
+
   const themeStyles = {
     container: {
       flex: 1,
       backgroundColor: isDarkMode ? '#1e1e1e' : '#F0F0F0',
     },
     text: {
-      color: isDarkMode ? '#FFF' : '#000',
+      color: isDarkMode ? '#FFF' : '#222',
     },
     settingItem: {
       flexDirection: 'row',
       alignItems: 'center',
-      padding: 15,
+      padding: 18,
       borderBottomWidth: 1,
-      borderBottomColor: isDarkMode ? '#444' : '#DDD',
+      borderBottomColor: isDarkMode ? '#444' : '#EEE',
+      borderRadius: 12,
+      marginVertical: 4,
     },
     settingsSection: {
-      backgroundColor: isDarkMode ? '#2a2a2a' : '#FFF',
-      borderRadius: 20,
-      margin: 20,
+      backgroundColor: isDarkMode ? '#232323' : '#FFF',
+      borderRadius: 24,
+      marginHorizontal: 16,
+      marginVertical: 12,
       padding: 10,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      elevation: 4,
     },
   };
 
@@ -239,7 +250,7 @@ const ProfileScreen = () => {
         <View style={themeStyles.settingsSection}>
           <View style={themeStyles.settingItem}>
             <Icon name="light-mode" size={24} color={themeStyles.text.color} />
-            <Text style={[styles.settingText, themeStyles.text]}>Dark Mode</Text>
+            <Text style={[styles.settingText, themeStyles.text]}>{modeLabel}</Text>
             <View style={{ flex: 1, alignItems: 'flex-end' }}>
               <Switch value={isDarkMode} onValueChange={toggleTheme} />
             </View>
@@ -256,34 +267,44 @@ const styles = StyleSheet.create({
   profileHeader: {
     alignItems: 'center',
     marginTop: 20,
+    marginBottom: 10,
   },
   profileImage: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    borderWidth: 3,
+    borderWidth: 4,
     borderColor: '#FF6B00',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
   },
   editButton: {
     position: 'absolute',
     right: 40,
     bottom: 15,
     backgroundColor: '#FF6B00',
-    padding: 6,
-    borderRadius: 20,
+    padding: 8,
+    borderRadius: 24,
+    elevation: 2,
   },
   name: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
-    marginTop: 10,
+    marginTop: 12,
+    color: '#FF6B00',
   },
   email: {
-    fontSize: 14,
-    marginBottom: 10,
+    fontSize: 15,
+    marginBottom: 12,
+    color: '#888',
   },
   settingText: {
-    marginLeft: 15,
-    fontSize: 16,
+    marginLeft: 18,
+    fontSize: 17,
+    fontWeight: '500',
   },
 });
 
