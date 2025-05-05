@@ -18,7 +18,8 @@ console.log('🌐 ENV Check:', {
 import profileRoutes from './routes/profileRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import supplementRoutes from './routes/supplementRoutes.js';
-import trainerRoutes from './routes/trainerRoutes.js'; // ADD THIS LINE
+import trainerRoutes from './routes/trainerRoutes.js'; 
+import userRoutes from './routes/userRoutes.js';
 
 
 // Utils
@@ -41,6 +42,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/supplements', supplementRoutes);
 app.use('/api/trainers', trainerRoutes);
+app.use('/api/users', userRoutes);
 
 
 // Port
