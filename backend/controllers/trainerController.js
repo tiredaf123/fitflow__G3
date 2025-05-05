@@ -5,8 +5,6 @@ import jwt from 'jsonwebtoken';
 // POST /api/trainers
 export const createTrainer = async (req, res) => {
   try {
-    console.log('req.body:', req.body);
-    console.log('req.file:', req.file);
     const { username, password, bio, specialties } = req.body;
 
     if (!username || !password) {
@@ -19,13 +17,17 @@ export const createTrainer = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const imageUrl = req.file ? `/api/uploads/profile/${req.file.filename}` : '';
+    const imageUrl = req.file ? `uploads/profile/${req.file.filename}` : '';
 
     const newTrainer = new Trainer({
       username,
       password: hashedPassword,
       bio,
-      specialties: specialties?.split(',').map(s => s.trim()) || [],
+      specialties: specialties
+        ? Array.isArray(specialties)
+          ? specialties
+          : specialties.split(',').map(s => s.trim())
+        : [],
       imageUrl,
     });
 
@@ -52,16 +54,30 @@ export const loginTrainer = async (req, res) => {
       expiresIn: '7d',
     });
 
-    res.status(200).json({ token, trainer });
+    // Remove password before sending trainer data
+    const trainerData = trainer.toObject();
+    delete trainerData.password;
+
+    res.status(200).json({ token, trainer: trainerData });
   } catch (err) {
     res.status(500).json({ message: 'Login failed', error: err.message });
   }
 };
 
-// GET /api/trainers
+// GET /api/trainers (Admin only)
 export const getAllTrainers = async (req, res) => {
   try {
-    const trainers = await Trainer.find();
+    const trainers = await Trainer.find().select('-password');
+    res.status(200).json(trainers);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch trainers', error: err.message });
+  }
+};
+
+// GET /api/trainers/public (Public route)
+export const getPublicTrainers = async (req, res) => {
+  try {
+    const trainers = await Trainer.find().select('-password');
     res.status(200).json(trainers);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch trainers', error: err.message });

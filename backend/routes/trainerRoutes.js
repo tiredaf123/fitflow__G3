@@ -1,11 +1,11 @@
-// trainerRoutes.js
 import express from 'express';
 import {
   createTrainer,
   getAllTrainers,
+  getPublicTrainers,
   updateTrainer,
   deleteTrainer,
-  loginTrainer, // ✅ NEW
+  loginTrainer,
 } from '../controllers/trainerController.js';
 
 import protect from '../middleware/authMiddleware.js';
@@ -14,8 +14,11 @@ import upload from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
-// Trainer login (no auth needed)
-router.post('/login', loginTrainer); // ✅ NEW public route
+// Public route to get trainers for users
+router.get('/public', getPublicTrainers);
+
+// Login route (public)
+router.post('/login', loginTrainer);
 
 // Admin-only routes
 router.post('/', protect, isAdmin, upload.single('image'), createTrainer);
