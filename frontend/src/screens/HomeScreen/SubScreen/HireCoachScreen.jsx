@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
+  TouchableOpacity,
   Alert,
   Linking,
+  Platform,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
@@ -21,11 +21,14 @@ const HireCoachScreen = () => {
 
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
-  const [message, setMessage] = useState('');
-  const [chatMessages, setChatMessages] = useState([
-    { sender: 'coach', text: 'Hi! Ready to level up your fitness?' },
-  ]);
   const [hasPaid, setHasPaid] = useState(false);
+
+  const handleDateChange = (event, selectedDate) => {
+    if (Platform.OS === 'android') setShowPicker(false);
+    if (event?.type === 'set' && selectedDate) {
+      setDate(selectedDate);
+    }
+  };
 
   const handleBooking = () => {
     Alert.alert('Booked!', `Appointment set for ${date.toLocaleString()}`);
@@ -33,26 +36,11 @@ const HireCoachScreen = () => {
 
   const handlePayment = () => {
     Linking.openURL('https://your-payment-link.com')
-      .then(() => setHasPaid(true))
-      .catch(() => Alert.alert('Error', 'Unable to open payment link'));
-  };
-
-  const handleSendMessage = () => {
-    if (!hasPaid) {
-      Alert.alert('Payment Required', 'Please pay before sending messages.');
-      return;
-    }
-
-    if (!message) return Alert.alert('Message Empty', 'Please write something first.');
-    setChatMessages([...chatMessages, { sender: 'user', text: message }]);
-    setMessage('');
-  };
-
-  const handleCoachPress = () => {
-    Alert.alert('Membership Required', 'Buy a membership to access full features.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Buy Membership', onPress: handlePayment },
-    ]);
+      .then(() => {
+        setHasPaid(true);
+        Alert.alert('Payment Success', 'Your payment was received!');
+      })
+      .catch(() => Alert.alert('Error', 'Failed to open payment link'));
   };
 
   return (
@@ -60,34 +48,42 @@ const HireCoachScreen = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.heading}>Hire a Coach</Text>
 
-        <TouchableOpacity onPress={handleCoachPress} style={styles.card}>
+        {/* View Trainers Button */}
+        <TouchableOpacity
+          style={styles.viewTrainersButton}
+          onPress={() => navigation.navigate('TrainerList')}
+        >
+          <Text style={styles.viewTrainersText}>View Trainers</Text>
+        </TouchableOpacity>
+
+        {/* Coach Preview Card */}
+        <TouchableOpacity style={styles.card}>
           <Text style={styles.label}>Coach Name:</Text>
           <Text style={styles.info}>Alex Johnson</Text>
 
           <Text style={styles.label}>About:</Text>
           <Text style={styles.info}>
-            Certified personal trainer with 8 years of experience. Specializes in strength, mobility,
-            and habit building.
+            Certified coach with 8 years of experience. Specialized in habit building and strength training.
           </Text>
 
           <Text style={styles.label}>Rate:</Text>
           <Text style={styles.info}>£35/hour</Text>
         </TouchableOpacity>
 
+        {/* Appointment Picker */}
         <Text style={styles.label}>Select Appointment Time</Text>
         <TouchableOpacity style={styles.input} onPress={() => setShowPicker(true)}>
-          <Text style={{ color: isDarkMode ? '#fff' : '#000' }}>{date.toLocaleString()}</Text>
+          <Text style={{ color: isDarkMode ? '#fff' : '#000' }}>
+            {date.toLocaleString()}
+          </Text>
         </TouchableOpacity>
 
         {showPicker && (
           <DateTimePicker
             value={date}
             mode="datetime"
-            display="default"
-            onChange={(event, selectedDate) => {
-              setShowPicker(false);
-              if (selectedDate) setDate(selectedDate);
-            }}
+            display={Platform.OS === 'ios' ? 'inline' : 'default'}
+            onChange={handleDateChange}
           />
         )}
 
@@ -103,7 +99,7 @@ const HireCoachScreen = () => {
           style={styles.sendButton}
           onPress={() => {
             if (!hasPaid) {
-              Alert.alert('Payment Required', 'Please complete the payment to message the coach.');
+              Alert.alert('Payment Required', 'Please pay to continue.');
               return;
             }
             navigation.navigate('Messages');
@@ -128,10 +124,22 @@ const getStyles = (isDarkMode) =>
       padding: 20,
     },
     heading: {
-      fontSize: 22,
+      fontSize: 24,
       fontWeight: 'bold',
       color: isDarkMode ? '#FFF' : '#000',
       marginBottom: 20,
+    },
+    viewTrainersButton: {
+      backgroundColor: '#6c5ce7',
+      paddingVertical: 12,
+      borderRadius: 12,
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    viewTrainersText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: 'bold',
     },
     card: {
       backgroundColor: isDarkMode ? '#2a2a2a' : '#fff',

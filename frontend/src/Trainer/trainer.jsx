@@ -1,5 +1,6 @@
 // screens/TrainerDashboard.js
 import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -76,6 +77,33 @@ const TrainerDashboard = () => {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+
+const { width } = Dimensions.get('window');
+
+const TrainerDashboard = () => {
+  const navigation = useNavigation();
+
+  const [trainerName] = useState('Alex Strong');
+  const [clients] = useState([
+    { name: 'John Doe', status: 'In Session' },
+    { name: 'Jane Smith', status: 'Scheduled' },
+  ]);
+  const [schedule] = useState([
+    { time: '10:00 AM', client: 'John Doe' },
+    { time: '1:00 PM', client: 'Jane Smith' },
+  ]);
+  const [workouts] = useState([
+    { title: 'Push Day Routine' },
+    { title: 'Cardio Blast' },
+  ]);
+
+  return (
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Header with Notifications */}
       <View style={styles.headerRow}>
         <Text style={styles.header}>Welcome, {trainerName} 👋</Text>
         <TouchableOpacity
@@ -99,6 +127,29 @@ const TrainerDashboard = () => {
           >
             <Text style={styles.clientName}>{client.name}</Text>
             <Text style={styles.clientStatus}>{client.status || 'Active'}</Text>
+
+          {/* you can add a badge count here if needed */}
+        </TouchableOpacity>
+      </View>
+
+      {/* Schedule Card */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>🗓️ Today's Schedule</Text>
+        {schedule.map((item, index) => (
+          <View key={index} style={styles.scheduleItem}>
+            <Text style={styles.time}>{item.time}</Text>
+            <Text style={styles.client}>with {item.client}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Clients Card */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>💼 Your Clients</Text>
+        {clients.map((client, index) => (
+          <TouchableOpacity key={index} style={styles.clientItem}>
+            <Text style={styles.clientName}>{client.name}</Text>
+            <Text style={styles.clientStatus}>{client.status}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -121,6 +172,25 @@ const TrainerDashboard = () => {
         <TouchableOpacity
           style={styles.actionBtn}
           onPress={() => navigation.navigate('AddWorkout', { clientId: selectedClientId })}
+      {/* Workout Plans */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>🏋️ Workout Plans</Text>
+        {workouts.map((workout, index) => (
+          <TouchableOpacity
+            key={index}
+            style={styles.workoutItem}
+            onPress={() => navigation.navigate('AddWorkout')}
+          >
+            <Text style={styles.workoutTitle}>{workout.title}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Quick Action Buttons */}
+      <View style={styles.quickActions}>
+        <TouchableOpacity
+          style={styles.actionBtn}
+          onPress={() => navigation.navigate('AddWorkout')}
         >
           <Text style={styles.actionText}>+ Add Workout</Text>
         </TouchableOpacity>
@@ -146,6 +216,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -178,6 +249,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 10,
   },
+
+  scheduleItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+  },
+  time: {
+    fontSize: 16,
+  },
+  client: {
+    fontSize: 16,
+    fontStyle: 'italic',
+  },
   clientItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -185,6 +271,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
     borderRadius: 8,
+
   },
   clientName: {
     fontSize: 16,
@@ -201,6 +288,10 @@ const styles = StyleSheet.create({
   workoutTitle: {
     fontSize: 16,
     fontWeight: '600',
+
+  },
+  workoutTitle: {
+    fontSize: 16,
     color: '#333',
   },
   quickActions: {

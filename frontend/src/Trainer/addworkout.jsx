@@ -66,6 +66,29 @@ const AddWorkout = () => {
     } finally {
       setSaving(false);
     }
+
+  StyleSheet,
+  ScrollView,
+  Alert,
+  Platform,
+  KeyboardAvoidingView,
+} from 'react-native';
+
+const AddWorkout = () => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [duration, setDuration] = useState('');
+
+  const handleSave = () => {
+    if (!title || !description || !duration) {
+      Alert.alert('Missing Fields', 'Please fill in all fields.');
+      return;
+    }
+
+    Alert.alert('Success', 'Workout Plan Saved!');
+    setTitle('');
+    setDescription('');
+    setDuration('');
   };
 
   return (
@@ -74,6 +97,10 @@ const AddWorkout = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.inner} keyboardShouldPersistTaps="handled">
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.container}
+    >
+      <ScrollView contentContainerStyle={styles.inner}>
         <Text style={styles.title}>🏋️ Create a New Workout Plan</Text>
 
         <Text style={styles.label}>Workout Title</Text>
@@ -108,6 +135,9 @@ const AddWorkout = () => {
           disabled={saving}
         >
           <Text style={styles.saveText}>{saving ? 'Saving...' : 'Save Workout'}</Text>
+
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <Text style={styles.saveText}>Save Workout</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -115,6 +145,10 @@ const AddWorkout = () => {
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F0F4F8',
+  },
   inner: {
     padding: 20,
   },
@@ -123,6 +157,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
+
+    marginBottom: 20,
+    textAlign: 'center',
     color: '#333',
   },
   label: {

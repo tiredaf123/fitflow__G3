@@ -11,6 +11,23 @@ const protect = async (req, res, next) => {
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ message: 'No token, authorization denied' });
+  let token;
+
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    try {
+      token = req.headers.authorization.split(' ')[1];
+      const decoded = jwt.verify(token, JWT_SECRET);
+
+      // Fix: Use decoded.userId instead of decoded.id
+      req.user = await User.findById(decoded.userId).select('-password');
+      next();
+    } catch (err) {
+      console.error('TOKEN ERROR:', err);
+      return res.status(401).json({ message: 'Not authorized, token failed' });
+    }
   }
 
   const token = authHeader.split(' ')[1];

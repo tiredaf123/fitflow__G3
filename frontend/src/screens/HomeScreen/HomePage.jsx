@@ -1,5 +1,4 @@
-// Enhanced HomeScreen with cleaner layout, modern design, animations, and goal-based filtering
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,6 +14,9 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import BottomTabBar from '../../components/BottomTabBar';
 import { useTheme } from '../../navigation/ThemeProvider';
+import moment from 'moment';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BASE_URL } from '../../config/config';
 
 const { width } = Dimensions.get('window');
 
@@ -25,6 +27,35 @@ const HomeScreen = ({ route }) => {
 
   const [flippedCardId, setFlippedCardId] = useState(null);
   const flipAnimations = useRef({}).current;
+
+  const scrollRef = useRef(null);
+  const [selectedDate, setSelectedDate] = useState(moment());
+  const [userName, setUserName] = useState('');
+
+  const daysOfWeek = Array.from({ length: 7 }, (_, i) =>
+    moment().clone().add(i, 'days')
+  );
+
+  useEffect(() => {
+    const fetchUserName = async () => {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) return;
+      try {
+        const res = await fetch(`${BASE_URL}/profile/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setUserName(data?.fullName || data?.username || '');
+        } else {
+          console.error('Failed to fetch profile');
+        }
+      } catch (err) {
+        console.error('Error fetching user name:', err);
+      }
+    };
+    fetchUserName();
+  }, []);
 
   const themeStyles = StyleSheet.create({
     container: {
@@ -102,10 +133,46 @@ const HomeScreen = ({ route }) => {
         <View style={styles.profileWrapper}>
           <Image source={require('../../assets/Images/profile.png')} style={styles.profileImage} />
           <View>
-            <Text style={themeStyles.greetingText}>Welcome Back!</Text>
+            <Text style={themeStyles.greetingText}>
+              {userName ? `Welcome Back, ${userName}!` : 'Welcome Back!'}
+            </Text>
             {selectedGoal && <Text style={themeStyles.subText}>Goal: {selectedGoal}</Text>}
           </View>
         </View>
+
+        {/* Calendar */}
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.calendarContainer}
+          snapToInterval={80}
+          decelerationRate="fast"
+          onContentSizeChange={() => {
+            scrollRef.current?.scrollTo({
+              x: 0,
+              animated: true,
+            });
+          }}
+        >
+          {daysOfWeek.map((day, index) => {
+            const isSelected = selectedDate.isSame(day, 'day');
+            return (
+              <TouchableOpacity
+                key={index}
+                style={[styles.dayItem, isSelected && styles.selectedDay]}
+                onPress={() => setSelectedDate(day)}
+              >
+                <Text style={[styles.dayText, isSelected && styles.selectedDayText]}>
+                  {day.format('ddd')}
+                </Text>
+                <Text style={[styles.dateText, isSelected && styles.selectedDateText]}>
+                  {day.format('D')}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
 
         {/* Diet Plans */}
         <Text style={styles.sectionTitle}>Diet Plans 🍽️</Text>
@@ -138,6 +205,7 @@ const HomeScreen = ({ route }) => {
             <Text style={styles.actionButtonText}>Go to Trainer Dashboard</Text>
           </TouchableOpacity>
         </View>
+        <View style={styles.buttonGroup} />
       </ScrollView>
       <BottomTabBar />
     </View>
@@ -258,22 +326,48 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
-  actionButton: {
-    flexDirection: 'row',
+  calendarContainer: {
+    paddingLeft: 20,
+    paddingRight: 10,
+    paddingVertical: 15,
+  },
+  dayItem: {
+    width: 70,
+    height: 70,
+    marginRight: 10,
+    borderRadius: 15,
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#1E1E1E',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#FEC400',
+
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
   },
-  actionButtonText: {
-    color: '#FEC400',
+  selectedDay: {
+    backgroundColor: '#FEC400',
+  },
+  dayText: {
+    fontSize: 14,
+    color: '#CCCCCC',
+  },
+  dateText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 10,
-    letterSpacing: 0.5,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  selectedDayText: {
+    color: '#1E1E1E',
+  },
+  selectedDateText: {
+    color: '#1E1E1E',
   },
 });
 

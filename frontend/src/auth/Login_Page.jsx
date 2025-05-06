@@ -26,6 +26,25 @@ const Login_Page = () => {
     Toast.show({ type, text1, text2 });
   };
 
+  // ---- START: STREAK TRACKER ----
+  const updateLoginStreak = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const storedDate = await AsyncStorage.getItem('last_login_date');
+    const storedStreak = parseInt(await AsyncStorage.getItem('login_streak')) || 0;
+
+    if (storedDate !== today) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterDateStr = yesterday.toISOString().split('T')[0];
+
+      let newStreak = (storedDate === yesterDateStr) ? storedStreak + 1 : 1;
+
+      await AsyncStorage.setItem('login_streak', newStreak.toString());
+      await AsyncStorage.setItem('last_login_date', today);
+    }
+  };
+  // ---- END: STREAK TRACKER ----
+
   const handleLogin = async () => {
     if (!username || !password) {
       showToast('error', 'Missing Info', 'Please enter both username and password');
@@ -55,8 +74,16 @@ const Login_Page = () => {
         console.log('Token:', data.token);
         console.log('Client ID:', data.clientId || (data.user && data.user._id));
 
+        await AsyncStorage.setItem('isAdmin', data.isAdmin ? 'true' : 'false');
+
+
         showToast('success', 'Login Successful', 'Welcome back!');
-        navigation.reset({ index: 0, routes: [{ name: 'HomeScreen' }] });
+
+        if (data.isAdmin) {
+          navigation.reset({ index: 0, routes: [{ name: 'AdminPanel' }] });
+        } else {
+          navigation.reset({ index: 0, routes: [{ name: 'HomeScreen' }] });
+        }
       } else {
         showToast('error', 'Login Failed', data.message || 'Incorrect credentials');
       }
@@ -91,6 +118,10 @@ const Login_Page = () => {
 
         <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
           <Text style={styles.loginButtonText}>Login</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.trainerLoginTopRight} onPress={() => navigation.navigate('Trainer_LoginPage')}>
+          <Text style={styles.trainerLoginTopRightText}>Trainer Login</Text>
         </TouchableOpacity>
 
         <Text style={styles.orText}>or sign in with</Text>
@@ -176,6 +207,20 @@ const styles = StyleSheet.create({
     marginTop: height * 0.015,
   },
   signupButtonText: { fontSize: width * 0.05, fontWeight: 'bold', color: '#000' },
+  trainerLoginTopRight: {
+    position: 'absolute',
+    top: 40,
+    right: 30,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+  },
+  trainerLoginTopRightText: {
+    color: '#000',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });
 
 export default Login_Page;

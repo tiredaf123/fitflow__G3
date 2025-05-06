@@ -1,7 +1,7 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
-
+apply plugin: 'com.google.gms.google-services'
 
 
 /**
@@ -121,5 +121,18 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+    // Import the Firebase BoM (Bill of Materials)
+    implementation platform('com.google.firebase:firebase-bom:33.13.0')
+    // Firebase Analytics (add other Firebase services here)
+    implementation 'com.google.firebase:firebase-analytics'
+    // Firebase Cloud Messaging (FCM)
+    implementation 'com.google.firebase:firebase-messaging'
+
+    // Firebase Authentication (example, add more if needed)
+    implementation 'com.google.firebase:firebase-auth'
+
+    // Firebase Firestore (example)
+    implementation 'com.google.firebase:firebase-firestore'
+
 }
 apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
