@@ -1,3 +1,5 @@
+import User from '../models/User.js'; // For accessing user model
+import WeightEntry from '../models/WeightEntry.js'; // Assuming you're saving weight entries
 // controllers/profileController.js
 import User from '../models/User.js';
 import UserProfile from '../models/profile.js';
@@ -8,7 +10,7 @@ import streamifier from 'streamifier';
 // ✅ Get current user's profile
 export const getMe = async (req, res) => {
   try {
-    const profile = await UserProfile.findOne({ userId: req.user._id });
+    const profile = await User.findById(req.user._id);
 
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });
@@ -38,7 +40,7 @@ export const saveProfileData = async (req, res) => {
   const { gender, age, height, weight, goal } = req.body;
 
   try {
-    let profile = await UserProfile.findOne({ userId: req.user._id });
+    let profile = await User.findOne({ userId: req.user._id });
 
     if (profile) {
       profile.gender = gender;
@@ -48,7 +50,7 @@ export const saveProfileData = async (req, res) => {
       profile.goal = goal;
       await profile.save();
     } else {
-      profile = await UserProfile.create({
+      profile = await User.create({
         userId: req.user._id,
         gender,
         age,
@@ -70,7 +72,7 @@ export const updateProfile = async (req, res) => {
   const { gender, age, height, weight, goal } = req.body;
 
   try {
-    const updated = await UserProfile.findOneAndUpdate(
+    const updated = await User.findOneAndUpdate(
       { userId: req.user._id },
       { gender, age, height, weight, goal },
       { new: true, upsert: true }
@@ -120,6 +122,59 @@ export const getWeightData = async (req, res) => {
   }
 };
 
+// @desc    Get the current membership deadline
+// @route   GET /api/profile/membership
+// @access  Private
+export const getMembership = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json({ membershipDeadline: user.membershipDeadline });
+  } catch (err) {
+    console.error('GET MEMBERSHIP ERROR:', err);
+    res.status(500).json({ message: 'Failed to fetch membership deadline', error: err.message });
+  }
+};
+
+// @desc    Update membership deadline for the current user
+// @route   PUT /api/profile/membership
+// @access  Private
+export const updateMembership = async (req, res) => {
+  const { membershipDeadline } = req.body;
+
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.membershipDeadline = membershipDeadline || user.membershipDeadline;
+    await user.save();
+
+    res.status(200).json({
+      message: 'Membership updated successfully',
+      membershipDeadline: user.membershipDeadline
+    });
+  } catch (err) {
+    console.error('UPDATE MEMBERSHIP ERROR:', err);
+    res.status(500).json({ message: 'Failed to update membership', error: err.message });
+  }
+};
+
+// ==============================
+// NEW: Get All Clients for Trainer
+// ==============================
+export const getClients = async (req, res) => {
+  try {
+    // Exclude the current user (trainer) and return all other users
+    const clients = await User.find({ _id: { $ne: req.user._id } }).select('-password');
+    res.status(200).json(clients);
+  } catch (err) {
+    console.error('GET CLIENTS ERROR:', err);
+    res.status(500).json({ message: 'Failed to fetch clients', error: err.message });
 // ✅ Upload profile photo using Cloudinary
 export const uploadProfilePhoto = async (req, res) => {
   if (!req.file || !req.file.buffer) {

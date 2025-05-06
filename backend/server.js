@@ -1,8 +1,11 @@
+// server.js
+
 // server.js or index.js
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
+
 import path from 'path';
 import fs from 'fs';
 
@@ -14,9 +17,13 @@ console.log('🌐 ENV Check:', {
   API_SECRET: process.env.CLOUDINARY_API_SECRET ? '✅ Present' : '❌ Missing',
 });
 
-// Routes
 import profileRoutes from './routes/profileRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import calendarRoutes from './routes/calendarRoutes.js';
+import { router as achievementRoutes } from './routes/Achievement.js';
+import workoutPlanRoutes from './routes/workoutPlanRoutes.js';
+
+dotenv.config();
 import supplementRoutes from './routes/supplementRoutes.js';
 import trainerRoutes from './routes/trainerRoutes.js'; // ADD THIS LINE
 
@@ -36,6 +43,12 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.resolve('uploads')));
 
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/calendar', calendarRoutes);
+app.use('/api/achievements', achievementRoutes);
+app.use('/api/workouts', workoutPlanRoutes);  // Updated endpoint for workout plans
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
@@ -51,6 +64,8 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(async () => {
     console.log('✅ MongoDB connected');
+    app.listen(process.env.PORT || 5000, () => {
+      console.log(`🚀 Server running at http://localhost:${process.env.PORT || 5000}`);
 
     await createAdminUser();
 

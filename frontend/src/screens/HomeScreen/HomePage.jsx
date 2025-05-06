@@ -186,6 +186,25 @@ const HomeScreen = ({ route }) => {
           {filteredWorkouts.map((item) => renderFlippableCard(item))}
         </ScrollView>
 
+        {/* Buttons */}
+        <View style={styles.buttonGroup}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => navigation.navigate('GoalSelection')}
+          >
+            <Icon name="track-changes" size={22} color="#FEC400" />
+            <Text style={styles.actionButtonText}>Update Your Goal</Text>
+          </TouchableOpacity>
+
+          {/* NEW Trainer Dashboard Button */}
+          <TouchableOpacity
+            style={[styles.actionButton, { marginTop: 15 }]}
+            onPress={() => navigation.navigate('TrainerDashboard')}
+          >
+            <Icon name="fitness-center" size={22} color="#FEC400" />
+            <Text style={styles.actionButtonText}>Go to Trainer Dashboard</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.buttonGroup} />
       </ScrollView>
       <BottomTabBar />
@@ -320,6 +339,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#1E1E1E',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FEC400',
+
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
