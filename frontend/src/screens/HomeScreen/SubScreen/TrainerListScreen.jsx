@@ -10,34 +10,36 @@ import {
 import Toast from 'react-native-toast-message';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../../config/config';
+import BottomTabBar from '../../../components/BottomTabBar';
+import { useTheme } from '../../../navigation/ThemeProvider';
 
 const TrainerListScreen = () => {
   const [trainers, setTrainers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { isDarkMode } = useTheme();
+  const styles = getStyles(isDarkMode);
 
   const fetchTrainers = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
-      console.log('Token:', token);
-  
       const response = await fetch(`${BASE_URL}/trainers`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-  
+
       if (!response.ok) {
         const errorText = await response.text();
         Toast.show({
           type: 'error',
-          text1: `Trainer Fetch Error`,
+          text1: 'Trainer Fetch Error',
           text2: `Error ${response.status}: ${errorText}`,
         });
         setError('Failed to load trainer data. Please try again.');
         return;
       }
-  
+
       const data = await response.json();
       setTrainers(data);
     } catch (err) {
@@ -90,58 +92,62 @@ const TrainerListScreen = () => {
         </ScrollView>
       )}
       <Toast />
+      <BottomTabBar />
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    backgroundColor: '#fff',
-    flex: 1,
-  },
-  header: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 15,
-  },
-  card: {
-    flexDirection: 'row',
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    alignItems: 'center',
-    elevation: 2,
-  },
-  image: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    marginRight: 15,
-  },
-  details: {
-    flex: 1,
-  },
-  name: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  bio: {
-    fontSize: 14,
-    color: '#555',
-  },
-  specialties: {
-    fontSize: 14,
-    color: '#333',
-    marginTop: 5,
-  },
-  errorText: {
-    color: 'red',
-    textAlign: 'center',
-    marginTop: 20,
-  },
-});
+const getStyles = (isDarkMode) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 20,
+      backgroundColor: isDarkMode ? '#1c1c1c' : '#fff',
+    },
+    header: {
+      fontSize: 22,
+      fontWeight: 'bold',
+      marginBottom: 15,
+      color: isDarkMode ? '#fff' : '#000',
+    },
+    card: {
+      flexDirection: 'row',
+      backgroundColor: isDarkMode ? '#2a2a2a' : '#f9f9f9',
+      borderRadius: 10,
+      padding: 15,
+      marginBottom: 15,
+      alignItems: 'center',
+      elevation: 2,
+    },
+    image: {
+      width: 70,
+      height: 70,
+      borderRadius: 35,
+      marginRight: 15,
+    },
+    details: {
+      flex: 1,
+    },
+    name: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginBottom: 4,
+      color: isDarkMode ? '#fff' : '#000',
+    },
+    bio: {
+      fontSize: 14,
+      color: isDarkMode ? '#ccc' : '#555',
+    },
+    specialties: {
+      fontSize: 14,
+      color: isDarkMode ? '#ddd' : '#333',
+      marginTop: 5,
+    },
+    errorText: {
+      color: 'red',
+      textAlign: 'center',
+      marginTop: 20,
+    },
+  });
 
 export default TrainerListScreen;

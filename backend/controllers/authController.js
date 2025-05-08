@@ -1,3 +1,5 @@
+// controllers/authController.js
+
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
@@ -71,8 +73,7 @@ export const signup = async (req, res) => {
   }
 };
 
-// User Login Route (Modified for testing 3-day streak)
-// ✅ Login Controller
+
 export const login = async (req, res) => {
   const { username, password } = req.body;
 
@@ -87,6 +88,26 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    // 🧠 Login Streak Logic
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+    let updatedStreak = user.loginStreak;
+
+    if (user.lastLoginDate === today) {
+      // Already logged in today – do not increase streak
+      updatedStreak = user.loginStreak;
+    } else if (user.lastLoginDate === yesterday) {
+      // Consecutive login
+      updatedStreak += 1;
+    } else {
+      // Missed day(s) – reset streak
+      updatedStreak = 1;
+    }
+
+    user.lastLoginDate = today;
+    user.loginStreak = updatedStreak;
+    await user.save();
 
     // 🔧 FOR TESTING: Force 3-day login streak
     const today = new Date();
@@ -117,13 +138,27 @@ export const login = async (req, res) => {
       token,
       isAdmin: user.isAdmin,
       username: user.username,
-
+      loginStreak: user.loginStreak,
+      lastLoginDate: user.lastLoginDate,
     });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ message: 'Login failed', error: err.message });
   }
 };
+
+
+// ✅ Logout Controller
+export const logout = async (req, res) => {
+  try {
+    res.status(200).json({ message: 'Logout successful' });
+  } catch (err) {
+    console.error('Logout error:', err);
+    res.status(500).json({ message: 'Logout failed', error: err.message });
+  }
+};
+
+// ✅ Get current authenticated user
 
 // Get Current User
 export const getCurrentUser = async (req, res) => {
@@ -132,6 +167,7 @@ export const getCurrentUser = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.status(200).json(user);
 // ✅ Get Current Authenticated User
+
 export const getCurrentUser = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select('-password');
@@ -152,6 +188,7 @@ export const getCurrentUser = async (req, res) => {
   }
 };
 
+
 // Logout Route
 
 // ✅ Logout Controller
@@ -164,3 +201,4 @@ export const logout = async (req, res) => {
     res.status(500).json({ message: 'Logout failed', error: err.message });
   }
 };
+
