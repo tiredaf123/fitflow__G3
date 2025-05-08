@@ -3,13 +3,19 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import Achievement from '../models/Achievement.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default_jwt_secret';
-
 if (!process.env.JWT_SECRET) {
-  console.warn('⚠️ Warning: JWT_SECRET is not defined in .env file. Using fallback default.');
+  console.warn('⚠️ JWT_SECRET not defined, using default secret');
 }
 
+// Helper: generate a JWT for a user ID
+const generateToken = (id) => {
+  return jwt.sign({ id }, JWT_SECRET, { expiresIn: '7d' });
+};
+
+// User Signup Route
 // 🔐 Generate JWT
 const generateToken = (user) => {
   return jwt.sign(
@@ -27,13 +33,15 @@ export const signup = async (req, res) => {
   const { fullName, username, email, password } = req.body;
 
   try {
+    // Check for existing username
+    if (await User.findOne({ username })) {
     const existingUser = await User.findOne({ username: username.toLowerCase() });
     if (existingUser) {
       return res.status(400).json({ message: 'Username already exists' });
     }
 
+    // Hash password & create user
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const user = await User.create({
       fullName,
       username: username.toLowerCase(),
@@ -41,6 +49,16 @@ export const signup = async (req, res) => {
       password: hashedPassword,
     });
 
+    // Create welcome achievement
+    await Achievement.create({
+      userId: user._id,
+      title: 'Welcome to FitFlow!',
+      description: 'You’ve joined the fitness journey. Let’s get started! 💪',
+      date: new Date(),
+    });
+
+    const token = generateToken(user._id);
+    res.status(201).json({ token, user });
     const token = generateToken(user);
 
     res.status(201).json({
@@ -55,7 +73,7 @@ export const signup = async (req, res) => {
   }
 };
 
-// ✅ Login Controller with Streak Logic
+
 export const login = async (req, res) => {
   const { username, password } = req.body;
 
@@ -91,6 +109,28 @@ export const login = async (req, res) => {
     user.loginStreak = updatedStreak;
     await user.save();
 
+    // 🔧 FOR TESTING: Force 3-day login streak
+    const today = new Date();
+    user.lastLoginDate = today;
+    user.loginStreak = 3;
+    await user.save();
+
+    // 💥 Always give 3-day login streak achievement
+    const exists = await Achievement.findOne({
+      userId: user._id,
+      title: '3-Day Login Streak!',
+    });
+    if (!exists) {
+      await Achievement.create({
+        userId: user._id,
+        title: '3-Day Login Streak!',
+        description: 'Logged in 3 days in a row. Keep it going! 🔥',
+        date: today,
+      });
+    }
+
+    const token = generateToken(user._id);
+    res.status(200).json({ token, user });
     const token = generateToken(user);
 
     res.status(200).json({
@@ -107,6 +147,7 @@ export const login = async (req, res) => {
   }
 };
 
+
 // ✅ Logout Controller
 export const logout = async (req, res) => {
   try {
@@ -118,6 +159,15 @@ export const logout = async (req, res) => {
 };
 
 // ✅ Get current authenticated user
+
+// Get Current User
+export const getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.status(200).json(user);
+// ✅ Get Current Authenticated User
+
 export const getCurrentUser = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select('-password');
@@ -137,3 +187,18 @@ export const getCurrentUser = async (req, res) => {
     res.status(500).json({ message: 'Failed to get current user', error: err.message });
   }
 };
+
+
+// Logout Route
+
+// ✅ Logout Controller
+export const logout = async (req, res) => {
+  try {
+    // Optionally revoke token if using sessions or token blacklist
+    res.status(200).json({ message: 'Logout successful' });
+  } catch (err) {
+    console.error('Logout error:', err);
+    res.status(500).json({ message: 'Logout failed', error: err.message });
+  }
+};
+

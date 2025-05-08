@@ -33,6 +33,7 @@ import MainDrawerNavigator from './MainDrawerNavigator';
 // Home & Profile Screens
 import HomePage from '../screens/HomeScreen/HomePage';
 import AchievementsScreen from '../screens/HomeScreen/AchievementsScreen';
+
 import ProfileScreen from '../screens/HomeScreen/ProfileScreen';
 import PersonalScreen from '../screens/HomeScreen/SubScreen/PersonalScreen';
 import GeneralScreen from '../screens/HomeScreen/SubScreen/GeneralScreen';
@@ -42,6 +43,14 @@ import HireCoachScreen from '../screens/HomeScreen/SubScreen/HireCoachScreen';
 import TrainerListScreen from '../screens/HomeScreen/SubScreen/TrainerListScreen';
 import AboutScreen from '../screens/HomeScreen/SubScreen/AboutScreen';
 import TermsAndConditionsScreen from '../screens/HomeScreen/SubScreen/TermsAndConditionsScreen';
+import AdminPanel from '../Admin/AdminPanel';
+import CalenderScreen from '../screens/HomeScreen/CalenderScreen';
+import WeightInScreen from '../screens/HomeScreen/WeightInScreen';
+import WeightGoalScreen from '../screens/HomeScreen/WeightGoalScreen';
+
+// Drawer
+import MainDrawerNavigator from './MainDrawerNavigator';
+
 import StreakScreen from '../screens/HomeScreen/SubScreen/StreakScreen';
 import CalendarScreen from '../screens/HomeScreen/CalenderScreen';
 import FoodManagerScreen from '../screens/HomeScreen/FoodManagerScreen';
@@ -56,20 +65,21 @@ import Progress from '../components/SideBar/Progress';
 import Classes from '../components/SideBar/Classes';
 import Nutrition from '../components/SideBar/Nutrition';
 
+// Trainer screens imported from src/Trainer/
+import TrainerDashboard from '../Trainer/trainer';
+import MessageClient from '../Trainer/msgclient';
+import AddWorkout from '../Trainer/addworkout';
+import Notification from '../Trainer/notif';
+
 const Stack = createStackNavigator();
+
+export default function AppNavigator() {
 
 function AppNavigator() {
   const { isDarkMode } = useTheme();
 
-  const themeStyles = {
-    container: {
-      flex: 1,
-      backgroundColor: isDarkMode ? '#1e1e1e' : '#F0F0F0',
-    },
-  };
-
   return (
-    <View style={themeStyles.container}>
+    <View style={{ flex: 1, backgroundColor: isDarkMode ? '#1e1e1e' : '#F0F0F0' }}>
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Welcome">
 
@@ -87,6 +97,7 @@ function AppNavigator() {
           {/* Main Drawer */}
           <Stack.Screen name="DashboardScreen" component={MainDrawerNavigator} />
 
+          {/* Core Screens */}
           {/* App Screens */}
           <Stack.Screen name="HomeScreen" component={HomePage} />
           <Stack.Screen name="WorkoutScreen" component={WorkoutScreen} />
@@ -121,6 +132,9 @@ function AppNavigator() {
           {/* Utility & Management */}
           <Stack.Screen name="Calendar" component={CalendarScreen} />
           <Stack.Screen name="FoodManager" component={FoodManagerScreen} />
+          <Stack.Screen name="WeightGoal" component={WeightGoalScreen} />
+          <Stack.Screen name="WeightIn" component={WeightInScreen} />
+
           <Stack.Screen name="WeightIn" component={WeightInScreen} />
           <Stack.Screen name="WeightGoal" component={WeightGoalScreen} />
 
@@ -131,6 +145,11 @@ function AppNavigator() {
           <Stack.Screen name="Classes" component={Classes} />
           <Stack.Screen name="Nutrition" component={Nutrition} />
 
+          {/* Trainer Screens */}
+          <Stack.Screen name="TrainerDashboard" component={TrainerDashboard} />
+          <Stack.Screen name="MessageClient" component={MessageClient} />
+          <Stack.Screen name="AddWorkout" component={AddWorkout} />
+          <Stack.Screen name="NotificationScreen" component={Notification} />
         </Stack.Navigator>
       </NavigationContainer>
     </View>

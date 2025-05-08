@@ -15,6 +15,12 @@ const userSchema = new mongoose.Schema({
 
   photoURL: { type: String },
   isAdmin: { type: Boolean, default: false },
+  membershipDeadline: { type: Date, default: null },
+
+  // ✅ For login streak tracking
+  lastLoginDate: { type: Date },
+  loginStreak: { type: Number, default: 0 },
+
 
   // ✅ Login Streak Tracking Fields
   lastLoginDate: {
