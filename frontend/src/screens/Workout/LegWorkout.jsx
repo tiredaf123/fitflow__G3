@@ -9,33 +9,16 @@ import {
   Modal,
 } from 'react-native';
 import { useTheme } from '../../navigation/ThemeProvider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WebView } from 'react-native-webview';
 
 const exerciseData = [
-  {
-    name: 'Squats',
-    video: 'https://www.youtube.com/watch?v=NH4bYCenMxQ',
-  },
-  {
-    name: 'Lunges',
-    video: 'https://www.youtube.com/watch?v=RwVXSUmiXAo',
-  },
-  {
-    name: 'Leg Press',
-    video: 'https://www.youtube.com/embed/IZxyjW7MPJQ',
-  },
-  {
-    name: 'Leg Extension',
-    video: 'https://www.youtube.com/embed/YyvSfVjQeL0',
-  },
-  {
-    name: 'Calf Raises',
-    video: 'https://www.youtube.com/embed/-M4-G8p8fmc',
-  },
-  {
-    name: 'Hamstring Curls',
-    video: 'https://www.youtube.com/embed/s0nFz3cx0fs',
-  },
+  { name: 'Squats', video: 'https://www.youtube.com/watch?v=NH4bYCenMxQ' },
+  { name: 'Lunges', video: 'https://www.youtube.com/watch?v=RwVXSUmiXAo' },
+  { name: 'Leg Press', video: 'https://www.youtube.com/embed/IZxyjW7MPJQ' },
+  { name: 'Leg Extension', video: 'https://www.youtube.com/embed/YyvSfVjQeL0' },
+  { name: 'Calf Raises', video: 'https://www.youtube.com/embed/-M4-G8p8fmc' },
+  { name: 'Hamstring Curls', video: 'https://www.youtube.com/embed/s0nFz3cx0fs' },
 ];
 
 const LegWorkout = () => {
@@ -45,6 +28,11 @@ const LegWorkout = () => {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [videoUrl, setVideoUrl] = useState(null);
+  const [workoutStatus, setWorkoutStatus] = useState('incomplete');
+
+  useEffect(() => {
+    loadStatus();
+  }, []);
 
   useEffect(() => {
     let interval;
@@ -62,6 +50,24 @@ const LegWorkout = () => {
     const mins = Math.floor(secs / 60);
     const seconds = secs % 60;
     return `${String(mins).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+
+  const saveStatus = async (status) => {
+    try {
+      await AsyncStorage.setItem('legWorkoutStatus', status);
+      setWorkoutStatus(status);
+    } catch (error) {
+      console.log('Failed to save workout status', error);
+    }
+  };
+
+  const loadStatus = async () => {
+    try {
+      const status = await AsyncStorage.getItem('legWorkoutStatus');
+      if (status) setWorkoutStatus(status);
+    } catch (error) {
+      console.log('Failed to load workout status', error);
+    }
   };
 
   return (
@@ -85,6 +91,23 @@ const LegWorkout = () => {
           </TouchableOpacity>
 
           <Text style={styles.timerText}>{formatTime(secondsElapsed)}</Text>
+
+          <Text style={styles.statusLabel}>Status: {workoutStatus}</Text>
+
+          <View style={styles.statusButtons}>
+            {['incomplete', 'in progress', 'done'].map((status) => (
+              <TouchableOpacity
+                key={status}
+                style={[
+                  styles.statusButton,
+                  workoutStatus === status && styles.selectedStatus,
+                ]}
+                onPress={() => saveStatus(status)}
+              >
+                <Text style={styles.statusText}>{status}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </ImageBackground>
 
@@ -105,17 +128,10 @@ const LegWorkout = () => {
       <Modal visible={!!videoUrl} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <TouchableOpacity
-              onPress={() => setVideoUrl(null)}
-              style={styles.closeButton}
-            >
+            <TouchableOpacity onPress={() => setVideoUrl(null)} style={styles.closeButton}>
               <Text style={styles.closeText}>Close</Text>
             </TouchableOpacity>
-            <WebView
-              source={{ uri: videoUrl }}
-              style={{ flex: 1 }}
-              allowsFullscreenVideo
-            />
+            <WebView source={{ uri: videoUrl }} style={{ flex: 1 }} allowsFullscreenVideo />
           </View>
         </View>
       </Modal>
@@ -140,6 +156,7 @@ const getStyles = (isDarkMode) =>
       alignItems: 'center',
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       borderRadius: 15,
+      padding: 10,
     },
     title: {
       fontSize: 28,
@@ -169,6 +186,29 @@ const getStyles = (isDarkMode) =>
       marginTop: 10,
       fontWeight: '600',
     },
+    statusLabel: {
+      color: '#fff',
+      marginTop: 15,
+      fontSize: 16,
+    },
+    statusButtons: {
+      flexDirection: 'row',
+      gap: 10,
+      marginTop: 10,
+    },
+    statusButton: {
+      backgroundColor: '#fff',
+      borderRadius: 15,
+      paddingVertical: 5,
+      paddingHorizontal: 10,
+    },
+    selectedStatus: {
+      backgroundColor: '#FFCC00',
+    },
+    statusText: {
+      color: '#000',
+      fontWeight: '600',
+    },
     exerciseList: {
       marginTop: 20,
       marginHorizontal: 20,
@@ -193,6 +233,7 @@ const getStyles = (isDarkMode) =>
     watchVideo: {
       color: '#FFCC00',
       fontWeight: 'bold',
+      fontSize: 18,
     },
     modalContainer: {
       flex: 1,

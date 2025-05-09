@@ -9,33 +9,16 @@ import {
   Modal,
 } from 'react-native';
 import { useTheme } from '../../navigation/ThemeProvider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WebView } from 'react-native-webview';
 
 const exerciseData = [
-  {
-    name: 'Bicep Curls',
-    video: 'https://www.youtube.com/embed/ykJmrZ5v0Oo', // 🔗 YouTube link
-  },
-  {
-    name: 'Preacher Curl',
-    video: 'https://www.youtube.com/embed/IaZGv2ZC4Q4', // 🔗 YouTube link
-  },
-  {
-    name: 'Overhead Press',
-    video: 'https://www.youtube.com/embed/2yjwXTZQDDI', // 🔗 YouTube link
-  },
-  {
-    name: 'Bench Dip',
-    video: 'https://www.youtube.com/embed/6kALZikXxLc', // 🔗 YouTube link
-  },
-  {
-    name: 'Skull Crusher',
-    video: 'https://www.youtube.com/embed/d_KZxkY_0cM', // 🔗 YouTube link
-  },
-  {
-    name: 'Triceps Pushdown',
-    video: 'https://www.youtube.com/embed/2-LAMcpzODU', // 🔗 YouTube link
-  },
+  { name: 'Bicep Curls', video: 'https://www.youtube.com/embed/ykJmrZ5v0Oo' },
+  { name: 'Preacher Curl', video: 'https://www.youtube.com/embed/IaZGv2ZC4Q4' },
+  { name: 'Overhead Press', video: 'https://www.youtube.com/embed/2yjwXTZQDDI' },
+  { name: 'Bench Dip', video: 'https://www.youtube.com/embed/6kALZikXxLc' },
+  { name: 'Skull Crusher', video: 'https://www.youtube.com/embed/d_KZxkY_0cM' },
+  { name: 'Triceps Pushdown', video: 'https://www.youtube.com/embed/2-LAMcpzODU' },
 ];
 
 const ArmsWorkout = () => {
@@ -45,6 +28,11 @@ const ArmsWorkout = () => {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [videoUrl, setVideoUrl] = useState(null);
+  const [workoutStatus, setWorkoutStatus] = useState('incomplete');
+
+  useEffect(() => {
+    loadStatus();
+  }, []);
 
   useEffect(() => {
     let interval;
@@ -62,6 +50,24 @@ const ArmsWorkout = () => {
     const mins = Math.floor(secs / 60);
     const seconds = secs % 60;
     return `${String(mins).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+
+  const saveStatus = async (status) => {
+    try {
+      await AsyncStorage.setItem('armsWorkoutStatus', status);
+      setWorkoutStatus(status);
+    } catch (error) {
+      console.log('Failed to save workout status', error);
+    }
+  };
+
+  const loadStatus = async () => {
+    try {
+      const status = await AsyncStorage.getItem('armsWorkoutStatus');
+      if (status) setWorkoutStatus(status);
+    } catch (error) {
+      console.log('Failed to load workout status', error);
+    }
   };
 
   return (
@@ -85,6 +91,25 @@ const ArmsWorkout = () => {
           </TouchableOpacity>
 
           <Text style={styles.timerText}>{formatTime(secondsElapsed)}</Text>
+
+          <Text style={styles.statusLabel}>Status: {workoutStatus}</Text>
+
+          <View style={styles.statusButtons}>
+            {['incomplete', 'in progress', 'done'].map((status) => (
+              <TouchableOpacity
+                key={status}
+                style={[
+                  styles.statusButton,
+                  workoutStatus === status && styles.selectedStatus,
+                ]}
+                onPress={() => saveStatus(status)}
+              >
+                <Text style={styles.statusText}>
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </ImageBackground>
 
@@ -170,6 +195,29 @@ const getStyles = (isDarkMode) =>
       marginTop: 10,
       fontWeight: '600',
     },
+    statusLabel: {
+      color: '#fff',
+      marginTop: 15,
+      fontSize: 16,
+    },
+    statusButtons: {
+      flexDirection: 'row',
+      gap: 10,
+      marginTop: 10,
+    },
+    statusButton: {
+      backgroundColor: '#fff',
+      borderRadius: 15,
+      paddingVertical: 5,
+      paddingHorizontal: 10,
+    },
+    selectedStatus: {
+      backgroundColor: '#FFCC00',
+    },
+    statusText: {
+      color: '#000',
+      fontWeight: '600',
+    },
     exerciseList: {
       marginTop: 20,
       marginHorizontal: 20,
@@ -194,6 +242,7 @@ const getStyles = (isDarkMode) =>
     watchVideo: {
       color: '#FFCC00',
       fontWeight: 'bold',
+      fontSize: 18,
     },
     modalContainer: {
       flex: 1,
