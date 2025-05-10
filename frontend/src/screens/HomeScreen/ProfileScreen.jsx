@@ -58,8 +58,12 @@ const ProfileScreen = () => {
         navigation.reset({ index: 0, routes: [{ name: 'Login_Page' }] });
       }
     };
+
+    // Fetch on mount and on screen focus
     fetchUser();
-  }, []);
+    const unsubscribe = navigation.addListener('focus', fetchUser);
+    return unsubscribe;
+  }, [navigation]);
 
   const chooseImage = () => {
     Alert.alert('Update Profile Photo', 'Choose a method', [
@@ -190,19 +194,18 @@ const ProfileScreen = () => {
     <View style={themeStyles.container}>
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={styles.profileHeader}>
-          <Image
-            source={photoURL ? { uri: photoURL } : require('../../assets/Images/profile.png')}
-            style={styles.profileImage}
-          />
-          <TouchableOpacity style={styles.editButton} onPress={chooseImage}>
-            <Icon name="edit" size={20} color="#FFF" />
-          </TouchableOpacity>
+          <View style={{ position: 'relative' }}>
+            <Image
+              source={photoURL ? { uri: photoURL } : require('../../assets/Images/profile.png')}
+              style={styles.profileImage}
+            />
+            <TouchableOpacity style={styles.editButton} onPress={chooseImage}>
+              <Icon name="edit" size={20} color="#FFF" />
+            </TouchableOpacity>
+          </View>
           {uploading && <ActivityIndicator size="small" color="#FF6B00" style={{ marginTop: 8 }} />}
           <Text style={[styles.name, themeStyles.text]}>{fullName || username || 'Loading...'}</Text>
           <Text style={[styles.email, themeStyles.text]}>{email || 'Fetching email...'}</Text>
-          <Text style={[themeStyles.text, { marginTop: 5 }]}>Height: {height} cm</Text>
-          <Text style={[themeStyles.text]}>Weight: {weight} kg</Text>
-          <Text style={[themeStyles.text]}>Goal: {goal}</Text>
         </View>
 
         <View style={themeStyles.settingsSection}>
@@ -266,8 +269,8 @@ const styles = StyleSheet.create({
   },
   editButton: {
     position: 'absolute',
-    right: 40,
-    bottom: 15,
+    top: 0,
+    right: 0,
     backgroundColor: '#FF6B00',
     padding: 6,
     borderRadius: 20,

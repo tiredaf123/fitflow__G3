@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -21,12 +21,28 @@ const Login_Page = () => {
   const navigation = useNavigation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
 
   const showToast = (type, text1, text2) => {
     Toast.show({ type, text1, text2 });
   };
 
-  // ---- START: STREAK TRACKER ----
+  useEffect(() => {
+    const checkStoredLogin = async () => {
+      const token = await AsyncStorage.getItem('token');
+      const remember = await AsyncStorage.getItem('rememberMe');
+      const isAdmin = await AsyncStorage.getItem('isAdmin');
+
+      if (token && remember === 'true') {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: isAdmin === 'true' ? 'AdminPanel' : 'HomeScreen' }],
+        });
+      }
+    };
+    checkStoredLogin();
+  }, []);
+
   const updateLoginStreak = async () => {
     const today = new Date().toISOString().split('T')[0];
     const storedDate = await AsyncStorage.getItem('last_login_date');
@@ -37,13 +53,12 @@ const Login_Page = () => {
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterDateStr = yesterday.toISOString().split('T')[0];
 
-      let newStreak = (storedDate === yesterDateStr) ? storedStreak + 1 : 1;
+      let newStreak = storedDate === yesterDateStr ? storedStreak + 1 : 1;
 
       await AsyncStorage.setItem('login_streak', newStreak.toString());
       await AsyncStorage.setItem('last_login_date', today);
     }
   };
-  // ---- END: STREAK TRACKER ----
 
   const handleLogin = async () => {
     if (!username || !password) {
@@ -62,17 +77,21 @@ const Login_Page = () => {
 
       if (res.ok) {
         await AsyncStorage.setItem('token', data.token);
-
         await AsyncStorage.setItem('isAdmin', data.isAdmin ? 'true' : 'false');
+        if (rememberMe) {
+          await AsyncStorage.setItem('rememberMe', 'true');
+        } else {
+          await AsyncStorage.removeItem('rememberMe');
+        }
 
+        await updateLoginStreak();
 
         showToast('success', 'Login Successful', 'Welcome back!');
 
-        if (data.isAdmin) {
-          navigation.reset({ index: 0, routes: [{ name: 'AdminPanel' }] });
-        } else {
-          navigation.reset({ index: 0, routes: [{ name: 'HomeScreen' }] });
-        }
+        navigation.reset({
+          index: 0,
+          routes: [{ name: data.isAdmin ? 'AdminPanel' : 'HomeScreen' }],
+        });
       } else {
         showToast('error', 'Login Failed', data.message || 'Incorrect credentials');
       }
@@ -103,6 +122,13 @@ const Login_Page = () => {
             onChangeText={setPassword}
             value={password}
           />
+        </View>
+
+        <View style={styles.rememberMeContainer}>
+          <TouchableOpacity onPress={() => setRememberMe(!rememberMe)} style={styles.checkbox}>
+            <View style={[styles.checkboxBox, rememberMe && styles.checkboxChecked]} />
+            <Text style={styles.checkboxLabel}>Remember Me</Text>
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
@@ -159,6 +185,33 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderWidth: 1,
     borderColor: '#ccc',
+  },
+  rememberMeContainer: {
+    width: '90%',
+    alignItems: 'flex-start',
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  checkbox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkboxBox: {
+    width: 20,
+    height: 20,
+    borderWidth: 1,
+    borderRadius: 100,
+    marginLeft: 8,
+    borderColor: '#FFF',
+    backgroundColor: 'transparent',
+    marginRight: 10,
+  },
+  checkboxChecked: {
+    backgroundColor: '#FFD700',
+  },
+  checkboxLabel: {
+    color: '#FFF',
+    fontSize: width * 0.04,
   },
   loginButton: {
     backgroundColor: '#FFD700',

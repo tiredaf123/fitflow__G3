@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import BottomTabBar from '../../components/BottomTabBar';
 import { useTheme } from '../../navigation/ThemeProvider';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../config/config';
 
@@ -18,41 +18,43 @@ const DashboardScreen = () => {
   const [steps, setSteps] = useState(0);
   const [food, setFood] = useState(0);
 
-  useEffect(() => {
-    const fetchWeight = async () => {
-      try {
-        const token = await AsyncStorage.getItem('token');
-        const res = await fetch(`${BASE_URL}/profile/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+  const fetchWeight = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const res = await fetch(`${BASE_URL}/profile/weight`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-        const data = await res.json();
-        if (res.ok && data?.profile?.weight) {
-          const w = parseFloat(data.profile.weight);
-          setWeight(w.toString());
+      const data = await res.json();
+      if (res.ok && data?.currentWeight?.weight) {
+        const w = parseFloat(data.currentWeight.weight);
+        setWeight(w.toString());
 
-          const baseCalories = 22 * w;
-          const dailyCalories = Math.round(baseCalories);
-          const exerciseBurn = Math.round(dailyCalories * 0.2);
-          const waterIntake = Math.round(w * 35); // ml
-          const stepEstimate = Math.round(exerciseBurn * 20);
-          const foodCalories = dailyCalories + exerciseBurn;
+        const baseCalories = 22 * w;
+        const dailyCalories = Math.round(baseCalories);
+        const exerciseBurn = Math.round(dailyCalories * 0.2);
+        const waterIntake = Math.round(w * 35); // ml
+        const stepEstimate = Math.round(exerciseBurn * 20);
+        const foodCalories = dailyCalories + exerciseBurn;
 
-          setCalories(dailyCalories);
-          setExercise(exerciseBurn);
-          setWater(waterIntake);
-          setSteps(stepEstimate);
-          setFood(foodCalories);
-        }
-      } catch (err) {
-        console.error('Dashboard fetch weight error:', err);
+        setCalories(dailyCalories);
+        setExercise(exerciseBurn);
+        setWater(waterIntake);
+        setSteps(stepEstimate);
+        setFood(foodCalories);
       }
-    };
+    } catch (err) {
+      console.error('Dashboard fetch weight error:', err);
+    }
+  };
 
-    fetchWeight();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchWeight();
+    }, [])
+  );
 
   const themeStyles = {
     container: { flex: 1, backgroundColor: isDarkMode ? '#1a1a1a' : '#F0F0F0' },
@@ -143,7 +145,7 @@ const DashboardScreen = () => {
             name: 'balance-scale',
             text: 'Weight In',
             value: weight,
-            subtext: 'Last recorded from onboarding',
+            subtext: 'Last recorded from WeightIn',
             screen: 'WeightIn'
           },
           { name: 'bullseye', text: 'My Weight Goal & Plan', screen: 'WeightGoal' },
@@ -174,7 +176,7 @@ const DashboardScreen = () => {
           </TouchableOpacity>
         ))}
 
-        {/* ---- START: STREAK CARD ---- */}
+        {/* Streak Card */}
         <TouchableOpacity
           onPress={() => navigation.navigate('Streak')}
           style={[{
@@ -195,7 +197,6 @@ const DashboardScreen = () => {
           </View>
           <MaterialIcon name="chevron-right" size={24} color={themeStyles.iconColor} />
         </TouchableOpacity>
-        {/* ---- END: STREAK CARD ---- */}
       </ScrollView>
 
       <BottomTabBar />
