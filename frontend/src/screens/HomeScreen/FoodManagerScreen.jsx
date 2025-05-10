@@ -91,7 +91,6 @@ const FoodManagerScreen = () => {
       marginTop: 10,
       fontSize: 16,
       fontWeight: '500',
-   
       color: isDarkMode ? '#ccc' : '#444',
     },
   });
@@ -99,13 +98,16 @@ const FoodManagerScreen = () => {
   const handleSuggestMeals = () => {
     const curr = parseFloat(currentWeight);
     const goal = parseFloat(targetWeight);
-    if (!goal || isNaN(curr) || isNaN(goal)) {
+
+    // Check if both currentWeight and targetWeight are valid numbers
+    if (isNaN(curr) || isNaN(goal) || goal <= 0 || targetWeight.trim() === '') {
       Alert.alert('Please enter a valid target weight');
       return;
     }
 
     let plan;
     const diff = curr - goal;
+
     if (diff >= 5) {
       // Suggest weight loss meal
       plan = {
@@ -123,9 +125,9 @@ const FoodManagerScreen = () => {
           items: ['Vegetable soup', 'Tofu stir fry', 'Green salad'],
           calories: 350,
           protein: 25,
-        }
+        },
       };
-    } else if (goal > curr + 5) {
+    } else if (goal && curr && goal > curr + 5) {
       // Suggest weight gain meal
       plan = {
         breakfast: {
@@ -142,7 +144,7 @@ const FoodManagerScreen = () => {
           items: ['Pasta with chicken', 'Greek yogurt', 'Mixed nuts'],
           calories: 600,
           protein: 35,
-        }
+        },
       };
     } else {
       // Maintenance plan
@@ -161,7 +163,7 @@ const FoodManagerScreen = () => {
           items: ['Grilled salmon', 'Brown rice', 'Steamed broccoli'],
           calories: 450,
           protein: 30,
-        }
+        },
       };
     }
 

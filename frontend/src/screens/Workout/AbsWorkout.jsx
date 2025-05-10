@@ -35,7 +35,7 @@ const exerciseData = [
   },
   {
     name: 'Flutter',
-    video: 'https://www.youtube.com/embed/K1VgfT4YjWY',
+    video: 'https://www.youtube.com/watch?v=7U_piQpfGws',
   },
 ];
 

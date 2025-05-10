@@ -95,7 +95,7 @@ const LegWorkout = () => {
           <Text style={styles.statusLabel}>Status: {workoutStatus}</Text>
 
           <View style={styles.statusButtons}>
-            {['incomplete', 'in progress', 'done'].map((status) => (
+            {['In complete', 'In progress', 'Done'].map((status) => (
               <TouchableOpacity
                 key={status}
                 style={[
@@ -104,7 +104,8 @@ const LegWorkout = () => {
                 ]}
                 onPress={() => saveStatus(status)}
               >
-                <Text style={styles.statusText}>{status}</Text>
+                <Text style={styles.statusText}>{status.charAt(0).toUpperCase() + status.slice(1)}</Text>
+
               </TouchableOpacity>
             ))}
           </View>
