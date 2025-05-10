@@ -1,5 +1,5 @@
 // screens/TrainerDashboard.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -30,6 +31,49 @@ const TrainerDashboard = () => {
     { title: 'Cardio Blast' },
   ]);
 
+  const [clientProgress, setClientProgress] = useState([]);
+
+  useEffect(() => {
+    loadClientProgress();
+  }, []);
+
+  const loadClientProgress = async () => {
+    try {
+      // Assuming that status keys for Abs, Leg, etc. are being saved in AsyncStorage
+      const johnProgress = {
+        name: 'John Doe',
+        abs: await AsyncStorage.getItem('absWorkoutStatus') || 'incomplete',
+        legs: await AsyncStorage.getItem('legWorkoutStatus') || 'incomplete',
+        back: await AsyncStorage.getItem('backWorkoutStatus') || 'incomplete',
+        arms: await AsyncStorage.getItem('armsWorkoutStatus') || 'incomplete',
+      };
+      const janeProgress = {
+        name: 'Jane Smith',
+        abs: await AsyncStorage.getItem('absWorkoutStatus') || 'incomplete',
+        legs: await AsyncStorage.getItem('legWorkoutStatus') || 'incomplete',
+        back: await AsyncStorage.getItem('backWorkoutStatus') || 'incomplete',
+        arms: await AsyncStorage.getItem('armsWorkoutStatus') || 'incomplete',
+      };
+
+      setClientProgress([johnProgress, janeProgress]);
+    } catch (error) {
+      console.log('Error loading client progress', error);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'incomplete':
+        return '#FFCC00';
+      case 'in progress':
+        return '#4CAF50';
+      case 'done':
+        return '#2196F3';
+      default:
+        return '#FFCC00';
+    }
+  };
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Header with Notifications */}
@@ -40,7 +84,6 @@ const TrainerDashboard = () => {
           style={styles.bellButton}
         >
           <Icon name="notifications" size={26} color="#333" />
-          {/* you can add a badge count here if needed */}
         </TouchableOpacity>
       </View>
 
@@ -55,14 +98,24 @@ const TrainerDashboard = () => {
         ))}
       </View>
 
-      {/* Clients Card */}
+      {/* Clients Card with Workout Progress */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>💼 Your Clients</Text>
-        {clients.map((client, index) => (
-          <TouchableOpacity key={index} style={styles.clientItem}>
+        {clientProgress.map((client, index) => (
+          <View key={index} style={styles.clientItem}>
             <Text style={styles.clientName}>{client.name}</Text>
-            <Text style={styles.clientStatus}>{client.status}</Text>
-          </TouchableOpacity>
+            {['abs', 'legs', 'back', 'arms'].map((workout) => (
+              <View key={workout} style={styles.progressRow}>
+                <Text style={styles.progressText}>{workout.toUpperCase()}</Text>
+                <View
+                  style={[
+                    styles.progressBar,
+                    { backgroundColor: getStatusColor(client[workout]) },
+                  ]}
+                />
+              </View>
+            ))}
+          </View>
         ))}
       </View>
 
@@ -152,18 +205,27 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   clientItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
   clientName: {
     fontSize: 16,
+    fontWeight: 'bold',
   },
-  clientStatus: {
+  progressRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 4,
+  },
+  progressText: {
     fontSize: 14,
-    color: '#888',
+    color: '#333',
+  },
+  progressBar: {
+    width: 100,
+    height: 10,
+    borderRadius: 5,
   },
   workoutItem: {
     paddingVertical: 8,
