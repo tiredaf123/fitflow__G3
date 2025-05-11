@@ -6,6 +6,10 @@ import { useTheme } from './ThemeProvider';
 
 // Screens
 import Welcome from '../screens/Welcome';
+import TrainerDashboard from '../trainerdashboard/trainer';
+import AddWorkout from '../trainerdashboard/addworkout';
+import NotifScreen from '../trainerdashboard/notifscreen';
+
 import AgeSelection from '../screens/AgeSelection';
 import GenderSelection from '../screens/GenderSelection';
 import HeightSelector from '../screens/HeightSelector';
@@ -45,6 +49,9 @@ import MessagesScreen from '../screens/HomeScreen/Message/MessagesScreen';
 
 // Drawer Navigator
 import MainDrawerNavigator from './MainDrawerNavigator';
+import ClientListScreen from '../trainerdashboard/ClientListScreen';
+import TrainerChatScreen from '../trainerdashboard/TrainerChat';
+import AllWorkouts from '../screens/HomeScreen/AllWorkouts';
 
 const Stack = createStackNavigator();
 
@@ -112,6 +119,13 @@ const AppNavigator = () => {
           <Stack.Screen name="Nutrition" component={Nutrition} />
           <Stack.Screen name="Trainer_LoginPage" component={Trainer_LoginPage} />
           <Stack.Screen name="Messages" component={MessagesScreen} />
+          <Stack.Screen name="AllWorkouts" component={AllWorkouts} />
+          {/* Trainer Dashboard Screens */}
+          <Stack.Screen name="TrainerDashboard" component={TrainerDashboard} />
+          <Stack.Screen name="AddWorkout" component={AddWorkout} />
+          <Stack.Screen name="TrainerChat" component={TrainerChatScreen} />
+          <Stack.Screen name="TrainerNotification" component={NotifScreen} />
+          <Stack.Screen name="ClientList" component={ClientListScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </View>

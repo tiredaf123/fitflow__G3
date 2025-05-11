@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Image,
   StyleSheet,
   Dimensions,
   ImageBackground,
@@ -17,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import { BASE_URL } from '../config/config';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const { width, height } = Dimensions.get('window');
 
@@ -24,6 +24,7 @@ const Login_Page = () => {
   const navigation = useNavigation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const showToast = (type, text1, text2) => {
     Toast.show({ type, text1, text2 });
@@ -65,58 +66,92 @@ const Login_Page = () => {
   };
 
   return (
-    <ImageBackground source={require('../assets/ExerciseImages/9.png')} style={styles.backgroundImage}>
-      <LinearGradient colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.8)']} style={styles.overlay}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
-            <View style={styles.container}>
-              <Text style={styles.title}>Access Your{"\n"}Fitness World</Text>
+    <ImageBackground 
+      source={require('../assets/ExerciseImages/9.png')} 
+      style={styles.backgroundImage}
+      blurRadius={2}
+    >
+      <LinearGradient 
+        colors={['rgba(0,0,0,0.6)', 'rgba(0,0,0,0.8)']} 
+        style={styles.overlay}
+      >
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+          style={styles.keyboardView}
+        >
+          <ScrollView 
+            contentContainerStyle={styles.scrollContainer} 
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.content}>
+              <Text style={styles.title}>Welcome Back</Text>
+              <Text style={styles.subtitle}>Sign in to continue</Text>
 
               <View style={styles.inputContainer}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Username"
-                  placeholderTextColor="#444"
-                  onChangeText={setUsername}
-                  value={username}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Password"
-                  placeholderTextColor="#444"
-                  secureTextEntry
-                  onChangeText={setPassword}
-                  value={password}
-                />
+                <View style={styles.inputWrapper}>
+                  <Icon name="person" size={20} color="#888" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Username"
+                    placeholderTextColor="#888"
+                    onChangeText={setUsername}
+                    value={username}
+                    autoCapitalize="none"
+                  />
+                </View>
+                
+                <View style={styles.inputWrapper}>
+                  <Icon name="lock" size={20} color="#888" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Password"
+                    placeholderTextColor="#888"
+                    secureTextEntry={!showPassword}
+                    onChangeText={setPassword}
+                    value={password}
+                  />
+                  <TouchableOpacity 
+                    style={styles.eyeIcon}
+                    onPress={() => setShowPassword(!showPassword)}
+                  >
+                    <Icon 
+                      name={showPassword ? "visibility-off" : "visibility"} 
+                      size={20} 
+                      color="#888" 
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
 
-              <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+              <TouchableOpacity 
+                style={styles.loginButton} 
+                onPress={handleLogin}
+                activeOpacity={0.8}
+              >
                 <Text style={styles.loginButtonText}>Login</Text>
               </TouchableOpacity>
 
-              <Text style={styles.orText}>or sign in with</Text>
-              <View style={styles.socialContainer}>
-                <TouchableOpacity style={styles.socialButton}>
-                  <Image source={require('../assets/Images/google.png')} style={styles.socialIcon} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.socialButton}>
-                  <Image source={require('../assets/Images/apple.png')} style={styles.socialIcon} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.socialButton}>
-                  <Image source={require('../assets/Images/twitter.png')} style={styles.socialIcon} />
+              <View style={styles.dividerContainer}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>Don't have an account?</Text>
+                <TouchableOpacity 
+                  onPress={() => navigation.navigate('SignUp_Page')}
+                >
+                  <Text style={styles.footerLink}>Sign Up</Text>
                 </TouchableOpacity>
               </View>
 
-              <Text style={styles.signupText}>Don't have an account?</Text>
-              <TouchableOpacity style={styles.signupButton} onPress={() => navigation.navigate('SignUp_Page')}>
-                <Text style={styles.signupButtonText}>SIGN UP</Text>
-              </TouchableOpacity>
-
-              {/* NEW Trainer Login Button */}
               <TouchableOpacity
-                style={styles.trainerLoginButton}
-                onPress={() => navigation.navigate('Trainer_LoginPage')}>
-                <Text style={styles.trainerLoginText}>LOGIN AS TRAINER</Text>
+                style={styles.trainerButton}
+                onPress={() => navigation.navigate('Trainer_LoginPage')}
+              >
+                <Text style={styles.trainerText}>Trainer Login</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -127,98 +162,118 @@ const Login_Page = () => {
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: { flex: 1, width: '100%', height: '100%' },
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   overlay: {
     flex: 1,
-    paddingHorizontal: width * 0.08,
+    paddingHorizontal: 24,
   },
-  container: { alignItems: 'center', paddingBottom: 40 },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  content: {
+    alignItems: 'center',
+    paddingBottom: 40,
+  },
   title: {
-    fontSize: width * 0.075,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#FFF',
-    textAlign: 'center',
-    marginBottom: height * 0.04,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: 100,
+    marginBottom: 8,
   },
-  inputContainer: { width: '100%', alignItems: 'center' },
+  subtitle: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.7)',
+    marginBottom: 40,
+  },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 24,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: 12,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+  },
   input: {
-    width: '90%',
-    paddingVertical: height * 0.015,
-    paddingHorizontal: width * 0.04,
-    borderRadius: 20,
-    marginBottom: height * 0.02,
-    fontSize: width * 0.045,
+    flex: 1,
+    height: 50,
+    fontSize: 16,
     color: '#000',
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#ccc',
+    paddingLeft: 8,
+  },
+  inputIcon: {
+    marginRight: 8,
+  },
+  eyeIcon: {
+    padding: 8,
   },
   loginButton: {
-    backgroundColor: '#FFD700',
-    paddingVertical: height * 0.018,
-    paddingHorizontal: width * 0.3,
-    borderRadius: 25,
-    marginTop: height * 0.02,
+    width: '100%',
+    backgroundColor: '#FFA500',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   loginButtonText: {
-    color: '#000',
-    fontSize: width * 0.05,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-  },
-  orText: {
-    marginTop: height * 0.03,
-    fontSize: width * 0.04,
-    fontWeight: '600',
     color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
-  socialContainer: {
+  dividerContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: height * 0.02,
+    alignItems: 'center',
+    width: '100%',
+    marginVertical: 24,
   },
-  socialButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    padding: 10,
-    borderRadius: 100,
-    marginHorizontal: width * 0.02,
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.3)',
   },
-  socialIcon: {
-    width: width * 0.12,
-    height: width * 0.12,
-    borderRadius: 100,
+  dividerText: {
+    color: 'rgba(255,255,255,0.7)',
+    paddingHorizontal: 12,
+    fontSize: 14,
   },
-  signupText: {
-    marginTop: height * 0.03,
-    fontSize: width * 0.045,
+  footer: {
+    flexDirection: 'row',
+    marginBottom: 24,
+  },
+  footerText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 14,
+  },
+  footerLink: {
+    color: '#FFA500',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  trainerButton: {
+    paddingVertical: 12,
+  },
+  trainerText: {
     color: '#FFF',
-  },
-  signupButton: {
-    backgroundColor: '#ffcc00',
-    paddingVertical: height * 0.015,
-    paddingHorizontal: width * 0.3,
-    borderRadius: 25,
-    marginTop: height * 0.015,
-  },
-  signupButtonText: {
-    fontSize: width * 0.05,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  trainerLoginButton: {
-    backgroundColor: '#FFF',
-    paddingVertical: height * 0.015,
-    paddingHorizontal: width * 0.3,
-    borderRadius: 25,
-    marginTop: height * 0.015,
-  },
-  trainerLoginText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000',
+    fontSize: 14,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });
 

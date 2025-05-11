@@ -9,6 +9,8 @@ import {
   Switch,
   ActivityIndicator,
   Alert,
+  Dimensions,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -18,6 +20,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../config/config';
 import Toast from 'react-native-toast-message';
 import ImagePicker from 'react-native-image-crop-picker';
+
+const { width } = Dimensions.get('window');
 
 const ProfileScreen = () => {
   const { isDarkMode, toggleTheme } = useTheme();
@@ -31,6 +35,7 @@ const ProfileScreen = () => {
   const [weight, setWeight] = useState('');
   const [goal, setGoal] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -56,6 +61,8 @@ const ProfileScreen = () => {
         console.error('Failed to fetch user profile', err);
         await AsyncStorage.removeItem('token');
         navigation.reset({ index: 0, routes: [{ name: 'Login_Page' }] });
+      } finally {
+        setLoadingProfile(false);
       }
     };
     fetchUser();
@@ -79,7 +86,7 @@ const ProfileScreen = () => {
       });
       uploadImage(image);
     } catch {
-      console.log('Camera cancelled');
+      // User cancelled
     }
   };
 
@@ -93,7 +100,7 @@ const ProfileScreen = () => {
       });
       uploadImage(image);
     } catch {
-      console.log('Gallery cancelled');
+      // User cancelled
     }
   };
 
@@ -121,6 +128,7 @@ const ProfileScreen = () => {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
         },
         body: formData,
       });
@@ -163,96 +171,171 @@ const ProfileScreen = () => {
     }
   };
 
-  // Dynamic mode label
-  const modeLabel = isDarkMode ? 'Light Mode' : 'Dark Mode';
-
   const themeStyles = {
     container: {
       flex: 1,
-      backgroundColor: isDarkMode ? '#1e1e1e' : '#F0F0F0',
+      backgroundColor: isDarkMode ? '#121212' : '#F9F9F9',
     },
     text: {
-      color: isDarkMode ? '#FFF' : '#222',
+      color: isDarkMode ? '#E0E0E0' : '#222',
     },
     settingItem: {
       flexDirection: 'row',
       alignItems: 'center',
-      padding: 18,
+      paddingVertical: 16,
+      paddingHorizontal: 20,
       borderBottomWidth: 1,
-      borderBottomColor: isDarkMode ? '#444' : '#EEE',
-      borderRadius: 12,
-      marginVertical: 4,
+      borderBottomColor: isDarkMode ? '#333' : '#E0E0E0',
     },
     settingsSection: {
-      backgroundColor: isDarkMode ? '#232323' : '#FFF',
-      borderRadius: 24,
-      marginHorizontal: 16,
-      marginVertical: 12,
-      padding: 10,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 8,
+      backgroundColor: isDarkMode ? '#1E1E1E' : '#FFFFFF',
+      borderRadius: 16,
+      marginHorizontal: 20,
+      marginVertical: 10,
+      shadowColor: isDarkMode ? '#000' : '#AAA',
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.1,
+      shadowRadius: 6,
       elevation: 4,
     },
   };
 
   return (
     <View style={themeStyles.container}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-        <View style={styles.profileHeader}>
-          <Image
-            source={photoURL ? { uri: photoURL } : require('../../assets/Images/profile.png')}
-            style={styles.profileImage}
-          />
-          <TouchableOpacity style={styles.editButton} onPress={chooseImage}>
-            <Icon name="edit" size={20} color="#FFF" />
-          </TouchableOpacity>
-          {uploading && <ActivityIndicator size="small" color="#FF6B00" style={{ marginTop: 8 }} />}
-          <Text style={[styles.name, themeStyles.text]}>{fullName || username || 'Loading...'}</Text>
-          <Text style={[styles.email, themeStyles.text]}>{email || 'Fetching email...'}</Text>
-          <Text style={[themeStyles.text, { marginTop: 5 }]}>Height: {height} cm</Text>
-          <Text style={[themeStyles.text]}>Weight: {weight} kg</Text>
-          <Text style={[themeStyles.text]}>Goal: {goal}</Text>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 110 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[styles.profileHeader, { backgroundColor: isDarkMode ? '#222' : '#FFF' }]}>
+          <View style={styles.imageWrapper}>
+            <Image
+              source={photoURL ? { uri: photoURL } : require('../../assets/Images/profile.png')}
+              style={styles.profileImage}
+            />
+            <TouchableOpacity style={styles.editButton} onPress={chooseImage} activeOpacity={0.7}>
+              <Icon name="edit" size={20} color="#FFF" />
+            </TouchableOpacity>
+            {uploading && (
+              <View style={styles.uploadingOverlay}>
+                <ActivityIndicator size="large" color="#FF6B00" />
+              </View>
+            )}
+          </View>
+          {loadingProfile ? (
+            <ActivityIndicator size="large" color={isDarkMode ? '#FF6B00' : '#FF6B00'} style={{ marginTop: 20 }} />
+          ) : (
+            <>
+              <Text style={[styles.name, themeStyles.text]}>{fullName || username || 'No Name'}</Text>
+              <Text style={[styles.email, themeStyles.text]}>{email || 'No Email'}</Text>
+              <View style={styles.infoRow}>
+                <Text style={[styles.infoLabel, themeStyles.text]}>Height:</Text>
+                <Text style={[styles.infoValue, themeStyles.text]}>{height ? `${height} cm` : '-'}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={[styles.infoLabel, themeStyles.text]}>Weight:</Text>
+                <Text style={[styles.infoValue, themeStyles.text]}>{weight ? `${weight} kg` : '-'}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={[styles.infoLabel, themeStyles.text]}>Goal:</Text>
+                <Text style={[styles.infoValue, themeStyles.text]}>{goal || '-'}</Text>
+              </View>
+            </>
+          )}
         </View>
 
+        {/* Settings Sections */}
         <View style={themeStyles.settingsSection}>
-          <TouchableOpacity style={themeStyles.settingItem} onPress={() => navigation.navigate('Personal')}>
+          <TouchableOpacity
+            style={themeStyles.settingItem}
+            onPress={() => navigation.navigate('Personal')}
+            activeOpacity={0.7}
+          >
             <Icon name="person" size={24} color={themeStyles.text.color} />
             <Text style={[styles.settingText, themeStyles.text]}>Personal</Text>
+            <Icon name="chevron-right" size={24} color={themeStyles.text.color} style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
-          <TouchableOpacity style={themeStyles.settingItem} onPress={() => navigation.navigate('General')}>
+
+          <TouchableOpacity
+            style={themeStyles.settingItem}
+            onPress={() => navigation.navigate('General')}
+            activeOpacity={0.7}
+          >
             <Icon name="tune" size={24} color={themeStyles.text.color} />
             <Text style={[styles.settingText, themeStyles.text]}>General</Text>
+            <Icon name="chevron-right" size={24} color={themeStyles.text.color} style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
-          <TouchableOpacity style={themeStyles.settingItem} onPress={() => navigation.navigate('Notification')}>
+
+          <TouchableOpacity
+            style={themeStyles.settingItem}
+            onPress={() => navigation.navigate('Notification')}
+            activeOpacity={0.7}
+          >
             <Icon name="notifications" size={24} color={themeStyles.text.color} />
             <Text style={[styles.settingText, themeStyles.text]}>Notification</Text>
+            <Icon name="chevron-right" size={24} color={themeStyles.text.color} style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
-          <TouchableOpacity style={themeStyles.settingItem} onPress={() => navigation.navigate('Help')}>
+
+          <TouchableOpacity
+            style={themeStyles.settingItem}
+            onPress={() => navigation.navigate('Help')}
+            activeOpacity={0.7}
+          >
             <Icon name="help" size={24} color={themeStyles.text.color} />
             <Text style={[styles.settingText, themeStyles.text]}>Help</Text>
+            <Icon name="chevron-right" size={24} color={themeStyles.text.color} style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
-          <TouchableOpacity style={themeStyles.settingItem} onPress={() => navigation.navigate('HireCoach')}>
+
+          <TouchableOpacity
+            style={themeStyles.settingItem}
+            onPress={() => navigation.navigate('HireCoach')}
+            activeOpacity={0.7}
+          >
             <Icon name="fitness-center" size={24} color={themeStyles.text.color} />
             <Text style={[styles.settingText, themeStyles.text]}>Hire a Coach</Text>
+            <Icon name="chevron-right" size={24} color={themeStyles.text.color} style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
-          <TouchableOpacity style={themeStyles.settingItem} onPress={() => navigation.navigate('Supplements')}>
+
+          <TouchableOpacity
+            style={themeStyles.settingItem}
+            onPress={() => navigation.navigate('Supplements')}
+            activeOpacity={0.7}
+          >
             <Icon name="local-pharmacy" size={24} color={themeStyles.text.color} />
             <Text style={[styles.settingText, themeStyles.text]}>Supplements</Text>
+            <Icon name="chevron-right" size={24} color={themeStyles.text.color} style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
-          <TouchableOpacity style={themeStyles.settingItem} onPress={handleLogout}>
+          <TouchableOpacity
+            style={themeStyles.settingItem}
+            onPress={() => navigation.navigate('AllWorkouts')}
+            activeOpacity={0.7}
+          >
+            <Icon name="fitness-center" size={24} color={themeStyles.text.color} />
+            <Text style={[styles.settingText, themeStyles.text]}>Workout by Trainers</Text>
+            <Icon name="chevron-right" size={24} color={themeStyles.text.color} style={{ marginLeft: 'auto' }} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[themeStyles.settingItem, { borderBottomWidth: 0 }]}
+            onPress={handleLogout}
+            activeOpacity={0.7}
+          >
             <Icon name="logout" size={24} color={themeStyles.text.color} />
             <Text style={[styles.settingText, themeStyles.text]}>Logout</Text>
           </TouchableOpacity>
+          
         </View>
 
         <View style={themeStyles.settingsSection}>
-          <View style={themeStyles.settingItem}>
+          <View style={[themeStyles.settingItem, { borderBottomWidth: 0 }]}>
             <Icon name="light-mode" size={24} color={themeStyles.text.color} />
-            <Text style={[styles.settingText, themeStyles.text]}>{modeLabel}</Text>
+            <Text style={[styles.settingText, themeStyles.text]}>Dark Mode</Text>
             <View style={{ flex: 1, alignItems: 'flex-end' }}>
-              <Switch value={isDarkMode} onValueChange={toggleTheme} />
+              <Switch
+                value={isDarkMode}
+                onValueChange={toggleTheme}
+                thumbColor={Platform.OS === 'android' ? (isDarkMode ? '#FF6B00' : '#f4f3f4') : undefined}
+                trackColor={{ false: '#767577', true: '#FF6B00' }}
+              />
             </View>
           </View>
         </View>
@@ -265,45 +348,82 @@ const ProfileScreen = () => {
 
 const styles = StyleSheet.create({
   profileHeader: {
+    marginTop: 30,
+    marginHorizontal: 20,
+    borderRadius: 16,
+    paddingVertical: 25,
+    paddingHorizontal: 20,
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 6,
+  },
+  imageWrapper: {
+    position: 'relative',
+    marginBottom: 15,
   },
   profileImage: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    borderWidth: 4,
-    borderColor: '#FF6B00',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
+    borderWidth: 3,
+    borderColor: '#FFD700',
+    backgroundColor: '#ddd',
   },
   editButton: {
     position: 'absolute',
-    right: 40,
-    bottom: 15,
+    bottom: 6,
+    right: 6,
     backgroundColor: '#FF6B00',
+    borderRadius: 20,
     padding: 8,
-    borderRadius: 24,
-    elevation: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#FF6B00',
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  uploadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   name: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    marginTop: 12,
-    color: '#FF6B00',
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 4,
   },
   email: {
-    fontSize: 15,
-    marginBottom: 12,
+    fontSize: 16,
     color: '#888',
+    marginBottom: 12,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    width: '80%',
+    justifyContent: 'space-between',
+    marginVertical: 3,
+  },
+  infoLabel: {
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  infoValue: {
+    fontSize: 16,
   },
   settingText: {
-    marginLeft: 18,
-    fontSize: 17,
+    marginLeft: 16,
+    fontSize: 16,
     fontWeight: '500',
   },
 });
