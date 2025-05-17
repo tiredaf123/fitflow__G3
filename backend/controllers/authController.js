@@ -1,5 +1,3 @@
-// controllers/authController.js
-
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
@@ -22,13 +20,20 @@ const generateToken = (user) => {
   );
 };
 
-// Signup controller
+// ✅ Signup Controller
 export const signup = async (req, res) => {
   try {
     const { fullName, username, email, password } = req.body;
 
-  try {
-    const existingUser = await User.findOne({ username: username.toLowerCase() });
+    const trimmedFullName = fullName?.trim();
+    const trimmedUsername = username?.trim().toLowerCase();
+    const trimmedEmail = email?.trim().toLowerCase();
+
+    if (!trimmedFullName || !trimmedUsername || !trimmedEmail || !password) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    const existingUser = await User.findOne({ username: trimmedUsername });
     if (existingUser) {
       return res.status(400).json({ message: 'Username already exists' });
     }
@@ -42,7 +47,7 @@ export const signup = async (req, res) => {
       password: hashedPassword,
     });
 
-    // Create welcome achievement
+    // Welcome Achievement
     await Achievement.create({
       userId: user._id,
       title: 'Welcome to FitFlow!',
@@ -50,10 +55,7 @@ export const signup = async (req, res) => {
       date: new Date(),
     });
 
-    const token = generateToken(user._id);
-    res.status(201).json({ token, user });
     const token = generateToken(user);
-
     res.status(201).json({
       message: 'Signup successful',
       token,
@@ -73,7 +75,7 @@ export const login = async (req, res) => {
 
   if (
     !username || typeof username !== 'string' || username.trim() === '' ||
-    !password || typeof password !== 'string' || password === ''
+    !password || typeof password !== 'string' || password.trim() === ''
   ) {
     return res.status(400).json({ message: 'Username and password are required' });
   }
@@ -90,55 +92,47 @@ export const login = async (req, res) => {
     }
 
     // 🧠 Login Streak Logic
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
     let updatedStreak = user.loginStreak;
 
-    if (user.lastLoginDate === today) {
-      // Already logged in today – do not increase streak
-      updatedStreak = user.loginStreak;
-    } else if (user.lastLoginDate === yesterday) {
-      // Consecutive login
+    if (user.lastLoginDate === todayStr) {
+      // Already logged in today – do nothing
+    } else if (user.lastLoginDate === yesterdayStr) {
       updatedStreak += 1;
     } else {
-      // Missed day(s) – reset streak
       updatedStreak = 1;
     }
 
-    user.lastLoginDate = today;
+    user.lastLoginDate = todayStr;
     user.loginStreak = updatedStreak;
     await user.save();
 
-    // 🔧 FOR TESTING: Force 3-day login streak
-    const today = new Date();
-    user.lastLoginDate = today;
-    user.loginStreak = 3;
-    await user.save();
-
-    // 💥 Always give 3-day login streak achievement
-    const exists = await Achievement.findOne({
-      userId: user._id,
-      title: '3-Day Login Streak!',
-    });
-    if (!exists) {
-      await Achievement.create({
+    // 🏆 Add 3-day login streak achievement
+    if (updatedStreak >= 3) {
+      const exists = await Achievement.findOne({
         userId: user._id,
         title: '3-Day Login Streak!',
-        description: 'Logged in 3 days in a row. Keep it going! 🔥',
-        date: today,
       });
+
+      if (!exists) {
+        await Achievement.create({
+          userId: user._id,
+          title: '3-Day Login Streak!',
+          description: 'Logged in 3 days in a row. Keep it going! 🔥',
+          date: new Date(),
+        });
+      }
     }
 
-    const token = generateToken(user._id);
-    res.status(200).json({ token, user });
     const token = generateToken(user);
-
     res.status(200).json({
       message: 'Login successful',
       token,
       isAdmin: user.isAdmin,
       username: user.username,
+      fullName: user.fullName,
       loginStreak: user.loginStreak,
       lastLoginDate: user.lastLoginDate,
     });
@@ -170,10 +164,7 @@ export const getCurrentUser = async (req, res) => {
   }
 };
 
-
-// Logout Route
-
-// Update user profile (fullName and phone)
+// ✅ Update Profile
 export const updateProfile = async (req, res) => {
   const { fullName, phone } = req.body;
 
@@ -186,11 +177,9 @@ export const updateProfile = async (req, res) => {
   }
 
   try {
-    const user = req.user; // ✅ already loaded in protect middleware
-
+    const user = req.user; // loaded by auth middleware
     user.fullName = fullName.trim();
     user.phone = phone !== undefined ? phone.trim() : user.phone;
-
     await user.save();
 
     res.status(200).json({
@@ -204,14 +193,13 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-// Logout controller (optional)
+// ✅ Logout (optional stateless)
 export const logout = async (req, res) => {
   try {
-    // If you implement token invalidation, do it here.
+    // Token invalidation can be handled via token blacklist if needed.
     res.status(200).json({ message: 'Logout successful' });
   } catch (err) {
     console.error('Logout error:', err);
     res.status(500).json({ message: 'Logout failed', error: err.message });
   }
 };
-
