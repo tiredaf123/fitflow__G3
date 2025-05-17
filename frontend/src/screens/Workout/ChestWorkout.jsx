@@ -8,6 +8,7 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Add this import for AsyncStorage
 import { useTheme } from '../../navigation/ThemeProvider';
 import { WebView } from 'react-native-webview';
 
@@ -38,6 +39,8 @@ const exerciseData = [
   },
 ];
 
+const STATUS_OPTIONS = ['Incomplete', 'In Progress', 'Done']; // Status options for tracking
+
 const ChestWorkout = () => {
   const { isDarkMode } = useTheme();
   const styles = getStyles(isDarkMode);
@@ -45,6 +48,7 @@ const ChestWorkout = () => {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [videoUrl, setVideoUrl] = useState(null);
+  const [status, setStatus] = useState('Incomplete'); // Track the workout status
 
   useEffect(() => {
     let interval;
@@ -57,6 +61,20 @@ const ChestWorkout = () => {
     }
     return () => clearInterval(interval);
   }, [isTimerRunning]);
+
+  useEffect(() => {
+    // Load saved status from AsyncStorage when component mounts
+    const loadStatus = async () => {
+      const savedStatus = await AsyncStorage.getItem('chestWorkoutStatus');
+      if (savedStatus) setStatus(savedStatus); // Set the loaded status if available
+    };
+    loadStatus();
+  }, []);
+
+  const handleStatusChange = async (newStatus) => {
+    setStatus(newStatus);
+    await AsyncStorage.setItem('chestWorkoutStatus', newStatus); // Save the new status to AsyncStorage
+  };
 
   const formatTime = (secs) => {
     const mins = Math.floor(secs / 60);
@@ -85,6 +103,29 @@ const ChestWorkout = () => {
           </TouchableOpacity>
 
           <Text style={styles.timerText}>{formatTime(secondsElapsed)}</Text>
+
+          {/* Workout status selector */}
+          <View style={styles.statusContainer}>
+            {STATUS_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option}
+                onPress={() => handleStatusChange(option)}
+                style={[
+                  styles.statusButton,
+                  status === option && styles.statusButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusButtonText,
+                    status === option && styles.statusButtonTextActive,
+                  ]}
+                >
+                  {option}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </ImageBackground>
 
@@ -168,6 +209,29 @@ const getStyles = (isDarkMode) =>
       color: '#fff',
       marginTop: 10,
       fontWeight: '600',
+    },
+    statusContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      marginTop: 15,
+      gap: 10,
+      flexWrap: 'wrap',
+    },
+    statusButton: {
+      paddingVertical: 8,
+      paddingHorizontal: 15,
+      backgroundColor: '#555',
+      borderRadius: 20,
+    },
+    statusButtonActive: {
+      backgroundColor: '#FFCC00',
+    },
+    statusButtonText: {
+      color: '#fff',
+      fontWeight: '500',
+    },
+    statusButtonTextActive: {
+      color: '#000',
     },
     exerciseList: {
       marginTop: 20,

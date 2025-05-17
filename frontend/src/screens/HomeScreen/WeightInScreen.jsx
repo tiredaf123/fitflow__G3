@@ -60,7 +60,8 @@ const WeightInScreen = () => {
       if (res.ok) {
         Toast.show({ type: 'success', text1: 'Weight saved' });
         setNewWeight('');
-        fetchWeightData();
+        fetchWeightData();  // Fetch and update data after saving
+        navigation.goBack();  // Navigate back to profile screen after saving
       } else {
         const errorData = await res.json();
         Toast.show({ type: 'error', text1: errorData.message || 'Save failed' });

@@ -8,35 +8,38 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../navigation/ThemeProvider';
 import { WebView } from 'react-native-webview';
 
 const exerciseData = [
   {
     name: 'Crunches',
-    video: 'https://www.youtube.com/embed/l4kQd9eWclE', // YouTube link
+    video: 'https://www.youtube.com/embed/l4kQd9eWclE',
   },
   {
     name: 'Plank',
-    video: 'https://www.youtube.com/embed/ASdvN_XEl_c', // YouTube link
+    video: 'https://www.youtube.com/embed/ASdvN_XEl_c',
   },
   {
     name: 'Mountain Climbers',
-    video: 'https://www.youtube.com/embed/cnyTQDSE884', // YouTube link
+    video: 'https://www.youtube.com/embed/cnyTQDSE884',
   },
   {
     name: 'Cable Crunches',
-    video: 'https://www.youtube.com/embed/k9Hd9ogZqKM', // YouTube link
+    video: 'https://www.youtube.com/embed/k9Hd9ogZqKM',
   },
   {
     name: 'Side Plank',
-    video: 'https://www.youtube.com/embed/K2VljzCC16g', // YouTube link
+    video: 'https://www.youtube.com/embed/K2VljzCC16g',
   },
   {
     name: 'Flutter',
-    video: 'https://www.youtube.com/embed/K1VgfT4YjWY', // YouTube link
+    video: 'https://www.youtube.com/watch?v=7U_piQpfGws',
   },
 ];
+
+const STATUS_OPTIONS = ['Incomplete', 'In Progress', 'Done'];
 
 const AbsWorkout = () => {
   const { isDarkMode } = useTheme();
@@ -45,6 +48,7 @@ const AbsWorkout = () => {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [videoUrl, setVideoUrl] = useState(null);
+  const [status, setStatus] = useState('Incomplete');
 
   useEffect(() => {
     let interval;
@@ -57,6 +61,20 @@ const AbsWorkout = () => {
     }
     return () => clearInterval(interval);
   }, [isTimerRunning]);
+
+  useEffect(() => {
+    // Load saved status from local storage
+    const loadStatus = async () => {
+      const savedStatus = await AsyncStorage.getItem('absWorkoutStatus');
+      if (savedStatus) setStatus(savedStatus);
+    };
+    loadStatus();
+  }, []);
+
+  const handleStatusChange = async (newStatus) => {
+    setStatus(newStatus);
+    await AsyncStorage.setItem('absWorkoutStatus', newStatus);
+  };
 
   const formatTime = (secs) => {
     const mins = Math.floor(secs / 60);
@@ -85,6 +103,29 @@ const AbsWorkout = () => {
           </TouchableOpacity>
 
           <Text style={styles.timerText}>{formatTime(secondsElapsed)}</Text>
+
+          {/* Workout status selector */}
+          <View style={styles.statusContainer}>
+            {STATUS_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option}
+                onPress={() => handleStatusChange(option)}
+                style={[
+                  styles.statusButton,
+                  status === option && styles.statusButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusButtonText,
+                    status === option && styles.statusButtonTextActive,
+                  ]}
+                >
+                  {option}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </ImageBackground>
 
@@ -130,7 +171,7 @@ const getStyles = (isDarkMode) =>
       backgroundColor: isDarkMode ? '#1A1A1A' : '#F5F5F5',
     },
     imageBackground: {
-      height: 300,
+      height: 370,
       margin: 20,
       borderRadius: 15,
     },
@@ -140,6 +181,7 @@ const getStyles = (isDarkMode) =>
       alignItems: 'center',
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       borderRadius: 15,
+      padding: 10,
     },
     title: {
       fontSize: 28,
@@ -168,6 +210,29 @@ const getStyles = (isDarkMode) =>
       color: '#fff',
       marginTop: 10,
       fontWeight: '600',
+    },
+    statusContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      marginTop: 15,
+      gap: 10,
+      flexWrap: 'wrap',
+    },
+    statusButton: {
+      paddingVertical: 8,
+      paddingHorizontal: 15,
+      backgroundColor: '#555',
+      borderRadius: 20,
+    },
+    statusButtonActive: {
+      backgroundColor: '#FFCC00',
+    },
+    statusButtonText: {
+      color: '#fff',
+      fontWeight: '500',
+    },
+    statusButtonTextActive: {
+      color: '#000',
     },
     exerciseList: {
       marginTop: 20,
