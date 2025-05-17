@@ -190,6 +190,13 @@ const AllWorkouts = () => {
     // 3. Present payment sheet
     const { error: paymentError } = await stripe.presentPaymentSheet();
 
+    // 👉 Handle user canceling the payment sheet
+    if (paymentError?.code === 'Canceled') {
+      console.warn('User canceled the payment flow');
+      updateState({ loading: false });
+      return;
+    }
+
     if (paymentError) throw paymentError;
 
     // 4. Confirm payment with backend - with retry logic
@@ -217,7 +224,6 @@ const AllWorkouts = () => {
           Alert.alert('Success', 'Your membership has been activated!');
           return;
         } else if (confirmData.status === 'processing') {
-          // Wait before retrying
           await new Promise(resolve => setTimeout(resolve, 2000));
           retries++;
         } else {
@@ -236,14 +242,21 @@ const AllWorkouts = () => {
       throw new Error('Payment is taking longer than expected. Please check back later.');
     }
   } catch (error) {
-    console.error('Payment error:', error);
+    console.warn('Payment canceled or failed:', error);
+
+    if (error?.code === 'Canceled') {
+      updateState({ loading: false });
+      return;
+    }
+
     let errorMessage = 'Failed to process payment';
     try {
-      const errorData = JSON.parse(error.message);
-      errorMessage = errorData.message || errorMessage;
-    } catch (e) {
+      const errorData = typeof error.message === 'string' ? JSON.parse(error.message) : {};
+      errorMessage = errorData.message || error.message || errorMessage;
+    } catch {
       errorMessage = error.message || errorMessage;
     }
+
     Alert.alert('Payment Error', errorMessage);
     updateState({ loading: false });
   }

@@ -22,29 +22,40 @@ const generateToken = (user) => {
 
 // Signup controller
 export const signup = async (req, res) => {
-  const { fullName, username, email, password } = req.body;
-
-  if (
-    !fullName || typeof fullName !== 'string' || fullName.trim() === '' ||
-    !username || typeof username !== 'string' || username.trim() === '' ||
-    !email || typeof email !== 'string' || email.trim() === '' ||
-    !password || typeof password !== 'string' || password.length < 6
-  ) {
-    return res.status(400).json({ message: 'Invalid signup data. Please provide all required fields with valid values.' });
-  }
-
   try {
-    const existingUser = await User.findOne({ username: username.toLowerCase() });
-    if (existingUser) {
+    const { fullName, username, email, password } = req.body;
+
+    // Validate inputs
+    if (!fullName?.trim() || !username?.trim() || !email?.trim() || !password || password.length < 6) {
+      return res.status(400).json({
+        message: 'All fields are required and password must be at least 6 characters long',
+      });
+    }
+
+    const trimmedUsername = username.toLowerCase().trim();
+    const trimmedEmail = email.toLowerCase().trim();
+    const trimmedFullName = fullName.trim();
+
+    // Check if username already exists
+    const existingUsername = await User.findOne({ username: trimmedUsername });
+    if (existingUsername) {
       return res.status(400).json({ message: 'Username already exists' });
     }
 
+    // Check if email already exists
+    const existingEmail = await User.findOne({ email: trimmedEmail });
+    if (existingEmail) {
+      return res.status(400).json({ message: 'Email already registered' });
+    }
+
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create new user
     const user = await User.create({
-      fullName: fullName.trim(),
-      username: username.toLowerCase().trim(),
-      email: email.toLowerCase().trim(),
+      fullName: trimmedFullName,
+      username: trimmedUsername,
+      email: trimmedEmail,
       password: hashedPassword,
     });
 
@@ -55,6 +66,7 @@ export const signup = async (req, res) => {
       token,
       isAdmin: user.isAdmin,
       username: user.username,
+      fullName: user.fullName,
     });
   } catch (err) {
     console.error('Signup error:', err);
