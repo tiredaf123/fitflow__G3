@@ -27,17 +27,17 @@ const HomeScreen = ({ route }) => {
 
   const [flippedCardId, setFlippedCardId] = useState(null);
   const flipAnimations = useRef({}).current;
-
   const scrollRef = useRef(null);
   const [selectedDate, setSelectedDate] = useState(moment());
   const [userName, setUserName] = useState('');
+  const [userPhoto, setUserPhoto] = useState(null);
 
   const daysOfWeek = Array.from({ length: 7 }, (_, i) =>
     moment().clone().add(i, 'days')
   );
 
   useEffect(() => {
-    const fetchUserName = async () => {
+    const fetchUserProfile = async () => {
       const token = await AsyncStorage.getItem('token');
       if (!token) return;
       try {
@@ -47,14 +47,15 @@ const HomeScreen = ({ route }) => {
         const data = await res.json();
         if (res.ok) {
           setUserName(data?.fullName || data?.username || '');
+          setUserPhoto(data?.photoURL || null);
         } else {
           console.error('Failed to fetch profile');
         }
       } catch (err) {
-        console.error('Error fetching user name:', err);
+        console.error('Error fetching user profile:', err);
       }
     };
-    fetchUserName();
+    fetchUserProfile();
   }, []);
 
   const themeStyles = StyleSheet.create({
@@ -121,7 +122,7 @@ const HomeScreen = ({ route }) => {
   return (
     <View style={themeStyles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Top Navbar */}
+        {/* Navbar */}
         <View style={styles.navbar}>
           <Text style={styles.title}>FitFlow</Text>
           <TouchableOpacity>
@@ -129,9 +130,12 @@ const HomeScreen = ({ route }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Profile Section */}
+        {/* Profile */}
         <View style={styles.profileWrapper}>
-          <Image source={require('../../assets/Images/profile.png')} style={styles.profileImage} />
+          <Image
+            source={userPhoto ? { uri: userPhoto } : require('../../assets/Images/profile.png')}
+            style={styles.profileImage}
+          />
           <View>
             <Text style={themeStyles.greetingText}>
               {userName ? `Welcome Back, ${userName}!` : 'Welcome Back!'}
@@ -149,10 +153,7 @@ const HomeScreen = ({ route }) => {
           snapToInterval={80}
           decelerationRate="fast"
           onContentSizeChange={() => {
-            scrollRef.current?.scrollTo({
-              x: 0,
-              animated: true,
-            });
+            scrollRef.current?.scrollTo({ x: 0, animated: true });
           }}
         >
           {daysOfWeek.map((day, index) => {
@@ -177,13 +178,21 @@ const HomeScreen = ({ route }) => {
         {/* Diet Plans */}
         <Text style={styles.sectionTitle}>Diet Plans 🍽️</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollRow}>
-          {dietFoods.map((item) => renderFlippableCard(item))}
+          {dietFoods.map((item, index) => (
+            <View style={{ paddingRight: index === dietFoods.length - 1 ? 20 : 0 }} key={item.id}>
+              {renderFlippableCard(item)}
+            </View>
+          ))}
         </ScrollView>
 
         {/* Workout Plans */}
         <Text style={styles.sectionTitle}>Workouts 💪</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollRow}>
-          {filteredWorkouts.map((item) => renderFlippableCard(item))}
+          {filteredWorkouts.map((item, index) => (
+            <View style={{ paddingRight: index === filteredWorkouts.length - 1 ? 20 : 0 }} key={item.id}>
+              {renderFlippableCard(item)}
+            </View>
+          ))}
         </ScrollView>
 
         {/* Buttons */}
@@ -223,7 +232,7 @@ const HomeScreen = ({ route }) => {
     });
 
     return (
-      <TouchableOpacity key={item.id} onPress={() => handleFlip(item.id)}>
+      <TouchableOpacity onPress={() => handleFlip(item.id)}>
         <View style={styles.cardContainer}>
           <Animated.View
             style={[styles.card, {
@@ -339,6 +348,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#1E1E1E',
+<<<<<<< HEAD
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -350,6 +360,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 3,
     elevation: 3,
+=======
+>>>>>>> Sohan
   },
   selectedDay: {
     backgroundColor: '#FEC400',
@@ -372,12 +384,12 @@ const styles = StyleSheet.create({
 });
 
 const workoutLibrary = [
-  { id: 'workout-1', name: 'Morning Yoga', goal: 'Improve Flexibility', image: require('../../assets/Images/yoga.png'), caloriesBurned: '100-150 kcal' },
-  { id: 'workout-2', name: 'HIIT Training', goal: 'Lose Weight', image: require('../../assets/Images/hiit.png') },
-  { id: 'workout-3', name: 'Strength Training', goal: 'Build Muscles', image: require('../../assets/Images/strength.png') },
-  { id: 'workout-4', name: 'Cardio Blast', goal: 'Lose Weight', image: require('../../assets/Images/cardio.png') },
-  { id: 'workout-5', name: 'Pilates', goal: 'Tone & Define', image: require('../../assets/Images/pilates.png') },
-  { id: 'workout-6', name: 'Stretching', goal: 'Improve Flexibility', image: require('../../assets/Images/stretching.png') },
+  { id: 'workout-1', name: 'Morning Yoga', goal: 'Improve Flexibility', image: require('../../assets/Images/yoga.png'), caloriesBurned: '100 kcal' },
+  { id: 'workout-2', name: 'HIIT Training', goal: 'Lose Weight', image: require('../../assets/Images/hiit.png'), caloriesBurned: '300 kcal' },
+  { id: 'workout-3', name: 'Strength Training', goal: 'Build Muscles', image: require('../../assets/Images/strength.png'), caloriesBurned: '250 kcal' },
+  { id: 'workout-4', name: 'Cardio Blast', goal: 'Lose Weight', image: require('../../assets/Images/cardio.png'), caloriesBurned: '280 kcal' },
+  { id: 'workout-5', name: 'Pilates', goal: 'Tone & Define', image: require('../../assets/Images/pilates.png'), caloriesBurned: '180 kcal' },
+  { id: 'workout-6', name: 'Stretching', goal: 'Improve Flexibility', image: require('../../assets/Images/stretching.png'), caloriesBurned: '70 kcal' },
 ];
 
 const dietFoods = [
