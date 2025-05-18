@@ -27,6 +27,8 @@ const HomeScreen = ({ route }) => {
 
   const [flippedCardId, setFlippedCardId] = useState(null);
   const flipAnimations = useRef({}).current;
+
+  const scrollRef = useRef(null);
   const [selectedDate, setSelectedDate] = useState(moment());
   const [userName, setUserName] = useState('');
   const [userPhoto, setUserPhoto] = useState(null);
@@ -132,6 +134,8 @@ const HomeScreen = ({ route }) => {
     <View style={themeStyles.container}>
       {/* Compact Header */}
       <View style={styles.header}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Navbar */}
         <View style={styles.navbar}>
           <Text style={styles.title}>FitFlow</Text>
           <TouchableOpacity>
@@ -139,6 +143,7 @@ const HomeScreen = ({ route }) => {
           </TouchableOpacity>
         </View>
 
+        {/* Profile */}
         <View style={styles.profileWrapper}>
           <Image
             source={userPhoto ? { uri: userPhoto } : require('../../assets/Images/profile.png')}
@@ -230,6 +235,74 @@ const HomeScreen = ({ route }) => {
               </View>
             ))}
           </ScrollView>
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.calendarContainer}
+          snapToInterval={80}
+          decelerationRate="fast"
+          onContentSizeChange={() => {
+            scrollRef.current?.scrollTo({ x: 0, animated: true });
+          }}
+        >
+          {daysOfWeek.map((day, index) => {
+            const isSelected = selectedDate.isSame(day, 'day');
+            return (
+              <TouchableOpacity
+                key={index}
+                style={[styles.dayItem, isSelected && styles.selectedDay]}
+                onPress={() => setSelectedDate(day)}
+              >
+                <Text style={[styles.dayText, isSelected && styles.selectedDayText]}>
+                  {day.format('ddd')}
+                </Text>
+                <Text style={[styles.dateText, isSelected && styles.selectedDateText]}>
+                  {day.format('D')}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {/* Diet Plans */}
+        <Text style={styles.sectionTitle}>Diet Plans 🍽️</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollRow}>
+          {dietFoods.map((item, index) => (
+            <View style={{ paddingRight: index === dietFoods.length - 1 ? 20 : 0 }} key={item.id}>
+              {renderFlippableCard(item)}
+            </View>
+          ))}
+        </ScrollView>
+
+        {/* Workout Plans */}
+        <Text style={styles.sectionTitle}>Workouts 💪</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollRow}>
+          {filteredWorkouts.map((item, index) => (
+            <View style={{ paddingRight: index === filteredWorkouts.length - 1 ? 20 : 0 }} key={item.id}>
+              {renderFlippableCard(item)}
+            </View>
+          ))}
+        </ScrollView>
+
+        {/* Buttons */}
+        <View style={styles.buttonGroup}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => navigation.navigate('GoalSelection')}
+          >
+            <Icon name="track-changes" size={22} color="#FEC400" />
+            <Text style={styles.actionButtonText}>Update Your Goal</Text>
+          </TouchableOpacity>
+
+          {/* NEW Trainer Dashboard Button */}
+          <TouchableOpacity
+            style={[styles.actionButton, { marginTop: 15 }]}
+            onPress={() => navigation.navigate('TrainerDashboard')}
+          >
+            <Icon name="fitness-center" size={22} color="#FEC400" />
+            <Text style={styles.actionButtonText}>Go to Trainer Dashboard</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
       <BottomTabBar />
@@ -256,6 +329,7 @@ const HomeScreen = ({ route }) => {
 
     return (
       <TouchableOpacity onPress={() => handleFlip(item.id)} activeOpacity={0.9}>
+      <TouchableOpacity onPress={() => handleFlip(item.id)}>
         <View style={styles.cardContainer}>
           {/* Front Card */}
           <Animated.View style={[
@@ -429,6 +503,13 @@ const styles = StyleSheet.create({
     padding: 15,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#1E1E1E',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FEC400',
+
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,

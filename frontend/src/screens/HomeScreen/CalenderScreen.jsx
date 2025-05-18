@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+  ScrollView,
+} from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { useTheme } from '../../navigation/ThemeProvider';
 import { useNavigation } from '@react-navigation/native';
@@ -23,7 +31,6 @@ const CalendarScreen = () => {
       const storedToken = await AsyncStorage.getItem('token');
       setToken(storedToken);
     };
-
     checkToken();
   }, []);
 
@@ -40,7 +47,6 @@ const CalendarScreen = () => {
         console.log('Error fetching userId:', err);
       }
     };
-
     fetchUserId();
   }, [token]);
 
@@ -61,10 +67,9 @@ const CalendarScreen = () => {
           setAllNotes(notesObject);
         }
       } catch (err) {
-        console.error('❌ Error fetching notes:', err);
+        console.error('Error fetching notes:', err);
       }
     };
-
     fetchNotes();
   }, [userId, token]);
 
@@ -79,14 +84,12 @@ const CalendarScreen = () => {
         const data = await res.json();
         setMembershipDeadline(data.membershipDeadline);
       } catch (err) {
-        console.error('❌ Error fetching membership deadline:', err);
+        console.error('Error fetching membership deadline:', err);
       }
     };
-
     fetchMembershipDeadline();
   }, [userId, token]);
 
-  // Live countdown logic in hours, minutes, seconds
   useEffect(() => {
     const updateCountdown = () => {
       if (membershipDeadline) {
@@ -105,19 +108,14 @@ const CalendarScreen = () => {
         }
       }
     };
-
-    updateCountdown(); // Initial run
-
-    const interval = setInterval(updateCountdown, 1000); // Update every second
-
-    return () => clearInterval(interval); // Cleanup the interval on unmount
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
   }, [membershipDeadline]);
 
   const handleSaveNotes = async () => {
     if (!selected || !notes.trim() || !token) return;
-
     const noteData = { date: selected, note: notes };
-
     try {
       const res = await fetch('http://10.0.2.2:5000/api/calendar', {
         method: 'POST',
@@ -127,31 +125,27 @@ const CalendarScreen = () => {
         },
         body: JSON.stringify(noteData),
       });
-
       const result = await res.json();
-
       if (res.ok) {
-        setAllNotes((prev) => ({ ...prev, [selected]: notes }));
-        setNotes('');
         const updatedNotes = { ...allNotes, [selected]: notes };
+        setAllNotes(updatedNotes);
+        setNotes('');
         await AsyncStorage.setItem('notes', JSON.stringify(updatedNotes));
       } else {
-        console.error('❌ Backend error:', result);
+        console.error('Backend error:', result);
       }
     } catch (err) {
-      console.error('❌ Network error:', err);
+      console.error('Network error:', err);
     }
   };
 
   const handleDeleteNote = async () => {
     if (!selected || !token) return;
-
     try {
       const res = await fetch(`http://10.0.2.2:5000/api/calendar/${userId}/${selected}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-
       if (res.ok) {
         const updatedNotes = { ...allNotes };
         delete updatedNotes[selected];
@@ -160,57 +154,40 @@ const CalendarScreen = () => {
         setSelected('');
         Alert.alert('Success', 'Note deleted successfully!');
       } else {
-        console.error('❌ Error deleting note');
         Alert.alert('Error', 'Failed to delete the note.');
       }
     } catch (err) {
-      console.error('❌ Network error:', err);
+      console.error('Network error:', err);
     }
   };
 
   const getMarkedDates = () => {
     const marked = {};
-
     Object.keys(allNotes).forEach((date) => {
       marked[date] = {
         marked: true,
         dotColor: isDarkMode ? '#00BFFF' : '#FF6B00',
       };
     });
-
     if (membershipDeadline) {
       const deadline = moment(membershipDeadline).format('YYYY-MM-DD');
       marked[deadline] = {
         ...marked[deadline],
         customStyles: {
-          container: {
-            backgroundColor: '#cc0000', // Red background for expiration
-            borderRadius: 50,
-          },
-          text: {
-            color: 'white',
-            fontWeight: 'bold',
-          },
+          container: { backgroundColor: '#cc0000', borderRadius: 50 },
+          text: { color: 'white', fontWeight: 'bold' },
         },
       };
     }
-
     if (selected) {
       marked[selected] = {
         ...marked[selected],
         customStyles: {
-          container: {
-            backgroundColor: isDarkMode ? '#00BFFF' : '#FF6B00',
-            borderRadius: 50,
-          },
-          text: {
-            color: 'white',
-            fontWeight: '600',
-          },
+          container: { backgroundColor: isDarkMode ? '#00BFFF' : '#FF6B00', borderRadius: 50 },
+          text: { color: 'white', fontWeight: '600' },
         },
       };
     }
-
     return marked;
   };
 
@@ -225,7 +202,7 @@ const CalendarScreen = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: isDarkMode ? '#1a1a1a' : '#fff' }]}>
+    <ScrollView style={[styles.container, { backgroundColor: isDarkMode ? '#1a1a1a' : '#fff' }]}>
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <MaterialIcon name="arrow-back" size={28} color={isDarkMode ? '#fff' : '#000'} />
@@ -246,7 +223,7 @@ const CalendarScreen = () => {
 
       {selected && (
         <View style={styles.notesSection}>
-          <Text style={{ color: isDarkMode ? '#fff' : '#000' }}>Notes for {selected}</Text>
+          <Text style={{ color: isDarkMode ? '#fff' : '#000', fontSize: 16, fontWeight: '600' }}>Notes for {selected}</Text>
           <TextInput
             style={[styles.input, { backgroundColor: isDarkMode ? '#333' : '#f1f1f1', color: isDarkMode ? '#fff' : '#000' }]}
             placeholder="e.g., Upper body workout and cardio"
@@ -259,34 +236,36 @@ const CalendarScreen = () => {
             onPress={handleSaveNotes}
             style={[styles.button, { backgroundColor: isDarkMode ? '#00BFFF' : '#FF6B00' }]}
           >
-            <Text style={{ color: '#fff' }}>Save Note</Text>
+            <Text style={styles.buttonText}>Save Note</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={handleDeleteNote}
             style={[styles.button, { backgroundColor: 'red', marginTop: 10 }]}
           >
-            <Text style={{ color: '#fff' }}>Delete Note</Text>
+            <Text style={styles.buttonText}>Delete Note</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      <Text style={[styles.membershipText, { color: isDarkMode ? '#ff6b6b' : '#cc0000' }]}>
+      <Text style={[styles.membershipText, { color: isDarkMode ? '#ff6b6b' : '#cc0000' }]}> 
         {countdown === 'EXPIRED' ? 'Membership has expired' : `Membership expires in: ${countdown}`}
       </Text>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 16,
+    paddingTop: 20,
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 10,
   },
   headerText: {
     fontSize: 22,
@@ -296,16 +275,22 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   input: {
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 10,
-    minHeight: 80,
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 12,
+    minHeight: 100,
+    fontSize: 16,
   },
   button: {
-    marginTop: 10,
-    padding: 12,
-    borderRadius: 8,
+    marginTop: 12,
+    padding: 14,
+    borderRadius: 10,
     alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   membershipText: {
     marginTop: 30,

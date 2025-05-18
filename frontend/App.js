@@ -1,32 +1,29 @@
 // App.js
 import React, { useEffect } from 'react';
+import { StripeProvider } from '@stripe/stripe-react-native';
+
 import AppNavigator from './src/navigation/AppNavigator';
 import { ThemeProvider } from './src/navigation/ThemeProvider';
 import Toast from 'react-native-toast-message';
-
-import { firebase } from '@react-native-firebase/messaging'; // Modular
-import { getMessaging, getToken, requestPermission } from '@react-native-firebase/messaging'; // Modular methods
-import { getApp } from '@react-native-firebase/app'; //  Needed for modular setup
+import messaging from '@react-native-firebase/messaging';
 
 const App = () => {
-
+  // Request permission for push notifications
   const requestUserPermission = async () => {
-    const app = getApp(); //  Correct app instance
-    const messaging = getMessaging(app); //  Correct messaging instance
-
-    const authStatus = await requestPermission(messaging);
+    const authStatus = await messaging().requestPermission();
     console.log('Permission Status:', authStatus);
 
-    const enabled = authStatus === 1 || authStatus === 2; // 1 = Authorized, 2 = Provisional
+    const enabled =
+      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
     return enabled;
   };
 
+  // Get FCM token
   const getTokenFromDevice = async () => {
     try {
-      const app = getApp();
-      const messaging = getMessaging(app);
-
-      const token = await getToken(messaging);
+      const token = await messaging().getToken();
       console.log('FCM Token:', token);
     } catch (error) {
       console.log('Error fetching FCM token:', error);
@@ -47,12 +44,18 @@ const App = () => {
   }, []);
 
   return (
-    <ThemeProvider>
-      <>
-        <AppNavigator />
-        <Toast />
-      </>
-    </ThemeProvider>
+    <StripeProvider
+      publishableKey="pk_test_51RNPAV4SrJuut3amYvK6lf6MFTdZv6I42fahASPBkdvnryJWeB5lkDDlC1dVRWZQEEx98uiRckuGUTTbyBpC60kb00oXzHOp6a"
+      urlScheme="fitflow" // Required for Android deep linking
+      merchantIdentifier="merchant.com.fitflow" // For Apple Pay (use real ID in production)
+    >
+      <ThemeProvider>
+        <>
+          <AppNavigator />
+          <Toast />
+        </>
+      </ThemeProvider>
+    </StripeProvider>
   );
 };
 

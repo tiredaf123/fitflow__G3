@@ -7,8 +7,11 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Add this import for AsyncStorage
 import { useTheme } from '../../navigation/ThemeProvider';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
+
+const STATUS_OPTIONS = ['Incomplete', 'In Progress', 'Done']; // Status options for tracking
 
 const ChestWorkout = () => {
   const { isDarkMode } = useTheme();
@@ -22,6 +25,42 @@ const ChestWorkout = () => {
     { name: 'Cable Crossover', sets: '3 sets of 15 reps', icon: 'compare-arrows' },
     { name: 'Incline Cable Fly', sets: '3 sets of 12 reps', icon: 'swap-vert' },
   ];
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [secondsElapsed, setSecondsElapsed] = useState(0);
+  const [videoUrl, setVideoUrl] = useState(null);
+  const [status, setStatus] = useState('Incomplete'); // Track the workout status
+
+  useEffect(() => {
+    let interval;
+    if (isTimerRunning) {
+      interval = setInterval(() => {
+        setSecondsElapsed((prev) => prev + 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerRunning]);
+
+  useEffect(() => {
+    // Load saved status from AsyncStorage when component mounts
+    const loadStatus = async () => {
+      const savedStatus = await AsyncStorage.getItem('chestWorkoutStatus');
+      if (savedStatus) setStatus(savedStatus); // Set the loaded status if available
+    };
+    loadStatus();
+  }, []);
+
+  const handleStatusChange = async (newStatus) => {
+    setStatus(newStatus);
+    await AsyncStorage.setItem('chestWorkoutStatus', newStatus); // Save the new status to AsyncStorage
+  };
+
+  const formatTime = (secs) => {
+    const mins = Math.floor(secs / 60);
+    const seconds = secs % 60;
+    return `${String(mins).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -40,6 +79,32 @@ const ChestWorkout = () => {
             <Text style={styles.startButtonText}>START WORKOUT</Text>
             <MaterialIcon name="arrow-forward" size={20} color="#000" />
           </TouchableOpacity>
+
+
+          <Text style={styles.timerText}>{formatTime(secondsElapsed)}</Text>
+
+          {/* Workout status selector */}
+          <View style={styles.statusContainer}>
+            {STATUS_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option}
+                onPress={() => handleStatusChange(option)}
+                style={[
+                  styles.statusButton,
+                  status === option && styles.statusButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusButtonText,
+                    status === option && styles.statusButtonTextActive,
+                  ]}
+                >
+                  {option}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </ImageBackground>
 
@@ -127,6 +192,29 @@ const getStyles = (isDarkMode) =>
       color: '#000',
       fontWeight: '700',
       marginRight: 8,
+    },
+    statusContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      marginTop: 15,
+      gap: 10,
+      flexWrap: 'wrap',
+    },
+    statusButton: {
+      paddingVertical: 8,
+      paddingHorizontal: 15,
+      backgroundColor: '#555',
+      borderRadius: 20,
+    },
+    statusButtonActive: {
+      backgroundColor: '#FFCC00',
+    },
+    statusButtonText: {
+      color: '#fff',
+      fontWeight: '500',
+    },
+    statusButtonTextActive: {
+      color: '#000',
     },
     exerciseList: {
       marginTop: 10,

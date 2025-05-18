@@ -2,16 +2,18 @@
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
-  fullName: String,
-  username: { type: String, unique: true, required: true },
-  email: String,
-  password: String,
+  fullName: { type: String, trim: true },
+  username: { type: String, unique: true, required: true, trim: true },
+  email: { type: String, trim: true },
+  password: { type: String },
+
   provider: {
     type: String,
     enum: ['manual', 'google', 'apple'],
     default: 'manual',
   },
-  photoURL: String,
+
+  photoURL: { type: String },
   isAdmin: { type: Boolean, default: false },
   membershipDeadline: { type: Date, default: null },
 
@@ -20,7 +22,7 @@ const userSchema = new mongoose.Schema({
   loginStreak: { type: Number, default: 0 },
 
 
-  // ✅ Add these for login streak tracking
+  // ✅ Login Streak Tracking Fields
   lastLoginDate: {
     type: String, // Format: 'YYYY-MM-DD'
     default: null,
@@ -29,7 +31,8 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-
-}, { timestamps: true });
+}, {
+  timestamps: true,
+});
 
 export default mongoose.model('User', userSchema);

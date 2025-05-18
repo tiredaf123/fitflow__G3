@@ -10,6 +10,18 @@ import {
 import { useTheme } from '../../navigation/ThemeProvider';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { WebView } from 'react-native-webview';
+
+const exerciseData = [
+  { name: 'Bicep Curls', video: 'https://www.youtube.com/embed/ykJmrZ5v0Oo' },
+  { name: 'Preacher Curl', video: 'https://www.youtube.com/embed/IaZGv2ZC4Q4' },
+  { name: 'Overhead Press', video: 'https://www.youtube.com/embed/2yjwXTZQDDI' },
+  { name: 'Bench Dip', video: 'https://www.youtube.com/embed/6kALZikXxLc' },
+  { name: 'Skull Crusher', video: 'https://www.youtube.com/embed/d_KZxkY_0cM' },
+  { name: 'Triceps Pushdown', video: 'https://www.youtube.com/embed/2-LAMcpzODU' },
+];
+
 const ArmsWorkout = () => {
   const { isDarkMode } = useTheme();
   const styles = getStyles(isDarkMode);
@@ -22,6 +34,52 @@ const ArmsWorkout = () => {
     { name: 'Skull Crusher', sets: '3 sets of 12 reps', icon: 'whatshot' },
     { name: 'Triceps Pushdown', sets: '3 sets of 15 reps', icon: 'vertical-align-bottom' },
   ];
+
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [secondsElapsed, setSecondsElapsed] = useState(0);
+  const [videoUrl, setVideoUrl] = useState(null);
+  const [workoutStatus, setWorkoutStatus] = useState('incomplete');
+
+  useEffect(() => {
+    loadStatus();
+  }, []);
+
+  useEffect(() => {
+    let interval;
+    if (isTimerRunning) {
+      interval = setInterval(() => {
+        setSecondsElapsed((prev) => prev + 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerRunning]);
+
+  const formatTime = (secs) => {
+    const mins = Math.floor(secs / 60);
+    const seconds = secs % 60;
+    return `${String(mins).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+ 
+
+  const saveStatus = async (status) => {
+    try {
+      await AsyncStorage.setItem('armsWorkoutStatus', status);
+      setWorkoutStatus(status);
+    } catch (error) {
+      console.log('Failed to save workout status', error);
+    }
+  };
+
+  const loadStatus = async () => {
+    try {
+      const status = await AsyncStorage.getItem('armsWorkoutStatus');
+      if (status) setWorkoutStatus(status);
+    } catch (error) {
+      console.log('Failed to load workout status', error);
+    }
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -40,6 +98,28 @@ const ArmsWorkout = () => {
             <Text style={styles.startButtonText}>START WORKOUT</Text>
             <MaterialIcon name="arrow-forward" size={20} color="#000" />
           </TouchableOpacity>
+
+
+          <Text style={styles.timerText}>{formatTime(secondsElapsed)}</Text>
+
+          <Text style={styles.statusLabel}>Status: {workoutStatus}</Text>
+
+          <View style={styles.statusButtons}>
+            {['incomplete', 'in progress', 'done'].map((status) => (
+              <TouchableOpacity
+                key={status}
+                style={[
+                  styles.statusButton,
+                  workoutStatus === status && styles.selectedStatus,
+                ]}
+                onPress={() => saveStatus(status)}
+              >
+                <Text style={styles.statusText}>
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </ImageBackground>
 
@@ -128,6 +208,29 @@ const getStyles = (isDarkMode) =>
       fontWeight: '700',
       marginRight: 8,
     },
+    statusLabel: {
+      color: '#fff',
+      marginTop: 15,
+      fontSize: 16,
+    },
+    statusButtons: {
+      flexDirection: 'row',
+      gap: 10,
+      marginTop: 10,
+    },
+    statusButton: {
+      backgroundColor: '#fff',
+      borderRadius: 15,
+      paddingVertical: 5,
+      paddingHorizontal: 10,
+    },
+    selectedStatus: {
+      backgroundColor: '#FFCC00',
+    },
+    statusText: {
+      color: '#000',
+      fontWeight: '600',
+    },
     exerciseList: {
       marginTop: 10,
       marginHorizontal: 15,
@@ -150,6 +253,19 @@ const getStyles = (isDarkMode) =>
     exerciseContent: {
       flexDirection: 'row',
       alignItems: 'center',
+
+    exerciseText: {
+      color: isDarkMode ? '#fff' : '#000',
+      fontSize: 16,
+    },
+    setsText: {
+      color: '#FFCC00',
+      fontSize: 14,
+    },
+    watchVideo: {
+      color: '#FFCC00',
+      fontWeight: 'bold',
+      fontSize: 18,
     },
     exerciseIcon: {
       backgroundColor: isDarkMode ? '#333' : '#F5F5F5',

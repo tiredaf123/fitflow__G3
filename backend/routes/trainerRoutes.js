@@ -1,20 +1,34 @@
 import express from 'express';
 import {
   getAllTrainers,
+  getPublicTrainers,
+  updateTrainer,
+  deleteTrainer,
+  loginTrainer,
+  getMyTrainerProfile,
   createTrainer,
-  deleteTrainer
 } from '../controllers/trainerController.js';
 
-import verifyToken from '../middleware/authMiddleware.js';
+import protect from '../middleware/authMiddleware.js';         // For admin or user
+import protectTrainer from '../middleware/protectTrainer.js'; // For trainer JWTs
 import isAdmin from '../middleware/isAdmin.js';
+import upload from '../middleware/multer.js';                 // Assuming you use multer for image upload
 
 const router = express.Router();
 
-// ✅ Public access for logged-in users
-router.get('/', getAllTrainers);
+// ✅ Public route to view all available trainers
+router.get('/public', getPublicTrainers);
 
-// ✅ Admin-only for creating and deleting
-router.post('/', verifyToken, isAdmin, createTrainer);
-router.delete('/:id', verifyToken, isAdmin, deleteTrainer);
+// ✅ Trainer login
+router.post('/login', loginTrainer);
+
+// ✅ Logged-in trainer profile
+router.get('/me', protectTrainer, getMyTrainerProfile);
+
+// ✅ Admin-only routes
+router.post('/', protect, isAdmin, upload.single('image'), createTrainer);
+router.get('/', protect, isAdmin, getAllTrainers);
+router.put('/:id', protect, isAdmin, updateTrainer);
+router.delete('/:id', protect, isAdmin, deleteTrainer);
 
 export default router;

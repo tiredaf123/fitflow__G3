@@ -7,8 +7,39 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../navigation/ThemeProvider';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
+import { WebView } from 'react-native-webview';
+
+const exerciseData = [
+  {
+    name: 'Crunches',
+    video: 'https://www.youtube.com/embed/l4kQd9eWclE',
+  },
+  {
+    name: 'Plank',
+    video: 'https://www.youtube.com/embed/ASdvN_XEl_c',
+  },
+  {
+    name: 'Mountain Climbers',
+    video: 'https://www.youtube.com/embed/cnyTQDSE884',
+  },
+  {
+    name: 'Cable Crunches',
+    video: 'https://www.youtube.com/embed/k9Hd9ogZqKM',
+  },
+  {
+    name: 'Side Plank',
+    video: 'https://www.youtube.com/embed/K2VljzCC16g',
+  },
+  {
+    name: 'Flutter',
+    video: 'https://www.youtube.com/watch?v=7U_piQpfGws',
+  },
+];
+
+const STATUS_OPTIONS = ['Incomplete', 'In Progress', 'Done'];
 
 const AbsWorkout = () => {
   const { isDarkMode } = useTheme();
@@ -22,6 +53,42 @@ const AbsWorkout = () => {
     { name: 'Side Plank', sets: '3 sets of 20 sec/side', icon: 'compare-arrows' },
     { name: 'Flutter Kicks', sets: '3 sets of 20 reps', icon: 'swap-vert' },
   ];
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [secondsElapsed, setSecondsElapsed] = useState(0);
+  const [videoUrl, setVideoUrl] = useState(null);
+  const [status, setStatus] = useState('Incomplete');
+
+  useEffect(() => {
+    let interval;
+    if (isTimerRunning) {
+      interval = setInterval(() => {
+        setSecondsElapsed((prev) => prev + 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerRunning]);
+
+  useEffect(() => {
+    // Load saved status from local storage
+    const loadStatus = async () => {
+      const savedStatus = await AsyncStorage.getItem('absWorkoutStatus');
+      if (savedStatus) setStatus(savedStatus);
+    };
+    loadStatus();
+  }, []);
+
+  const handleStatusChange = async (newStatus) => {
+    setStatus(newStatus);
+    await AsyncStorage.setItem('absWorkoutStatus', newStatus);
+  };
+
+  const formatTime = (secs) => {
+    const mins = Math.floor(secs / 60);
+    const seconds = secs % 60;
+    return `${String(mins).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -40,6 +107,31 @@ const AbsWorkout = () => {
             <Text style={styles.startButtonText}>START WORKOUT</Text>
             <MaterialIcon name="arrow-forward" size={20} color="#000" />
           </TouchableOpacity>
+
+          <Text style={styles.timerText}>{formatTime(secondsElapsed)}</Text>
+
+          {/* Workout status selector */}
+          <View style={styles.statusContainer}>
+            {STATUS_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option}
+                onPress={() => handleStatusChange(option)}
+                style={[
+                  styles.statusButton,
+                  status === option && styles.statusButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusButtonText,
+                    status === option && styles.statusButtonTextActive,
+                  ]}
+                >
+                  {option}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </ImageBackground>
 
@@ -80,6 +172,9 @@ const getStyles = (isDarkMode) =>
     },
     imageStyle: {
       borderRadius: 12,
+      height: 370,
+      margin: 20,
+      borderRadius: 15,
     },
     overlay: {
       flex: 1,
@@ -88,6 +183,8 @@ const getStyles = (isDarkMode) =>
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       borderRadius: 12,
       padding: 20,
+      borderRadius: 15,
+      padding: 10,
     },
     title: {
       fontSize: 32,
@@ -127,6 +224,29 @@ const getStyles = (isDarkMode) =>
       color: '#000',
       fontWeight: '700',
       marginRight: 8,
+    },
+    statusContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      marginTop: 15,
+      gap: 10,
+      flexWrap: 'wrap',
+    },
+    statusButton: {
+      paddingVertical: 8,
+      paddingHorizontal: 15,
+      backgroundColor: '#555',
+      borderRadius: 20,
+    },
+    statusButtonActive: {
+      backgroundColor: '#FFCC00',
+    },
+    statusButtonText: {
+      color: '#fff',
+      fontWeight: '500',
+    },
+    statusButtonTextActive: {
+      color: '#000',
     },
     exerciseList: {
       marginTop: 10,

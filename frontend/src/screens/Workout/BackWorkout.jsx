@@ -7,8 +7,40 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../navigation/ThemeProvider';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
+
+import { WebView } from 'react-native-webview';
+
+const exerciseData = [
+  {
+    name: 'Pull-ups',
+    video: 'https://www.youtube.com/embed/eGo4IYlbE5g',
+  },
+  {
+    name: 'Lat Pull-down',
+    video: 'https://www.youtube.com/embed/CAwf7n6Luuc',
+  },
+  {
+    name: 'T-Bar Row',
+    video: 'https://www.youtube.com/embed/UjEiHJxMsRM',
+  },
+  {
+    name: 'Machine Row',
+    video: 'https://www.youtube.com/embed/Q_HvP9PQE3k',
+  },
+  {
+    name: 'Cable Cruncher',
+    video: 'https://www.youtube.com/embed/mqDTPtOjZB0',
+  },
+  {
+    name: 'Deadlift',
+    video: 'https://www.youtube.com/embed/op9kVnSso6Q',
+  },
+];
+
+const STATUS_OPTIONS = ['Incomplete', 'In Progress', 'Done'];
 
 const BackWorkout = () => {
   const { isDarkMode } = useTheme();
@@ -23,6 +55,42 @@ const BackWorkout = () => {
     { name: 'Cable Cruncher', sets: '3 sets of 20 reps', icon: 'swap-vert' },
     { name: 'Deadlift', sets: '4 sets of 6 reps', icon: 'fitness-center' },
   ];
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [secondsElapsed, setSecondsElapsed] = useState(0);
+  const [videoUrl, setVideoUrl] = useState(null);
+  const [status, setStatus] = useState('Incomplete');
+
+  useEffect(() => {
+    let interval;
+    if (isTimerRunning) {
+      interval = setInterval(() => {
+        setSecondsElapsed((prev) => prev + 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerRunning]);
+
+  useEffect(() => {
+    // Load saved status from local storage
+    const loadStatus = async () => {
+      const savedStatus = await AsyncStorage.getItem('backWorkoutStatus');
+      if (savedStatus) setStatus(savedStatus);
+    };
+    loadStatus();
+  }, []);
+
+  const handleStatusChange = async (newStatus) => {
+    setStatus(newStatus);
+    await AsyncStorage.setItem('backWorkoutStatus', newStatus);
+  };
+
+  const formatTime = (secs) => {
+    const mins = Math.floor(secs / 60);
+    const seconds = secs % 60;
+    return `${String(mins).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -42,6 +110,32 @@ const BackWorkout = () => {
             <Text style={styles.startButtonText}>START WORKOUT</Text>
             <MaterialIcon name="arrow-forward" size={20} color="#000" />
           </TouchableOpacity>
+
+
+          <Text style={styles.timerText}>{formatTime(secondsElapsed)}</Text>
+
+          {/* Status selector right below the timer */}
+          <View style={styles.statusContainer}>
+            {STATUS_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option}
+                onPress={() => handleStatusChange(option)}
+                style={[
+                  styles.statusButton,
+                  status === option && styles.statusButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusButtonText,
+                    status === option && styles.statusButtonTextActive,
+                  ]}
+                >
+                  {option}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </ImageBackground>
 
@@ -67,6 +161,30 @@ const BackWorkout = () => {
           </TouchableOpacity>
         ))}
       </View>
+            <TouchableOpacity onPress={() => setVideoUrl(exercise.video)}>
+              <Text style={styles.videoLink}>▶</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
+
+      <Modal visible={!!videoUrl} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity
+              onPress={() => setVideoUrl(null)}
+              style={styles.closeButton}
+            >
+              <Text style={styles.closeText}>Close</Text>
+            </TouchableOpacity>
+            <WebView
+              style={{ flex: 1, borderRadius: 10 }}
+              source={{ uri: videoUrl }}
+              allowsFullscreenVideo
+            />
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -84,6 +202,9 @@ const getStyles = (isDarkMode) =>
     },
     imageStyle: {
       borderRadius: 12,
+      height: 370,
+      margin: 20,
+      borderRadius: 15,
     },
     overlay: {
       flex: 1,
@@ -92,6 +213,9 @@ const getStyles = (isDarkMode) =>
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       borderRadius: 12,
       padding: 20,
+
+      borderRadius: 15,
+      padding: 10,
     },
     title: {
       fontSize: 32,
@@ -132,6 +256,28 @@ const getStyles = (isDarkMode) =>
       fontWeight: '700',
       marginRight: 8,
     },
+    statusContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      marginTop: 15,
+      gap: 10,
+    },
+    statusButton: {
+      paddingVertical: 8,
+      paddingHorizontal: 15,
+      backgroundColor: '#555',
+      borderRadius: 20,
+    },
+    statusButtonActive: {
+      backgroundColor: '#FFCC00',
+    },
+    statusButtonText: {
+      color: '#fff',
+      fontWeight: '500',
+    },
+    statusButtonTextActive: {
+      color: '#000',
+    },
     exerciseList: {
       marginTop: 10,
       marginHorizontal: 15,
@@ -154,6 +300,18 @@ const getStyles = (isDarkMode) =>
     exerciseContent: {
       flexDirection: 'row',
       alignItems: 'center',
+    exerciseText: {
+      color: isDarkMode ? '#fff' : '#000',
+      fontSize: 16,
+    },
+    setsText: {
+      color: '#FFCC00',
+      fontSize: 14,
+    },
+    videoLink: {
+      color: '#FFCC00',
+      fontSize: 16,
+      fontWeight: 'bold',
     },
     exerciseIcon: {
       backgroundColor: isDarkMode ? '#333' : '#F5F5F5',
