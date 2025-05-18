@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,69 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Modal,
 } from 'react-native';
 import { useTheme } from '../../navigation/ThemeProvider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { WebView } from 'react-native-webview';
+
+const exerciseData = [
+  { name: 'Squats', video: 'https://www.youtube.com/watch?v=NH4bYCenMxQ' },
+  { name: 'Lunges', video: 'https://www.youtube.com/watch?v=RwVXSUmiXAo' },
+  { name: 'Leg Press', video: 'https://www.youtube.com/embed/IZxyjW7MPJQ' },
+  { name: 'Leg Extension', video: 'https://www.youtube.com/embed/YyvSfVjQeL0' },
+  { name: 'Calf Raises', video: 'https://www.youtube.com/embed/-M4-G8p8fmc' },
+  { name: 'Hamstring Curls', video: 'https://www.youtube.com/embed/s0nFz3cx0fs' },
+];
 
 const LegWorkout = () => {
   const { isDarkMode } = useTheme();
   const styles = getStyles(isDarkMode);
+
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [secondsElapsed, setSecondsElapsed] = useState(0);
+  const [videoUrl, setVideoUrl] = useState(null);
+  const [workoutStatus, setWorkoutStatus] = useState('incomplete');
+
+  useEffect(() => {
+    loadStatus();
+  }, []);
+
+  useEffect(() => {
+    let interval;
+    if (isTimerRunning) {
+      interval = setInterval(() => {
+        setSecondsElapsed((prev) => prev + 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerRunning]);
+
+  const formatTime = (secs) => {
+    const mins = Math.floor(secs / 60);
+    const seconds = secs % 60;
+    return `${String(mins).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+
+  const saveStatus = async (status) => {
+    try {
+      await AsyncStorage.setItem('legWorkoutStatus', status);
+      setWorkoutStatus(status);
+    } catch (error) {
+      console.log('Failed to save workout status', error);
+    }
+  };
+
+  const loadStatus = async () => {
+    try {
+      const status = await AsyncStorage.getItem('legWorkoutStatus');
+      if (status) setWorkoutStatus(status);
+    } catch (error) {
+      console.log('Failed to load workout status', error);
+    }
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -23,27 +80,62 @@ const LegWorkout = () => {
         <View style={styles.overlay}>
           <Text style={styles.title}>Leg Workout</Text>
           <Text style={styles.subTitle}>6 exercises | 55 mins</Text>
-          <TouchableOpacity style={styles.startButton}>
-            <Text style={styles.startButtonText}>Start Workout</Text>
+
+          <TouchableOpacity
+            style={styles.startButton}
+            onPress={() => setIsTimerRunning((prev) => !prev)}
+          >
+            <Text style={styles.startButtonText}>
+              {isTimerRunning ? 'Pause Timer' : 'Start Workout'}
+            </Text>
           </TouchableOpacity>
+
+          <Text style={styles.timerText}>{formatTime(secondsElapsed)}</Text>
+
+          <Text style={styles.statusLabel}>Status: {workoutStatus}</Text>
+
+          <View style={styles.statusButtons}>
+            {['In complete', 'In progress', 'Done'].map((status) => (
+              <TouchableOpacity
+                key={status}
+                style={[
+                  styles.statusButton,
+                  workoutStatus === status && styles.selectedStatus,
+                ]}
+                onPress={() => saveStatus(status)}
+              >
+                <Text style={styles.statusText}>{status.charAt(0).toUpperCase() + status.slice(1)}</Text>
+
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </ImageBackground>
 
       <View style={styles.exerciseList}>
-        {[
-          'Squats',
-          'Lunges',
-          'Leg Press',
-          'Leg Extension',
-          'Calf Raises',
-          'Hamstring Curls',
-        ].map((exercise, index) => (
-          <TouchableOpacity key={index} style={styles.exerciseItem}>
-            <Text style={styles.exerciseText}>{exercise}</Text>
-            <Text style={styles.setsText}>3 sets of 12 reps</Text>
-          </TouchableOpacity>
+        {exerciseData.map((exercise, index) => (
+          <View key={index} style={styles.exerciseItem}>
+            <View>
+              <Text style={styles.exerciseText}>{exercise.name}</Text>
+              <Text style={styles.setsText}>3 sets of 12 reps</Text>
+            </View>
+            <TouchableOpacity onPress={() => setVideoUrl(exercise.video)}>
+              <Text style={styles.watchVideo}>▶</Text>
+            </TouchableOpacity>
+          </View>
         ))}
       </View>
+
+      <Modal visible={!!videoUrl} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity onPress={() => setVideoUrl(null)} style={styles.closeButton}>
+              <Text style={styles.closeText}>Close</Text>
+            </TouchableOpacity>
+            <WebView source={{ uri: videoUrl }} style={{ flex: 1 }} allowsFullscreenVideo />
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -55,7 +147,7 @@ const getStyles = (isDarkMode) =>
       backgroundColor: isDarkMode ? '#1A1A1A' : '#F5F5F5',
     },
     imageBackground: {
-      height: 250,
+      height: 300,
       margin: 20,
       borderRadius: 15,
     },
@@ -65,6 +157,7 @@ const getStyles = (isDarkMode) =>
       alignItems: 'center',
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       borderRadius: 15,
+      padding: 10,
     },
     title: {
       fontSize: 28,
@@ -88,6 +181,35 @@ const getStyles = (isDarkMode) =>
       color: '#000',
       fontWeight: 'bold',
     },
+    timerText: {
+      fontSize: 24,
+      color: '#fff',
+      marginTop: 10,
+      fontWeight: '600',
+    },
+    statusLabel: {
+      color: '#fff',
+      marginTop: 15,
+      fontSize: 16,
+    },
+    statusButtons: {
+      flexDirection: 'row',
+      gap: 10,
+      marginTop: 10,
+    },
+    statusButton: {
+      backgroundColor: '#fff',
+      borderRadius: 15,
+      paddingVertical: 5,
+      paddingHorizontal: 10,
+    },
+    selectedStatus: {
+      backgroundColor: '#FFCC00',
+    },
+    statusText: {
+      color: '#000',
+      fontWeight: '600',
+    },
     exerciseList: {
       marginTop: 20,
       marginHorizontal: 20,
@@ -108,6 +230,33 @@ const getStyles = (isDarkMode) =>
     setsText: {
       color: '#FFCC00',
       fontSize: 14,
+    },
+    watchVideo: {
+      color: '#FFCC00',
+      fontWeight: 'bold',
+      fontSize: 18,
+    },
+    modalContainer: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.9)',
+      justifyContent: 'center',
+      padding: 20,
+    },
+    modalContent: {
+      flex: 1,
+      backgroundColor: '#000',
+      borderRadius: 10,
+      overflow: 'hidden',
+    },
+    closeButton: {
+      padding: 10,
+      backgroundColor: '#FFCC00',
+      alignItems: 'center',
+    },
+    closeText: {
+      color: '#000',
+      fontWeight: 'bold',
+      fontSize: 16,
     },
   });
 
