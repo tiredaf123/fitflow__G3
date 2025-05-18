@@ -12,24 +12,31 @@ const WorkoutScreen = () => {
     const themeStyles = {
         container: {
             flex: 1,
-            backgroundColor: isDarkMode ? '#1a1a1a' : '#F0F0F0',
+            backgroundColor: isDarkMode ? '#121212' : '#F5F5F5',
         },
-        topBarText: {
+        headerText: {
             color: isDarkMode ? '#FFF' : '#000',
             fontSize: 24,
-            marginLeft: 10,
-        },
-        overlay: {
-            backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)',
-        },
-        workoutName: {
-            color: isDarkMode ? '#FFF' : '#000',
-            fontSize: 20,
             fontWeight: 'bold',
         },
+        workoutName: {
+            color: '#FFF', // Always white for better contrast on images
+            fontSize: 22,
+            fontWeight: '700',
+            textShadowColor: 'rgba(0, 0, 0, 0.75)',
+            textShadowOffset: { width: 1, height: 1 },
+            textShadowRadius: 3,
+        },
         workoutDetails: {
-            color: isDarkMode ? '#00BFFF' : '#FF6B00',
-            fontSize: 14,
+            color: '#FFF',
+            fontSize: 16,
+            fontWeight: '600',
+            textShadowColor: 'rgba(0, 0, 0, 0.75)',
+            textShadowOffset: { width: 1, height: 1 },
+            textShadowRadius: 2,
+        },
+        overlay: {
+            backgroundColor: 'rgba(0, 0, 0, 0.4)', // Darker overlay for better text visibility
         }
     };
 
@@ -43,36 +50,61 @@ const WorkoutScreen = () => {
 
     return (
         <View style={themeStyles.container}>
-            <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }}>
-
-                {/* Top Bar */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
-                    <MaterialIcon name="arrow-back" size={28} color={themeStyles.topBarText.color} />
-                    <Text style={themeStyles.topBarText}>Workouts</Text>
+            <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
+                {/* Header */}
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                        <MaterialIcon 
+                            name="arrow-back" 
+                            size={28} 
+                            color={themeStyles.headerText.color} 
+                            style={styles.backButton}
+                        />
+                    </TouchableOpacity>
+                    <Text style={themeStyles.headerText}>Workouts</Text>
+                    <View style={styles.headerSpacer} />
                 </View>
 
                 {/* Workouts List */}
-                {workouts.map((workout, index) => (
-                    <TouchableOpacity 
-                        key={index} 
-                        style={styles.workoutContainer} 
-                        onPress={() => navigation.navigate(workout.screen)}
-                    >
-                        <ImageBackground 
-                            source={workout.image} 
-                            style={styles.workoutImage} 
-                            imageStyle={{ borderRadius: 12 }}
+                <View style={styles.workoutsList}>
+                    {workouts.map((workout, index) => (
+                        <TouchableOpacity 
+                            key={index}
+                            style={styles.workoutContainer}
+                            onPress={() => navigation.navigate(workout.screen)}
                         >
-                            <View style={[styles.overlay, themeStyles.overlay]}>
-                                <Text style={themeStyles.workoutName}>{workout.name}</Text>
-                                <View style={styles.workoutInfo}>
-                                    <Text style={themeStyles.workoutDetails}>{workout.kcal} Kcal</Text>
-                                    <Text style={themeStyles.workoutDetails}>{workout.time}</Text>
+                            <ImageBackground 
+                                source={workout.image} 
+                                style={styles.workoutImage}
+                                imageStyle={styles.workoutImageStyle}
+                            >
+                                <View style={[styles.overlay, themeStyles.overlay]}>
+                                    <Text style={themeStyles.workoutName}>{workout.name}</Text>
+                                    <View style={styles.workoutInfo}>
+                                        <View style={styles.detailContainer}>
+                                            <MaterialIcon 
+                                                name="local-fire-department" 
+                                                size={20} 
+                                                color="#FFD700" 
+                                                style={styles.icon}
+                                            />
+                                            <Text style={themeStyles.workoutDetails}>{workout.kcal} Kcal</Text>
+                                        </View>
+                                        <View style={styles.detailContainer}>
+                                            <MaterialIcon 
+                                                name="schedule" 
+                                                size={20} 
+                                                color="#FFD700" 
+                                                style={styles.icon}
+                                            />
+                                            <Text style={themeStyles.workoutDetails}>{workout.time}</Text>
+                                        </View>
+                                    </View>
                                 </View>
-                            </View>
-                        </ImageBackground>
-                    </TouchableOpacity>
-                ))}
+                            </ImageBackground>
+                        </TouchableOpacity>
+                    ))}
+                </View>
             </ScrollView>
 
             {/* Bottom Navigation Bar */}
@@ -82,24 +114,57 @@ const WorkoutScreen = () => {
 };
 
 const styles = StyleSheet.create({
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 20,
+        paddingBottom: 15,
+    },
+    backButton: {
+        padding: 4,
+    },
+    headerSpacer: {
+        width: 32,
+    },
+    workoutsList: {
+        paddingHorizontal: 15,
+    },
     workoutContainer: {
-        marginBottom: 20,
+        marginBottom: 15,
         borderRadius: 12,
         overflow: 'hidden',
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
     },
     workoutImage: {
-        height: 180,
+        height: 150,
         justifyContent: 'flex-end',
     },
+    workoutImageStyle: {
+        borderRadius: 12,
+    },
     overlay: {
-        padding: 10,
-        borderBottomLeftRadius: 12,
-        borderBottomRightRadius: 12,
+        padding: 15,
+        paddingTop: 20,
     },
     workoutInfo: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 5,
+        marginTop: 10,
+    },
+    detailContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    icon: {
+        marginRight: 8,
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 2,
     },
 });
 
