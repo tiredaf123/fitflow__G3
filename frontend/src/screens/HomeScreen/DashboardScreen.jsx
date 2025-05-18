@@ -197,6 +197,28 @@ const DashboardScreen = () => {
           </View>
           <MaterialIcon name="chevron-right" size={24} color={themeStyles.iconColor} />
         </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('AtHomeWorkout')}
+          style={[{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: 15,
+            borderRadius: 12,
+            marginBottom: 10,
+          }, { backgroundColor: themeStyles.cardBackground }]}
+        >
+          <Icon name="home" size={20} color={themeStyles.text.color} />
+          <View style={{ flex: 1, marginLeft: 10 }}>
+            <Text style={[{ fontSize: 16 }, themeStyles.text]}>At-Home Workouts</Text>
+            <Text style={[{ fontSize: 12, marginTop: 2 }, themeStyles.text]}>No equipment required</Text>
+          </View>
+          <MaterialIcon name="chevron-right" size={24} color={themeStyles.iconColor} />
+        </TouchableOpacity>
+
+        
+
+
       </ScrollView>
 
       <BottomTabBar />

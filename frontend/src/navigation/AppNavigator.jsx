@@ -33,6 +33,7 @@ import BackWorkout from '../screens/Workout/BackWorkout';
 import LegWorkout from '../screens/Workout/LegWorkout';
 import AbsWorkout from '../screens/Workout/AbsWorkout';
 import AllWorkouts from '../screens/HomeScreen/AllWorkouts';
+import AtHomeWorkoutScreen from '../screens/Workout/AtHomeWorkoutScreen';
 
 // Profile & SubScreens
 import AchievementsScreen from '../screens/HomeScreen/AchievementsScreen';
@@ -108,6 +109,7 @@ export default function AppNavigator() {
           <Stack.Screen name="LegWorkout" component={LegWorkout} />
           <Stack.Screen name="AbsWorkout" component={AbsWorkout} />
           <Stack.Screen name="AllWorkouts" component={AllWorkouts} />
+          <Stack.Screen name="AtHomeWorkout" component={AtHomeWorkoutScreen} />
 
           {/* Profile & SubScreens */}
           <Stack.Screen name="AchievementsScreen" component={AchievementsScreen} />
