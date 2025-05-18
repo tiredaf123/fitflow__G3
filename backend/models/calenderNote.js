@@ -25,7 +25,7 @@ const CalendarNoteSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Ensure each user has one note per day
+// Ensure each user has only one note per day
 CalendarNoteSchema.index({ userId: 1, date: 1 }, { unique: true });
 
 const CalendarNote = mongoose.model('CalendarNote', CalendarNoteSchema);
