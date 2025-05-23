@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { BASE_URL } from '../../../config/config';
 import BottomTabBar from '../../../components/BottomTabBar';
+//Adharsh Sapkota and Sohan koirala for the backend Adharsh added bottom tab bar
 
 const HireCoachScreen = () => {
   const navigation = useNavigation();

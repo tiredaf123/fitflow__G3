@@ -7,7 +7,7 @@ import { useTheme } from '../../navigation/ThemeProvider';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../config/config';
-
+//satya
 const WeightGoalScreen = () => {
   const navigation = useNavigation();
   const { isDarkMode } = useTheme();

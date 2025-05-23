@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../config/config';
-
+//satya
 const FoodManagerScreen = () => {
   const { isDarkMode } = useTheme();
   const navigation = useNavigation();

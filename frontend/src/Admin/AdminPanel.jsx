@@ -1,39 +1,83 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  Dimensions, Image, ScrollView, Alert,
+  Dimensions, Image, ScrollView, RefreshControl, ActivityIndicator
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { BASE_URL } from '../config/config';
 import { LineChart } from 'react-native-chart-kit';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Icon2 from 'react-native-vector-icons/MaterialCommunityIcons';
 import ImagePicker from 'react-native-image-crop-picker';
 import Toast from 'react-native-toast-message';
+import { LinearGradient } from 'react-native-linear-gradient';
 
 const screenWidth = Dimensions.get('window').width;
 
 const AdminPanel = () => {
   const [supplements, setSupplements] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeUsers, setActiveUsers] = useState(0);
+  const [trainers, setTrainers] = useState([]);
+  const [creatingTrainer, setCreatingTrainer] = useState(false);
+
+  // Supplement form state
   const [name, setName] = useState('');
   const [purpose, setPurpose] = useState('');
   const [price, setPrice] = useState('');
   const [image, setImage] = useState(null);
   const [editingId, setEditingId] = useState(null);
+
+  // Trainer form state
   const [trainerUsername, setTrainerUsername] = useState('');
   const [trainerPassword, setTrainerPassword] = useState('');
+  const [trainerFullName, setTrainerFullName] = useState('');
+  const [trainerEmail, setTrainerEmail] = useState('');
   const [trainerBio, setTrainerBio] = useState('');
   const [trainerImage, setTrainerImage] = useState(null);
-  const [trainers, setTrainers] = useState([]);
   const [trainerSpecialties, setTrainerSpecialties] = useState('');
+  const [revenue] = useState(Math.floor(Math.random() * 2) + 12);
 
   const navigation = useNavigation();
 
-  const chartData = {
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    datasets: [{ data: [20, 45, 28, 80, 99, 43, 50] }],
-  };
+  // Generate random chart data
+  const generateChartData = useCallback(() => {
+    return {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      datasets: [{
+        data: Array.from({ length: 7 }, () => Math.floor(Math.random() * 100) + 50),
+        color: (opacity = 1) => `rgba(106, 17, 203, ${opacity})`,
+        strokeWidth: 2
+      }]
+    };
+  }, []);
+
+  const [chartData, setChartData] = useState(generateChartData());
+
+  // Update active users and chart data
+  const updateMetrics = useCallback(() => {
+    setActiveUsers(Math.floor(Math.random() * 2) + 3); // Random between 50-100
+    setChartData(generateChartData());
+  }, [generateChartData]);
+
+  useEffect(() => {
+    updateMetrics();
+    fetchSupplements();
+    fetchTrainers();
+
+    const interval = setInterval(updateMetrics, 3 * 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [updateMetrics]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    updateMetrics();
+    fetchSupplements();
+    fetchTrainers();
+    setTimeout(() => setRefreshing(false), 1000);
+  }, [updateMetrics]);
 
   const fetchSupplements = async () => {
     setLoading(true);
@@ -42,20 +86,10 @@ const AdminPanel = () => {
       const res = await fetch(`${BASE_URL}/supplements`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) {
-        const text = await res.text();
-        console.error('Server error (supplements):', res.status, text);
-        try {
-          const errorJson = JSON.parse(text);
-          throw new Error(`${res.status} ${errorJson.message || 'Request failed'}`);
-        } catch (jsonError) {
-          throw new Error(`${res.status} ${text}`);
-        }
-      }
       const data = await res.json();
       setSupplements(data);
     } catch (error) {
-      console.error('Error fetching supplements:', error);
+      Toast.show({ type: 'error', text1: 'Failed to fetch supplements' });
     } finally {
       setLoading(false);
     }
@@ -67,44 +101,41 @@ const AdminPanel = () => {
       const res = await fetch(`${BASE_URL}/trainers`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) {
-        const text = await res.text();
-        console.error('Server error (trainers):', res.status, text);
-        try {
-          const errorJson = JSON.parse(text);
-          throw new Error(`${res.status} ${errorJson.message || 'Request failed'}`);
-        } catch (jsonError) {
-          throw new Error(`${res.status} ${text}`);
-        }
-      }
       const data = await res.json();
-      setTrainers(data);
+      setTrainers(data.trainers || data);
     } catch (error) {
-      console.error('Error fetching trainers:', error);
+      Toast.show({ type: 'error', text1: 'Failed to fetch trainers' });
     }
   };
 
   const deleteTrainer = async (id) => {
     const token = await AsyncStorage.getItem('token');
     try {
-      const res = await fetch(`${BASE_URL}/trainers/${id}`, {
+      await fetch(`${BASE_URL}/trainers/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) {
-        const text = await res.text();
-        console.error('Server error (deleteTrainer):', res.status, text);
-        try {
-          const errorJson = JSON.parse(text);
-          throw new Error(`${res.status} ${errorJson.message || 'Request failed'}`);
-        } catch (jsonError) {
-          throw new Error(`${res.status} ${text}`);
-        }
-      }
       Toast.show({ type: 'success', text1: 'Trainer deleted' });
       fetchTrainers();
     } catch (error) {
       Toast.show({ type: 'error', text1: 'Failed to delete trainer' });
+    }
+  };
+
+  const toggleTrainerStatus = async (id, isActive) => {
+    const token = await AsyncStorage.getItem('token');
+    try {
+      await fetch(`${BASE_URL}/trainers/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ isActive })
+      });
+      fetchTrainers();
+    } catch (error) {
+      Toast.show({ type: 'error', text1: 'Failed to update status' });
     }
   };
 
@@ -116,15 +147,20 @@ const AdminPanel = () => {
         cropping: true,
         compressImageQuality: 0.7,
       });
-      setter(selected);
+      if (selected) {
+        setter(selected);
+        Toast.show({ type: 'success', text1: 'Image selected' });
+      }
     } catch (error) {
-      console.log('Image selection cancelled', error);
+      if (error.message !== 'User cancelled image selection') {
+        Toast.show({ type: 'error', text1: 'Image selection error' });
+      }
     }
   };
 
   const handleSaveSupplement = async () => {
     if (!name || !purpose || !price) {
-      Toast.show({ type: 'error', text1: 'All supplement fields required' });
+      Toast.show({ type: 'error', text1: 'All fields required' });
       return;
     }
 
@@ -133,259 +169,396 @@ const AdminPanel = () => {
     formData.append('name', name);
     formData.append('purpose', purpose);
     formData.append('price', price);
-    if (image && !editingId) {
+
+    if (image) {
       formData.append('image', {
-        uri: image.path || image.uri,
+        uri: image.path,
         name: image.filename || 'supplement.jpg',
         type: image.mime,
       });
     }
 
-    const url = editingId
-      ? `${BASE_URL}/supplements/${editingId}`
-      : `${BASE_URL}/supplements`;
-
     try {
-      const res = await fetch(url, {
+      const url = editingId ? `${BASE_URL}/supplements/${editingId}` : `${BASE_URL}/supplements`;
+      await fetch(url, {
         method: editingId ? 'PUT' : 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          ...(editingId ? { 'Content-Type': 'application/json' } : {}),
-        },
-        body: editingId
-          ? JSON.stringify({ name, purpose, price, imageUrl: image?.path || '' })
-          : formData,
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
       });
 
-      if (res.ok) {
-        Toast.show({ type: 'success', text1: 'Supplement saved' });
-        setName('');
-        setPurpose('');
-        setPrice('');
-        setImage(null);
-        setEditingId(null);
-        fetchSupplements();
-      }
+      Toast.show({ type: 'success', text1: 'Supplement saved' });
+      resetSupplementForm();
+      fetchSupplements();
     } catch (error) {
-      console.error('Error saving supplement:', error);
       Toast.show({ type: 'error', text1: 'Error saving supplement' });
     }
   };
 
   const handleSaveTrainer = async () => {
-    if (!trainerUsername || !trainerPassword || !trainerBio) {
-      Toast.show({ type: 'error', text1: 'All trainer fields required' });
+    if (!trainerUsername || !trainerPassword || !trainerFullName || !trainerSpecialties) {
+      Toast.show({ 
+        type: 'error', 
+        text1: 'Missing required fields',
+        text2: 'Please fill all fields marked with *' 
+      });
       return;
     }
 
+    setCreatingTrainer(true);
     const token = await AsyncStorage.getItem('token');
     const formData = new FormData();
+    
     formData.append('username', trainerUsername);
     formData.append('password', trainerPassword);
+    formData.append('fullName', trainerFullName);
+    formData.append('email', trainerEmail);
     formData.append('bio', trainerBio);
     formData.append('specialties', trainerSpecialties);
+
     if (trainerImage) {
       formData.append('image', {
-        uri: trainerImage.path || trainerImage.uri,
+        uri: trainerImage.path,
         name: trainerImage.filename || 'trainer.jpg',
         type: trainerImage.mime,
       });
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/trainers`, {
+      const response = await fetch(`${BASE_URL}/trainers`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        },
+        body: formData
       });
-      if (!res.ok) {
-        const text = await res.text();
-        console.error('Server error (handleSaveTrainer):', res.status, text);
-        try {
-          const errorJson = JSON.parse(text);
-          throw new Error(`${res.status} ${errorJson.message || 'Request failed'}`);
-        } catch (jsonError) {
-          throw new Error(`${res.status} ${text}`);
-        }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create trainer');
       }
-      Toast.show({ type: 'success', text1: 'Trainer added' });
-      setTrainerUsername('');
-      setTrainerPassword('');
-      setTrainerBio('');
-      setTrainerImage(null);
-      setTrainerSpecialties('');
+
+      Toast.show({ type: 'success', text1: 'Trainer created successfully' });
+      resetTrainerForm();
       fetchTrainers();
     } catch (error) {
-      console.error('Error saving trainer:', error);
-      Toast.show({ type: 'error', text1: 'Failed to save trainer' });
+      console.error('Error creating trainer:', error);
+      Toast.show({ 
+        type: 'error', 
+        text1: 'Error creating trainer',
+        text2: error.message 
+      });
+    } finally {
+      setCreatingTrainer(false);
     }
   };
 
   const handleLogout = async () => {
     const token = await AsyncStorage.getItem('token');
     try {
-      const res = await fetch(`${BASE_URL}/auth/logout`, {
+      await fetch(`${BASE_URL}/auth/logout`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) {
-        const text = await res.text();
-        console.error('Server error (handleLogout):', res.status, text);
-        try {
-          const errorJson = JSON.parse(text);
-          throw new Error(`${res.status} ${errorJson.message || 'Request failed'}`);
-        } catch (jsonError) {
-          throw new Error(`${res.status} ${text}`);
-        }
-      }
       await AsyncStorage.removeItem('token');
       navigation.reset({ index: 0, routes: [{ name: 'Login_Page' }] });
     } catch (error) {
-      console.error('Error logging out:', error);
       Toast.show({ type: 'error', text1: 'Logout failed' });
     }
   };
 
-  useEffect(() => {
-    fetchSupplements();
-    fetchTrainers();
-  }, []);
+  const resetSupplementForm = () => {
+    setName('');
+    setPurpose('');
+    setPrice('');
+    setImage(null);
+    setEditingId(null);
+  };
+
+  const resetTrainerForm = () => {
+    setTrainerUsername('');
+    setTrainerPassword('');
+    setTrainerFullName('');
+    setTrainerEmail('');
+    setTrainerBio('');
+    setTrainerImage(null);
+    setTrainerSpecialties('');
+  };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Header with Logout */}
-      <View style={styles.headerRow}>
-        <Text style={styles.header}>Admin Panel</Text>
-        <TouchableOpacity onPress={handleLogout}>
-          <Icon name="logout" size={28} color="#e74c3c" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Summary Cards */}
-      <View style={styles.summaryCardsContainer}>
-        <View style={styles.cardSummary}>
-          <Icon name="group" size={28} color="#fff" />
-          <Text style={styles.cardTitle}>Users</Text>
-          <Text style={styles.cardValue}>124</Text>
-        </View>
-        <View style={[styles.cardSummary, { backgroundColor: '#f39c12' }]}>
-          <Icon name="fitness-center" size={28} color="#fff" />
-          <Text style={styles.cardTitle}>Supplement</Text>
-          <Text style={styles.cardValue}>{supplements.length}</Text>
-        </View>
-        <View style={[styles.cardSummary, { backgroundColor: '#2ecc71' }]}>
-          <Icon name="attach-money" size={28} color="#fff" />
-          <Text style={styles.cardTitle}>Revenue</Text>
-          <Text style={styles.cardValue}>£1.5K</Text>
-        </View>
-      </View>
-
-      {/* Weekly Active Users Chart */}
-      <Text style={styles.subHeader}>Weekly Active Users</Text>
-      <LineChart
-        data={chartData}
-        width={screenWidth - 40}
-        height={220}
-        chartConfig={{
-          backgroundColor: '#e26a00',
-          backgroundGradientFrom: '#f1f1f1',
-          backgroundGradientTo: '#e1e1e1',
-          color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-          labelColor: () => '#333',
-          propsForDots: { r: '5', strokeWidth: '2', stroke: '#007bff' },
-        }}
-        bezier
-        style={{ borderRadius: 10, marginBottom: 20 }}
-      />
-
-      {/* Add / Update Supplement */}
-      <Text style={styles.subHeader}>Add / Update Supplement</Text>
-      <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
-      <TextInput style={styles.input} placeholder="Purpose" value={purpose} onChangeText={setPurpose} />
-      <TextInput
-        style={styles.input}
-        placeholder="Price"
-        value={price}
-        onChangeText={setPrice}
-        keyboardType="numeric"
-      />
-      <TouchableOpacity style={styles.uploadBtn} onPress={() => chooseImage(setImage)}>
-        <Text style={styles.uploadBtnText}>{image ? 'Change Image' : 'Upload Image'}</Text>
-      </TouchableOpacity>
-      {image && (
-        <Image source={{ uri: image.path || image.uri }} style={{ width: '100%', height: 150, marginBottom: 10 }} />
-      )}
-      <TouchableOpacity style={styles.saveBtn} onPress={handleSaveSupplement}>
-        <Text style={styles.saveBtnText}>{editingId ? 'Update' : 'Add'} Supplement</Text>
-      </TouchableOpacity>
-
-      {/* Add Trainer */}
-      <Text style={styles.subHeader}>Add Trainer</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Username"
-        value={trainerUsername}
-        onChangeText={setTrainerUsername}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        value={trainerPassword}
-        onChangeText={setTrainerPassword}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Trainer Bio"
-        value={trainerBio}
-        onChangeText={setTrainerBio}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Specialties (comma separated)"
-        value={trainerSpecialties}
-        onChangeText={setTrainerSpecialties}
-      />
-
-      <TouchableOpacity style={styles.uploadBtn} onPress={() => chooseImage(setTrainerImage)}>
-        <Text style={styles.uploadBtnText}>{trainerImage ? 'Change Image' : 'Upload Image'}</Text>
-      </TouchableOpacity>
-
-      {trainerImage && (
-        <Image
-          source={{ uri: trainerImage.path || trainerImage.uri }}
-          style={{ width: '100%', height: 150, marginBottom: 10 }}
+    <ScrollView
+      contentContainerStyle={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={['#6a11cb']}
+          tintColor="#6a11cb"
         />
-      )}
+      }
+    >
+      {/* Header */}
+      <LinearGradient
+        colors={['#6a11cb', '#2575fc']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.headerContainer}
+      >
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.welcomeText}>Welcome Admin</Text>
+            <Text style={styles.header}>Dashboard Overview</Text>
+          </View>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+            <Icon name="logout" size={22} color="#fff" />
+          </TouchableOpacity>
+        </View>
 
-      <TouchableOpacity style={styles.saveBtn} onPress={handleSaveTrainer}>
-        <Text style={styles.saveBtnText}>Save Trainer</Text>
-      </TouchableOpacity>
+        <View style={styles.statsContainer}>
+          <View style={[styles.statCard, styles.statCardElevated]}>
+            <View style={styles.statIconContainer}>
+              <Icon name="today" size={20} color="#6a11cb" />
+            </View>
+            <Text style={styles.statValue}>{activeUsers}</Text>
+            <Text style={styles.statLabel}>Active Now</Text>
+          </View>
 
-      {/* Trainers List */}
-      <Text style={styles.subHeader}>Trainers</Text>
-      {trainers.map((trainer) => (
-        <View key={trainer._id} style={styles.trainerCard}>
-          <Image
-            source={{ uri: trainer.imageUrl ? `${BASE_URL}${trainer.imageUrl}` : null }}
-            style={styles.trainerImage}
-          />
-          <View style={styles.trainerInfo}>
-            <Text style={styles.trainerName}>{trainer.username}</Text>
-            <Text style={styles.trainerBio}>{trainer.bio}</Text>
-            <Text style={styles.trainerSpecialties}>
-              Specialties: {Array.isArray(trainer.specialties) ? trainer.specialties.join(', ') : trainer.specialties}
-            </Text>
-            <TouchableOpacity onPress={() => deleteTrainer(trainer._id)}>
-              <Text style={{ color: 'red', marginTop: 8 }}>Delete</Text>
-            </TouchableOpacity>
+          <View style={[styles.statCard, styles.statCardElevated]}>
+            <View style={styles.statIconContainer}>
+              <Icon name="attach-money" size={20} color="#6a11cb" />
+            </View>
+            <Text style={styles.statValue}>${revenue}</Text>
+            <Text style={styles.statLabel}>Revenue</Text>
           </View>
         </View>
-      ))}
+      </LinearGradient>
+
+      {/* Weekly Activity Chart */}
+      <View style={styles.sectionContainer}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Weekly Activity</Text>
+          <TouchableOpacity onPress={updateMetrics}>
+            <Icon name="refresh" size={20} color="#6a11cb" />
+          </TouchableOpacity>
+        </View>
+        <View style={[styles.chartContainer, styles.elevatedCard]}>
+          <LineChart
+            data={chartData}
+            width={screenWidth - 60}
+            height={220}
+            chartConfig={{
+              backgroundGradientFrom: '#fff',
+              backgroundGradientTo: '#fff',
+              decimalPlaces: 0,
+              color: (opacity = 1) => `rgba(106, 17, 203, ${opacity})`,
+              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+              propsForDots: {
+                r: '5',
+                strokeWidth: '2',
+                stroke: '#6a11cb'
+              }
+            }}
+            bezier
+            style={{
+              marginVertical: 8,
+              borderRadius: 16,
+            }}
+          />
+        </View>
+      </View>
+
+      {/* Supplement Management */}
+      <View style={styles.sectionContainer}>
+        <Text style={styles.sectionTitle}>Supplement Management</Text>
+        <View style={[styles.formContainer, styles.elevatedCard]}>
+          <TextInput
+            style={styles.input}
+            placeholder="Name"
+            value={name}
+            onChangeText={setName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Purpose"
+            value={purpose}
+            onChangeText={setPurpose}
+          />
+          <View style={styles.priceInputContainer}>
+            <Text style={styles.currencySymbol}>£</Text>
+            <TextInput
+              style={[styles.input, styles.priceInput]}
+              placeholder="Price"
+              value={price}
+              onChangeText={setPrice}
+              keyboardType="numeric"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={styles.uploadBtn}
+            onPress={() => chooseImage(setImage)}
+          >
+            <Icon name={image ? 'photo-camera' : 'add-a-photo'} size={20} color="#6a11cb" />
+            <Text style={styles.uploadBtnText}>
+              {image ? 'Change Image' : 'Upload Image'}
+            </Text>
+          </TouchableOpacity>
+
+          {image && (
+            <Image source={{ uri: image.path }} style={styles.imagePreview} />
+          )}
+
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            onPress={handleSaveSupplement}
+          >
+            <Text style={styles.primaryBtnText}>
+              {editingId ? 'Update' : 'Add'} Supplement
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Trainer Management */}
+      <View style={styles.sectionContainer}>
+        <Text style={styles.sectionTitle}>Trainer Management</Text>
+        <View style={[styles.formContainer, styles.elevatedCard]}>
+          <View style={styles.twoColumnRow}>
+            <View style={styles.column}>
+              <TextInput
+                style={styles.input}
+                placeholder="Username *"
+                value={trainerUsername}
+                onChangeText={setTrainerUsername}
+              />
+            </View>
+            <View style={styles.column}>
+              <TextInput
+                style={styles.input}
+                placeholder="Password *"
+                secureTextEntry
+                value={trainerPassword}
+                onChangeText={setTrainerPassword}
+              />
+            </View>
+          </View>
+
+          <View style={styles.twoColumnRow}>
+            <View style={styles.column}>
+              <TextInput
+                style={styles.input}
+                placeholder="Full Name *"
+                value={trainerFullName}
+                onChangeText={setTrainerFullName}
+              />
+            </View>
+            <View style={styles.column}>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                keyboardType="email-address"
+                value={trainerEmail}
+                onChangeText={setTrainerEmail}
+              />
+            </View>
+          </View>
+
+          <TextInput
+            style={[styles.input, styles.bioInput]}
+            placeholder="Trainer Bio"
+            multiline
+            value={trainerBio}
+            onChangeText={setTrainerBio}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Specialties (comma separated) *"
+            value={trainerSpecialties}
+            onChangeText={setTrainerSpecialties}
+          />
+
+          <TouchableOpacity
+            style={styles.uploadBtn}
+            onPress={() => chooseImage(setTrainerImage)}
+          >
+            <Icon name={trainerImage ? 'photo-camera' : 'add-a-photo'} size={20} color="#6a11cb" />
+            <Text style={styles.uploadBtnText}>
+              {trainerImage ? 'Change Image' : 'Upload Image'}
+            </Text>
+          </TouchableOpacity>
+
+          {trainerImage && (
+            <Image source={{ uri: trainerImage.path }} style={styles.imagePreview} />
+          )}
+
+          <TouchableOpacity
+            style={[styles.primaryBtn, (!trainerUsername || !trainerPassword || !trainerFullName || !trainerSpecialties) && styles.disabledBtn]}
+            onPress={handleSaveTrainer}
+            disabled={!trainerUsername || !trainerPassword || !trainerFullName || !trainerSpecialties || creatingTrainer}
+          >
+            {creatingTrainer ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.primaryBtnText}>Create Trainer</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* Trainers List */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.subSectionTitle}>Current Trainers</Text>
+          <Text style={styles.trainerCount}>{trainers.length} trainers</Text>
+        </View>
+
+        {trainers.map((trainer) => (
+          <View key={trainer._id} style={[styles.trainerCard, styles.elevatedCard]}>
+            <Image
+              source={{ uri: trainer.imageUrl ? `${BASE_URL}/${trainer.imageUrl}` : null }}// Fixed bug and image of trainer is shown
+
+              style={styles.trainerImage}
+            />
+            <View style={styles.trainerInfo}>
+              <View style={styles.trainerHeader}>
+                <Text style={styles.trainerName}>{trainer.fullName || trainer.username}</Text>
+                <TouchableOpacity
+                  onPress={() => toggleTrainerStatus(trainer._id, !trainer.isActive)}
+                  style={[
+                    styles.statusBtn,
+                    trainer.isActive ? styles.activeBtn : styles.inactiveBtn
+                  ]}
+                >
+                  <Text style={[
+                    styles.statusBtnText,
+                    trainer.isActive ? styles.activeBtnText : styles.inactiveBtnText
+                  ]}>
+                    {trainer.isActive ? 'Active' : 'Inactive'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.trainerUsername}>@{trainer.username}</Text>
+              <Text style={styles.trainerBio}>{trainer.bio}</Text>
+              <View style={styles.specialtiesContainer}>
+                <Icon name="fitness-center" size={16} color="#6a11cb" />
+                <Text style={styles.trainerSpecialties}>
+                  {Array.isArray(trainer.specialties)
+                    ? trainer.specialties.join(', ')
+                    : trainer.specialties}
+                </Text>
+              </View>
+              <View style={styles.trainerActions}>
+                <TouchableOpacity
+                  style={styles.deleteBtn}
+                  onPress={() => deleteTrainer(trainer._id)}
+                >
+                  <Icon name="delete" size={18} color="#dc3545" />
+                  <Text style={styles.deleteBtnText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        ))}
+      </View>
 
       <Toast />
     </ScrollView>
@@ -394,106 +567,324 @@ const AdminPanel = () => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
+    paddingBottom: 40,
+  },
+  headerContainer: {
+    padding: 25,
+    paddingBottom: 30,
+    borderBottomLeftRadius: 25,
+    borderBottomRightRadius: 25,
+    marginBottom: 15,
+    shadowColor: '#6a11cb',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  welcomeText: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
+    marginBottom: 5,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 25,
   },
   header: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#fff',
   },
-  subHeader: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginVertical: 10,
+  logoutBtn: {
+    padding: 10,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    width: 42,
+    height: 42,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  summaryCardsContainer: {
+  statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginTop: 10,
   },
-  cardSummary: {
-    flex: 1,
-    backgroundColor: '#3498db',
-    padding: 15,
-    borderRadius: 10,
-    marginRight: 10,
+  statCard: {
+    backgroundColor: '#fff',
     alignItems: 'center',
+    flex: 1,
+    marginHorizontal: 5,
+    padding: 15,
+    borderRadius: 12,
   },
-  cardTitle: {
-    color: '#fff',
-    fontSize: 14,
-    marginTop: 5,
+  statCardElevated: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  cardValue: {
-    color: '#fff',
-    fontSize: 16,
+  statIconContainer: {
+    backgroundColor: 'rgba(106, 17, 203, 0.1)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statValue: {
+    fontSize: 20,
     fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
+  },
+  sectionContainer: {
+    marginHorizontal: 20,
+    marginBottom: 25,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 10
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+  },
+  viewAllText: {
+    color: '#6a11cb',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  trainerCount: {
+    color: '#666',
+    fontSize: 14,
+  },
+  subSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#444',
+  },
+  elevatedCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  chartContainer: {
+    borderRadius: 16,
+    padding: 15,
+  },
+  formContainer: {
+    padding: 20,
   },
   input: {
+    backgroundColor: '#f8f9fa',
     borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 12,
+    borderColor: '#e9ecef',
+    padding: 15,
     borderRadius: 10,
-    marginBottom: 10,
+    marginBottom: 15,
+    fontSize: 16,
+    color: '#333',
+  },
+  priceInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    borderRadius: 10,
+    marginBottom: 15,
+    paddingLeft: 15,
+  },
+  currencySymbol: {
+    fontSize: 16,
+    color: '#333',
+    marginRight: 10,
+  },
+  priceInput: {
+    flex: 1,
+    borderWidth: 0,
+    paddingLeft: 0,
+    marginBottom: 0,
+  },
+  bioInput: {
+    height: 80,
+    textAlignVertical: 'top',
   },
   uploadBtn: {
-    backgroundColor: '#6c5ce7',
-    padding: 12,
+    flexDirection: 'row',
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    padding: 15,
     borderRadius: 10,
-    marginBottom: 10,
+    marginBottom: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   uploadBtnText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: 'bold',
+    color: '#6a11cb',
+    fontWeight: '600',
+    marginLeft: 10,
   },
-  saveBtn: {
-    backgroundColor: '#28a745',
-    padding: 15,
+  primaryBtn: {
+    backgroundColor: '#6a11cb',
+    padding: 16,
     borderRadius: 10,
-    marginBottom: 20,
+    alignItems: 'center',
+    marginTop: 10,
+    shadowColor: '#6a11cb',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  saveBtnText: {
+  disabledBtn: {
+    backgroundColor: '#cccccc',
+    opacity: 0.7,
+  },
+  primaryBtnText: {
     color: '#fff',
-    textAlign: 'center',
     fontWeight: 'bold',
+    fontSize: 16,
+  },
+  imagePreview: {
+    width: '100%',
+    height: 180,
+    borderRadius: 10,
+    marginBottom: 15,
+    resizeMode: 'cover',
+    borderWidth: 1,
+    borderColor: '#e9ecef',
   },
   trainerCard: {
-    flexDirection: 'row',
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
     padding: 15,
     marginBottom: 15,
+    flexDirection: 'row',
     alignItems: 'center',
-    elevation: 2,
   },
   trainerImage: {
     width: 70,
     height: 70,
     borderRadius: 35,
     marginRight: 15,
+    borderWidth: 2,
+    borderColor: '#e9ecef',
   },
   trainerInfo: {
     flex: 1,
   },
-  trainerName: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  trainerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 5,
+  },
+  trainerName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  trainerUsername: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
   },
   trainerBio: {
     fontSize: 14,
     color: '#666',
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  specialtiesContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   trainerSpecialties: {
+    fontSize: 13,
+    color: '#6a11cb',
+    marginLeft: 5,
+    fontWeight: '500',
+  },
+  statusBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+  },
+  activeBtn: {
+    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+  },
+  inactiveBtn: {
+    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+  },
+  statusBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  activeBtnText: {
+    color: '#28a745',
+  },
+  inactiveBtnText: {
+    color: '#dc3545',
+  },
+  trainerActions: {
+    flexDirection: 'row',
+    marginTop: 10,
+  },
+  editBtn: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(106, 17, 203, 0.1)',
+    padding: 8,
+    borderRadius: 6,
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    marginRight: 10,
+  },
+  editBtnText: {
+    color: '#6a11cb',
     fontSize: 14,
-    color: '#666',
+    fontWeight: '600',
+    marginLeft: 5,
+  },
+  deleteBtn: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+    padding: 8,
+    borderRadius: 6,
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+  deleteBtnText: {
+    color: '#dc3545',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 5,
+  },
+  twoColumnRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  column: {
+    width: '48%',
   },
 });
 

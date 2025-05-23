@@ -8,22 +8,20 @@ const stripe = new Stripe('sk_test_51RNPAV4SrJuut3amIkB0ilvG8DWb6NXdlqtsezunuyIA
   typescript:false
 });
 
-/**
- * Check user's membership status
- */
+
+
 export const checkMembership = async (req, res) => {
   try {
-    const membership = await Membership.findOne({ 
+    const membership = await Membership.findOne({
       user: req.user.id,
-      status: { $in: ['active', 'trialing'] }
+      status: { $in: ['active', 'trialing'] },
     });
 
-    const hasMembership = membership && 
-      new Date(membership.currentPeriodEnd) > new Date();
+    const hasMembership = membership && new Date(membership.currentPeriodEnd) > new Date();
 
-    res.json({ 
+    res.json({
       hasMembership,
-      membership: hasMembership ? membership : null
+      membershipDeadline: hasMembership ? membership.currentPeriodEnd : null,
     });
   } catch (err) {
     console.error('Membership check error:', err);
@@ -31,31 +29,23 @@ export const checkMembership = async (req, res) => {
   }
 };
 
-/**
- * Create payment intent for membership purchase
- */
 export const createPaymentIntent = async (req, res) => {
   try {
     const { planType = 'monthly' } = req.body;
+    const priceId = planType === 'annual' ? process.env.STRIPE_ANNUAL_PRICE_ID : process.env.STRIPE_MONTHLY_PRICE_ID;
 
-    if (!['monthly', 'annual'].includes(planType)) {
-      return res.status(400).json({ error: 'Invalid plan type' });
-    }
+    if (!priceId) return res.status(400).json({ error: 'Stripe price ID is missing.' });
 
-    const priceId = planType === 'annual' 
-      ? process.env.STRIPE_ANNUAL_PRICE_ID 
-      : process.env.STRIPE_MONTHLY_PRICE_ID;
-
-    let customer;
     const user = await User.findById(req.user.id);
-    
+    let customer;
+
     if (user.stripeCustomerId) {
       customer = await stripe.customers.retrieve(user.stripeCustomerId);
     } else {
       customer = await stripe.customers.create({
         email: user.email,
         name: user.name,
-        metadata: { userId: user._id.toString() }
+        metadata: { userId: user._id.toString() },
       });
       user.stripeCustomerId = customer.id;
       await user.save();
@@ -69,41 +59,23 @@ export const createPaymentIntent = async (req, res) => {
     });
 
     const clientSecret = subscription.latest_invoice.payment_intent.client_secret;
-
-    res.json({
-      clientSecret,
-      subscriptionId: subscription.id
-    });
+    res.json({ clientSecret, subscriptionId: subscription.id });
   } catch (err) {
     console.error('Payment intent error:', err);
-    res.status(500).json({ 
-      error: 'Failed to create payment intent',
-      details: err.message 
-    });
+    res.status(500).json({ error: 'Failed to create payment intent' });
   }
 };
 
-/**
- * Confirm successful payment and activate membership
- */
 export const confirmPayment = async (req, res) => {
   try {
     const { subscriptionId } = req.body;
-
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
-    // Accept trialing as valid too
     if (!['active', 'trialing'].includes(subscription.status)) {
-      return res.status(202).json({
-        success: false,
-        message: 'Payment is still processing. Please wait or refresh later.'
-      });
+      return res.status(202).json({ success: false, message: 'Payment is still processing. Please refresh later.' });
     }
 
-    const planType = subscription.items.data[0].price.id === process.env.STRIPE_ANNUAL_PRICE_ID 
-      ? 'annual' 
-      : 'monthly';
-
+    const planType = subscription.items.data[0].price.id === process.env.STRIPE_ANNUAL_PRICE_ID ? 'annual' : 'monthly';
     const currentPeriodEnd = new Date(subscription.current_period_end * 1000);
 
     const membership = await Membership.findOneAndUpdate(
@@ -114,161 +86,64 @@ export const confirmPayment = async (req, res) => {
         status: subscription.status,
         currentPeriodEnd,
         stripeCustomerId: subscription.customer,
-        stripeSubscriptionId: subscription.id
+        stripeSubscriptionId: subscription.id,
       },
       { upsert: true, new: true }
     );
 
-    res.json({ 
-      success: true, 
-      membership,
-      currentPeriodEnd
-    });
+    res.json({ success: true, membership, currentPeriodEnd });
   } catch (err) {
     console.error('Payment confirmation error:', err);
-    res.status(500).json({ 
-      error: 'Failed to confirm payment',
-      details: err.message 
-    });
+    res.status(500).json({ error: 'Failed to confirm payment' });
   }
 };
 
-/**
- * Cancel user's subscription
- */
 export const cancelSubscription = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    if (!user.stripeCustomerId) {
-      return res.status(400).json({ error: 'No subscription found' });
-    }
-
-    // Find active subscription
-    const subscriptions = await stripe.subscriptions.list({
-      customer: user.stripeCustomerId,
-      status: 'active'
+    const membership = await Membership.findOne({
+      user: req.user.id,
+      status: { $in: ['active', 'trialing'] },
     });
 
-    if (subscriptions.data.length === 0) {
-      return res.status(400).json({ error: 'No active subscription found' });
+    if (!membership) {
+      return res.status(400).json({
+        success: false,
+        message: 'No active membership found to cancel.',
+      });
     }
 
-    const subscription = subscriptions.data[0];
-    
-    // Cancel subscription at period end
-    const canceledSubscription = await stripe.subscriptions.update(
-      subscription.id,
-      { cancel_at_period_end: true }
-    );
+    // Cancel the subscription immediately
+    const cancelledSub = await stripe.subscriptions.cancel(membership.stripeSubscriptionId);
 
-    // Update membership status
     await Membership.findOneAndUpdate(
-      { user: req.user.id },
-      { 
+      { _id: membership._id },
+      {
         status: 'canceled',
-        cancelAtPeriodEnd: true,
-        currentPeriodEnd: new Date(canceledSubscription.current_period_end * 1000)
-      }
+        cancelAtPeriodEnd: false,
+        canceledAt: new Date(),
+        currentPeriodEnd: new Date(), // end access now
+      },
+      { new: true }
     );
 
-    res.json({ 
+    res.json({
       success: true,
-      message: 'Subscription will cancel at period end',
-      cancelAt: new Date(canceledSubscription.current_period_end * 1000)
+      message: 'Membership cancelled immediately.',
     });
   } catch (err) {
     console.error('Cancel subscription error:', err);
-    res.status(500).json({ error: 'Failed to cancel subscription' });
+    res.status(500).json({ error: 'Failed to cancel membership' });
   }
 };
 
-/**
- * Update payment method
- */
-export const updatePaymentMethod = async (req, res) => {
-  try {
-    const { paymentMethodId } = req.body;
-    const user = await User.findById(req.user.id);
-
-    if (!user.stripeCustomerId) {
-      return res.status(400).json({ error: 'No customer record found' });
-    }
-
-    // Attach payment method to customer
-    await stripe.paymentMethods.attach(paymentMethodId, {
-      customer: user.stripeCustomerId,
-    });
-
-    // Set as default payment method
-    await stripe.customers.update(user.stripeCustomerId, {
-      invoice_settings: {
-        default_payment_method: paymentMethodId,
-      },
-    });
-
-    res.json({ success: true, message: 'Payment method updated' });
-  } catch (err) {
-    console.error('Update payment method error:', err);
-    res.status(500).json({ error: 'Failed to update payment method' });
-  }
-};
-
-/**
- * Get user's invoices
- */
-export const getInvoices = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user.stripeCustomerId) {
-      return res.json({ invoices: [] });
-    }
-
-    const invoices = await stripe.invoices.list({
-      customer: user.stripeCustomerId,
-      limit: 10
-    });
-
-    res.json({ invoices: invoices.data });
-  } catch (err) {
-    console.error('Get invoices error:', err);
-    res.status(500).json({ error: 'Failed to get invoices' });
-  }
-};
-
-/**
- * Get specific invoice
- */
-export const getInvoice = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    const invoice = await stripe.invoices.retrieve(req.params.id);
-
-    if (invoice.customer !== user.stripeCustomerId) {
-      return res.status(403).json({ error: 'Not authorized' });
-    }
-
-    res.json({ invoice });
-  } catch (err) {
-    console.error('Get invoice error:', err);
-    res.status(500).json({ error: 'Failed to get invoice' });
-  }
-};
-
-/**
- * Handle Stripe webhook events
- */
 export const handleWebhook = async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
+    event = stripe.webhooks.constructEvent(req.rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
-    console.error('Webhook verification failed:', err);
+    console.error('Webhook verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -276,27 +151,22 @@ export const handleWebhook = async (req, res) => {
     case 'payment_intent.succeeded':
       await handlePaymentSuccess(event.data.object);
       break;
-      
     case 'invoice.payment_succeeded':
       await handleSubscriptionPayment(event.data.object);
       break;
-      
     case 'invoice.payment_failed':
       await handlePaymentFailure(event.data.object);
       break;
-      
     case 'customer.subscription.deleted':
       await handleSubscriptionCancelled(event.data.object);
       break;
-      
     default:
-      console.log(`Unhandled event type: ${event.type}`);
+      console.log(`Unhandled event: ${event.type}`);
   }
 
   res.json({ received: true });
 };
 
-// Helper functions for webhook events
 async function handlePaymentSuccess(paymentIntent) {
   const userId = paymentIntent.metadata.userId;
   await Membership.findOneAndUpdate(
@@ -304,13 +174,11 @@ async function handlePaymentSuccess(paymentIntent) {
     { status: 'active' },
     { upsert: true }
   );
-  console.log(`Payment succeeded for user ${userId}`);
 }
 
 async function handleSubscriptionPayment(invoice) {
   const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
   const customerId = subscription.customer;
-  
   const user = await User.findOne({ stripeCustomerId: customerId });
   if (!user) return;
 
@@ -318,10 +186,9 @@ async function handleSubscriptionPayment(invoice) {
     { user: user._id },
     {
       currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-      status: 'active'
+      status: 'active',
     }
   );
-  console.log(`Subscription payment processed for user ${user._id}`);
 }
 
 async function handlePaymentFailure(invoice) {
@@ -333,7 +200,6 @@ async function handlePaymentFailure(invoice) {
     { user: user._id },
     { status: 'past_due' }
   );
-  console.log(`Payment failed for user ${user._id}`);
 }
 
 async function handleSubscriptionCancelled(subscription) {
@@ -343,10 +209,10 @@ async function handleSubscriptionCancelled(subscription) {
 
   await Membership.findOneAndUpdate(
     { user: user._id },
-    { 
+    {
       status: 'canceled',
-      canceledAt: new Date() 
+      canceledAt: new Date(),
+      currentPeriodEnd: new Date(),
     }
   );
-  console.log(`Subscription cancelled for user ${user._id}`);
 }

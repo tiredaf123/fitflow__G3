@@ -3,7 +3,7 @@ import { View, Text, ImageBackground, TouchableOpacity, StyleSheet, Animated, Di
 import { useNavigation } from '@react-navigation/native';
 import { useRef } from 'react';
 import { GestureHandlerRootView, PanGestureHandler } from 'react-native-gesture-handler';
-
+//Adharsh sapkota
 const { width } = Dimensions.get('window');
 
 const IntroScreen = ({ backgroundImage, title, description, buttonText, nextScreen }) => {

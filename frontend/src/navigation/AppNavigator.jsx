@@ -42,7 +42,7 @@ import GeneralScreen from '../screens/HomeScreen/SubScreen/GeneralScreen';
 import NotificationScreen from '../screens/HomeScreen/SubScreen/NotificationScreen';
 import HelpScreen from '../screens/HomeScreen/SubScreen/HelpScreen';
 import HireCoachScreen from '../screens/HomeScreen/SubScreen/HireCoachScreen';
-import TrainerListScreen from '../screens/HomeScreen/SubScreen/TrainerListScreen';
+
 import AboutScreen from '../screens/HomeScreen/SubScreen/AboutScreen';
 import TermsAndConditionsScreen from '../screens/HomeScreen/SubScreen/TermsAndConditionsScreen';
 import SupplementsScreen from '../screens/HomeScreen/SubScreen/SupplementsScreen';
@@ -57,15 +57,16 @@ import MessagesScreen from '../screens/HomeScreen/Message/MessagesScreen';
 import AdminPanel from '../Admin/AdminPanel';
 import Challenge from '../components/SideBar/Challenge';
 import Progress from '../components/SideBar/Progress';
-import Classes from '../components/SideBar/Classes';
-import Nutrition from '../components/SideBar/Nutrition';
 
+import Nutrition from '../components/SideBar/Nutrition';
+import HealthyFoodSuggestionScreen from "../services/HealthyFoodSuggestionScreen";
 // Trainer Dashboard
 import TrainerDashboard from '../trainerdashboard/trainer';
 import AddWorkout from '../trainerdashboard/addworkout';
 import NotifScreen from '../trainerdashboard/notifscreen';
 import ClientListScreen from '../trainerdashboard/ClientListScreen';
 import TrainerChatScreen from '../trainerdashboard/TrainerChat';
+import Membership from '../screens/HomeScreen/Member';
 
 const Stack = createStackNavigator();
 
@@ -107,6 +108,7 @@ export default function AppNavigator() {
           <Stack.Screen name="BackWorkout" component={BackWorkout} />
           <Stack.Screen name="LegWorkout" component={LegWorkout} />
           <Stack.Screen name="AbsWorkout" component={AbsWorkout} />
+          <Stack.Screen name="Member" component={Membership} />
           <Stack.Screen name="AllWorkouts" component={AllWorkouts} />
 
           {/* Profile & SubScreens */}
@@ -117,8 +119,8 @@ export default function AppNavigator() {
           <Stack.Screen name="Notification" component={NotificationScreen} />
           <Stack.Screen name="Help" component={HelpScreen} />
           <Stack.Screen name="HireCoach" component={HireCoachScreen} />
-          <Stack.Screen name="TrainerList" component={TrainerListScreen} />
-          <Stack.Screen name="Streak" component={StreakScreen} />
+
+          <Stack.Screen name="StreakScreen" component={StreakScreen} />
           <Stack.Screen name="About" component={AboutScreen} />
           <Stack.Screen name="Terms" component={TermsAndConditionsScreen} />
           <Stack.Screen name="Supplements" component={SupplementsScreen} />
@@ -132,7 +134,8 @@ export default function AppNavigator() {
           <Stack.Screen name="AdminPanel" component={AdminPanel} />
           <Stack.Screen name="Challenge" component={Challenge} />
           <Stack.Screen name="Progress" component={Progress} />
-          <Stack.Screen name="Classes" component={Classes} />
+
+          <Stack.Screen name="HealthyFoodSuggestionScreen" component={HealthyFoodSuggestionScreen} />
           <Stack.Screen name="Nutrition" component={Nutrition} />
 
           {/* Trainer Dashboard Screens */}

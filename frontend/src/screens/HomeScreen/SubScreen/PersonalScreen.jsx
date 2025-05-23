@@ -14,7 +14,7 @@ import { useTheme } from '../../../navigation/ThemeProvider';
 import BottomTabBar from '../../../components/BottomTabBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../../config/config';
-
+//Adharsh Sapkota added bottom tab bar
 const PersonalScreen = () => {
   const { isDarkMode } = useTheme();
   const styles = getStyles(isDarkMode);

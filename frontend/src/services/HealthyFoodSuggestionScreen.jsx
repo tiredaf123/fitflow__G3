@@ -1,16 +1,15 @@
+//Adharsh Sapkota
 import React, { useState } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   Modal,
   StyleSheet,
+  FlatList,
 } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
-const HealthyFoodSuggestionScreen = () => {
-  const [selectedFood, setSelectedFood] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
 
   const foodList = [
     {
@@ -1814,28 +1813,42 @@ const HealthyFoodSuggestionScreen = () => {
       "recipe": "Step 1: Cook oats in milk or water. Step 2: Top with sliced banana, almonds, and a sprinkle of cinnamon."
     }
   ];
+  const HealthyFoodSuggestionScreen = ({ navigation }) => {
+  const [selectedFood, setSelectedFood] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
   const handlePress = (food) => {
     setSelectedFood(food);
     setModalVisible(true);
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>Healthy Food Suggestions</Text>
-      {foodList.map((food, index) => (
-        <TouchableOpacity
-          key={index}
-          style={styles.item}
-          onPress={() => handlePress(food)}
-        >
-          <Text style={styles.itemText}>{food.name}</Text>
+    <View style={styles.container}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
-      ))}
+        <Text style={styles.header}>Healthy Food Suggestions</Text>
+      </View>
+
+      <FlatList
+        data={foodList}
+        keyExtractor={(item, index) => `${item.name}-${index}`}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.item}
+            onPress={() => handlePress(item)}
+          >
+            <Text style={styles.itemText}>{item.name}</Text>
+          </TouchableOpacity>
+        )}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      />
 
       <Modal
         visible={modalVisible}
         transparent
-        animationType='slide'
+        animationType="slide"
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalContainer}>
@@ -1848,7 +1861,8 @@ const HealthyFoodSuggestionScreen = () => {
                 <Text>Protein: {selectedFood.protein}</Text>
                 <Text>Carbs: {selectedFood.carbs}</Text>
                 <Text>Vitamins: {selectedFood.vitamins}</Text>
-                <Text>Recipe: {selectedFood.recipe}</Text>
+                <Text style={{ marginTop: 10 }}>Recipe:</Text>
+                <Text>{selectedFood.recipe}</Text>
               </>
             )}
             <TouchableOpacity
@@ -1860,7 +1874,7 @@ const HealthyFoodSuggestionScreen = () => {
           </View>
         </View>
       </Modal>
-    </ScrollView>
+    </View>
   );
 };
 
@@ -1868,12 +1882,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginLeft: 10,
   },
   item: {
     padding: 15,
@@ -1891,7 +1911,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    width: '80%',
+    width: '85%',
     padding: 20,
     backgroundColor: 'white',
     borderRadius: 10,

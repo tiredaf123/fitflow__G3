@@ -1,3 +1,4 @@
+// Login_Page.js
 import React, { useState } from 'react';
 import {
   View,
@@ -6,6 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Image,
   ImageBackground,
   ScrollView,
   KeyboardAvoidingView,
@@ -30,6 +32,23 @@ const Login_Page = () => {
     Toast.show({ type, text1, text2 });
   };
 
+  const updateLoginStreak = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const storedDate = await AsyncStorage.getItem('last_login_date');
+    const storedStreak = parseInt(await AsyncStorage.getItem('login_streak')) || 0;
+
+    if (storedDate !== today) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterDateStr = yesterday.toISOString().split('T')[0];
+
+      const newStreak = storedDate === yesterDateStr ? storedStreak + 1 : 1;
+
+      await AsyncStorage.setItem('login_streak', newStreak.toString());
+      await AsyncStorage.setItem('last_login_date', today);
+    }
+  };
+
   const handleLogin = async () => {
     if (!username || !password) {
       showToast('error', 'Missing Info', 'Please enter both username and password');
@@ -47,7 +66,15 @@ const Login_Page = () => {
 
       if (res.ok) {
         await AsyncStorage.setItem('token', data.token);
+
+        if (data.clientId) {
+          await AsyncStorage.setItem('clientId', data.clientId);
+        } else if (data.user && data.user._id) {
+          await AsyncStorage.setItem('clientId', data.user._id);
+        }
+
         await AsyncStorage.setItem('isAdmin', data.isAdmin ? 'true' : 'false');
+        await updateLoginStreak();
 
         showToast('success', 'Login Successful', 'Welcome back!');
 
@@ -81,8 +108,8 @@ const Login_Page = () => {
         >
           <ScrollView 
             contentContainerStyle={styles.scrollContainer} 
-            showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
             <View style={styles.content}>
               <Text style={styles.title}>Welcome Back</Text>
@@ -100,7 +127,7 @@ const Login_Page = () => {
                     autoCapitalize="none"
                   />
                 </View>
-                
+
                 <View style={styles.inputWrapper}>
                   <Icon name="lock" size={20} color="#888" style={styles.inputIcon} />
                   <TextInput
@@ -115,42 +142,41 @@ const Login_Page = () => {
                     style={styles.eyeIcon}
                     onPress={() => setShowPassword(!showPassword)}
                   >
-                    <Icon 
-                      name={showPassword ? "visibility-off" : "visibility"} 
-                      size={20} 
-                      color="#888" 
-                    />
+                    <Icon name={showPassword ? 'visibility-off' : 'visibility'} size={20} color="#888" />
                   </TouchableOpacity>
                 </View>
               </View>
 
-              <TouchableOpacity 
-                style={styles.loginButton} 
-                onPress={handleLogin}
-                activeOpacity={0.8}
-              >
+              <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
                 <Text style={styles.loginButtonText}>Login</Text>
               </TouchableOpacity>
 
               <View style={styles.dividerContainer}>
                 <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or</Text>
+                <Text style={styles.dividerText}>or sign in with</Text>
                 <View style={styles.dividerLine} />
+              </View>
+
+              <View style={styles.socialContainer}>
+                <TouchableOpacity style={styles.socialButton}>
+                  <Image source={require('../assets/Images/google.png')} style={styles.socialIcon} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.socialButton}>
+                  <Image source={require('../assets/Images/apple.png')} style={styles.socialIcon} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.socialButton}>
+                  <Image source={require('../assets/Images/twitter.png')} style={styles.socialIcon} />
+                </TouchableOpacity>
               </View>
 
               <View style={styles.footer}>
                 <Text style={styles.footerText}>Don't have an account?</Text>
-                <TouchableOpacity 
-                  onPress={() => navigation.navigate('SignUp_Page')}
-                >
+                <TouchableOpacity onPress={() => navigation.navigate('SignUp_Page')}>
                   <Text style={styles.footerLink}>Sign Up</Text>
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity
-                style={styles.trainerButton}
-                onPress={() => navigation.navigate('Trainer_LoginPage')}
-              >
+              <TouchableOpacity onPress={() => navigation.navigate('Trainer_LoginPage')}>
                 <Text style={styles.trainerText}>Trainer Login</Text>
               </TouchableOpacity>
             </View>
@@ -162,41 +188,14 @@ const Login_Page = () => {
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
-  overlay: {
-    flex: 1,
-    paddingHorizontal: 24,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
-  content: {
-    alignItems: 'center',
-    paddingBottom: 40,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFF',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.7)',
-    marginBottom: 40,
-  },
-  inputContainer: {
-    width: '100%',
-    marginBottom: 24,
-  },
+  backgroundImage: { flex: 1, width: '100%', height: '100%' },
+  overlay: { flex: 1, paddingHorizontal: 24 },
+  keyboardView: { flex: 1 },
+  scrollContainer: { flexGrow: 1, justifyContent: 'center' },
+  content: { alignItems: 'center', paddingBottom: 40 },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#FFF', marginBottom: 8 },
+  subtitle: { fontSize: 16, color: 'rgba(255,255,255,0.7)', marginBottom: 40 },
+  inputContainer: { width: '100%', marginBottom: 24 },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -212,12 +211,8 @@ const styles = StyleSheet.create({
     color: '#000',
     paddingLeft: 8,
   },
-  inputIcon: {
-    marginRight: 8,
-  },
-  eyeIcon: {
-    padding: 8,
-  },
+  inputIcon: { marginRight: 8 },
+  eyeIcon: { padding: 8 },
   loginButton: {
     width: '100%',
     backgroundColor: '#FFA500',
@@ -252,23 +247,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 14,
   },
-  footer: {
-    flexDirection: 'row',
-    marginBottom: 24,
+  socialContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 8 },
+  socialButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    padding: 10,
+    borderRadius: 100,
+    marginHorizontal: 10,
   },
-  footerText: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 14,
-  },
-  footerLink: {
-    color: '#FFA500',
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-  trainerButton: {
-    paddingVertical: 12,
-  },
+  socialIcon: { width: 40, height: 40, borderRadius: 100 },
+  footer: { flexDirection: 'row', marginBottom: 16 },
+  footerText: { color: 'rgba(255,255,255,0.7)', fontSize: 14 },
+  footerLink: { color: '#FFA500', fontSize: 14, fontWeight: '600', marginLeft: 4 },
   trainerText: {
     color: '#FFF',
     fontSize: 14,

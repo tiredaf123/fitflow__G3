@@ -166,7 +166,7 @@ const TrainerChatScreen = ({ route }) => {
     </SafeAreaView>
   );
 };
-
+//satya for ui Sohan for the backend
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
   container: { flex: 1 },

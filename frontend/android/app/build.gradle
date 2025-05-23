@@ -60,4 +60,3 @@ apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
 
 // 🔥 Removed this line:
 // apply plugin: 'com.google.gms.google-services'
-

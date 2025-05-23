@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Add these permissions for video playback -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
       android:name=".MainApplication"
@@ -30,5 +33,11 @@
             <data android:scheme="fitflow" />
         </intent-filter>
       </activity>
+
+      <!-- Add this for react-native-video -->
+      <activity
+        android:name="com.brentvatne.react.ReactVideoViewActivity"
+        android:configChanges="keyboardHidden|orientation|screenSize"
+        android:windowSoftInputMode="adjustPan" />
     </application>
 </manifest>

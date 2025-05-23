@@ -1,35 +1,32 @@
+// middleware/uploadMiddleware.js
 import multer from 'multer';
 import path from 'path';
 
-// Storage config
 const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    cb(null, 'uploads/profile/');
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
   },
-  filename(req, file, cb) {
-    // Check if req.user and req.user._id exist
-    if (req.user && req.user._id) {
-      cb(null, `${req.user._id}_${Date.now()}${path.extname(file.originalname)}`);
-    } else {
-      // Handle the case where req.user or req.user._id is undefined
-      console.error('req.user or req.user._id is undefined');
-      return cb(new Error('User not authenticated'), false); // Reject the upload
-    }
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
   },
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/')) {
-    cb(null, true);
+  const filetypes = /jpeg|jpg|png|mp4|mov|avi/;
+  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = filetypes.test(file.mimetype);
+
+  if (extname && mimetype) {
+    return cb(null, true);
   } else {
-    cb(new Error('Only image files are allowed!'), false);
+    cb(new Error('Only images (JPEG, JPG, PNG) and videos (MP4, MOV, AVI) are allowed!'));
   }
 };
 
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit
 });
 
 export default upload;

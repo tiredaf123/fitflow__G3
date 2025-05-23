@@ -50,7 +50,7 @@ const ProfileScreen = () => {
           setEmail(data?.email || '');
           setUsername(data?.username || '');
           setFullName(data?.fullName || '');
-          setPhotoURL(data?.photoURL || null);
+          setPhotoURL(data?.photoURL ? `${data.photoURL}?${new Date().getTime()}` : null);
           setHeight(data?.profile?.height?.toString() || '');
           setWeight(data?.profile?.weight?.toString() || '');
           setGoal(data?.profile?.goal || '');
@@ -85,8 +85,13 @@ const ProfileScreen = () => {
         compressImageQuality: 0.7,
       });
       uploadImage(image);
-    } catch {
-      // User cancelled
+    } catch (err) {
+      console.error('Camera error:', err);
+      Toast.show({
+        type: 'error',
+        text1: 'Camera Error',
+        text2: 'Could not open camera. Please check permissions.',
+      });
     }
   };
 
@@ -99,8 +104,13 @@ const ProfileScreen = () => {
         compressImageQuality: 0.7,
       });
       uploadImage(image);
-    } catch {
-      // User cancelled
+    } catch (err) {
+      console.error('Gallery error:', err);
+      Toast.show({
+        type: 'error',
+        text1: 'Gallery Error',
+        text2: 'Could not access photos. Please check permissions.',
+      });
     }
   };
 
@@ -115,11 +125,18 @@ const ProfileScreen = () => {
 
     try {
       const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        console.error('No token found in AsyncStorage');
+        return;
+      }
+
+      const uri = Platform.OS === 'android' ? image.path : image.path.replace('file://', '');
+
       const formData = new FormData();
       formData.append('photo', {
-        uri: image.path,
+        uri,
         name: image.filename || `profile_${Date.now()}.jpg`,
-        type: image.mime,
+        type: image.mime || 'image/jpeg',
       });
 
       setUploading(true);
@@ -128,23 +145,31 @@ const ProfileScreen = () => {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
         },
         body: formData,
       });
 
       const data = await res.json();
-      setUploading(false);
 
-      if (res.ok) {
-        setPhotoURL(data.photoURL);
-        Toast.show({ type: 'success', text1: 'Profile photo updated' });
-      } else {
+      if (!res.ok || !data.photoURL) {
         throw new Error(data.message || 'Upload failed');
       }
+
+      setPhotoURL(`${data.photoURL}?${Date.now()}`);
+      Toast.show({
+        type: 'success',
+        text1: 'Profile photo updated',
+        text2: 'Your profile picture has been successfully updated.',
+      });
     } catch (err) {
+      console.error('Upload error:', err);
+      Toast.show({
+        type: 'error',
+        text1: 'Upload failed',
+        text2: err.message || 'Please try again',
+      });
+    } finally {
       setUploading(false);
-      Toast.show({ type: 'error', text1: 'Upload failed', text2: err.message });
     }
   };
 
@@ -170,6 +195,7 @@ const ProfileScreen = () => {
       });
     }
   };
+
 
   const themeStyles = {
     container: {
@@ -212,6 +238,7 @@ const ProfileScreen = () => {
             <Image
               source={photoURL ? { uri: photoURL } : require('../../assets/Images/profile.png')}
               style={styles.profileImage}
+              onError={(e) => console.log('Failed to load image:', e.nativeEvent.error)}
             />
             <TouchableOpacity style={styles.editButton} onPress={chooseImage} activeOpacity={0.7}>
               <Icon name="edit" size={20} color="#FFF" />
@@ -278,6 +305,16 @@ const ProfileScreen = () => {
 
           <TouchableOpacity
             style={themeStyles.settingItem}
+            onPress={() => navigation.navigate('StreakScreen')}
+            activeOpacity={0.7}
+          >
+            <Icon name="local-fire-department" size={24} color="#FF6B00" />
+            <Text style={[styles.settingText, themeStyles.text]}>StreakScreen</Text>
+            <Icon name="chevron-right" size={24} color={themeStyles.text.color} style={{ marginLeft: 'auto' }} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={themeStyles.settingItem}
             onPress={() => navigation.navigate('Help')}
             activeOpacity={0.7}
           >
@@ -305,15 +342,17 @@ const ProfileScreen = () => {
             <Text style={[styles.settingText, themeStyles.text]}>Supplements</Text>
             <Icon name="chevron-right" size={24} color={themeStyles.text.color} style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
+
           <TouchableOpacity
             style={themeStyles.settingItem}
-            onPress={() => navigation.navigate('AllWorkouts')}
+            onPress={() => navigation.navigate('Member')}
             activeOpacity={0.7}
           >
             <Icon name="fitness-center" size={24} color={themeStyles.text.color} />
             <Text style={[styles.settingText, themeStyles.text]}>Workout by Trainers</Text>
             <Icon name="chevron-right" size={24} color={themeStyles.text.color} style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
+
           <TouchableOpacity
             style={[themeStyles.settingItem, { borderBottomWidth: 0 }]}
             onPress={handleLogout}
@@ -322,7 +361,6 @@ const ProfileScreen = () => {
             <Icon name="logout" size={24} color={themeStyles.text.color} />
             <Text style={[styles.settingText, themeStyles.text]}>Logout</Text>
           </TouchableOpacity>
-          
         </View>
 
         <View style={themeStyles.settingsSection}>

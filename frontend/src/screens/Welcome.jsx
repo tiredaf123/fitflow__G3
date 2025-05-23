@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 const Welcome = () => {
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
-
+//Adharsh sapkota
   const handleNextPress = () => {
     setLoading(true);
     setTimeout(() => {

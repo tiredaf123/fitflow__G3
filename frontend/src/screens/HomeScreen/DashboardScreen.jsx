@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import BottomTabBar from '../../components/BottomTabBar';
 import { useTheme } from '../../navigation/ThemeProvider';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../config/config';
 
@@ -18,120 +18,210 @@ const DashboardScreen = () => {
   const [steps, setSteps] = useState(0);
   const [food, setFood] = useState(0);
 
-  useEffect(() => {
-    const fetchWeight = async () => {
-      try {
-        const token = await AsyncStorage.getItem('token');
-        const res = await fetch(`${BASE_URL}/profile/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+  const fetchWeight = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const res = await fetch(`${BASE_URL}/profile/weight`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-        const data = await res.json();
-        if (res.ok && data?.profile?.weight) {
-          const w = parseFloat(data.profile.weight);
-          setWeight(w.toString());
+      const data = await res.json();
+      if (res.ok && data?.currentWeight?.weight) {
+        const w = parseFloat(data.currentWeight.weight);
+        setWeight(w.toFixed(1)); // Show 1 decimal place
 
-          const baseCalories = 22 * w;
-          const dailyCalories = Math.round(baseCalories);
-          const exerciseBurn = Math.round(dailyCalories * 0.2);
-          const waterIntake = Math.round(w * 35); // ml
-          const stepEstimate = Math.round(exerciseBurn * 20);
-          const foodCalories = dailyCalories + exerciseBurn;
+        const baseCalories = 22 * w;
+        const dailyCalories = Math.round(baseCalories);
+        const exerciseBurn = Math.round(dailyCalories * 0.2);
+        const waterIntake = Math.round(w * 35); // ml
+        const stepEstimate = Math.round(exerciseBurn * 20);
+        const foodCalories = dailyCalories + exerciseBurn;
 
-          setCalories(dailyCalories);
-          setExercise(exerciseBurn);
-          setWater(waterIntake);
-          setSteps(stepEstimate);
-          setFood(foodCalories);
-        }
-      } catch (err) {
-        console.error('Dashboard fetch weight error:', err);
+        setCalories(dailyCalories);
+        setExercise(exerciseBurn);
+        setWater(waterIntake);
+        setSteps(stepEstimate);
+        setFood(foodCalories);
       }
-    };
+    } catch (err) {
+      console.error('Dashboard fetch weight error:', err);
+    }
+  };
 
-    fetchWeight();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchWeight();
+    }, [])
+  );
 
-  const themeStyles = {
-    container: { flex: 1, backgroundColor: isDarkMode ? '#1a1a1a' : '#F0F0F0' },
-    navbar: {
-      backgroundColor: isDarkMode ? '#2A2A2A' : '#FFF',
-      borderColor: isDarkMode ? '#444' : '#DDD',
-      paddingVertical: 15,
-      paddingHorizontal: 10,
-      borderRadius: 10,
-      marginBottom: 10,
+  const themeStyles = StyleSheet.create({
+    container: { 
+      flex: 1, 
+      backgroundColor: isDarkMode ? '#121212' : '#F5F5F5' 
+    },
+    contentContainer: {
+      padding: 16,
+      paddingBottom: 80 // Space for bottom tab bar
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      marginBottom: 16,
+      backgroundColor: isDarkMode ? '#1E1E1E' : '#FFF',
+      borderRadius: 12,
+      elevation: 2,
+      shadowColor: isDarkMode ? '#000' : '#888',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    },
+    dateNav: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 12,
+      backgroundColor: isDarkMode ? '#1E1E1E' : '#FFF',
+      borderRadius: 12,
+      marginBottom: 16,
+      elevation: 2,
+      shadowColor: isDarkMode ? '#000' : '#888',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
     },
     section: {
-      backgroundColor: isDarkMode ? '#2A2A2A' : '#FFF',
-      borderColor: isDarkMode ? '#444' : '#DDD',
-      padding: 20,
-      borderRadius: 16,
-      marginBottom: 20,
+      backgroundColor: isDarkMode ? '#1E1E1E' : '#FFF',
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 16,
+      elevation: 2,
+      shadowColor: isDarkMode ? '#000' : '#888',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
     },
-    text: { color: isDarkMode ? '#FFF' : '#000' },
-    iconColor: isDarkMode ? '#00BFFF' : '#FF6B00',
-    cardBackground: isDarkMode ? '#333' : '#E0E0E0',
-    sectionItem: { alignItems: 'center', flex: 1 },
-    sectionText: { marginTop: 5 },
-  };
+    text: { 
+      color: isDarkMode ? '#FFF' : '#000',
+      fontFamily: 'System',
+    },
+    titleText: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: isDarkMode ? '#FFF' : '#000',
+      marginLeft: 12,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: isDarkMode ? '#FFF' : '#000',
+      marginBottom: 12,
+    },
+    highlightText: {
+      color: isDarkMode ? '#00BFFF' : '#FF6B00',
+      fontSize: 28,
+      fontWeight: '700',
+      textAlign: 'center',
+      marginBottom: 16,
+    },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      borderRadius: 12,
+      marginBottom: 12,
+      backgroundColor: isDarkMode ? '#252525' : '#F0F0F0',
+    },
+    metricsContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      marginTop: 8,
+    },
+    metricItem: {
+      width: '30%',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    metricValue: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: isDarkMode ? '#FFF' : '#000',
+      marginTop: 4,
+    },
+    metricLabel: {
+      fontSize: 12,
+      color: isDarkMode ? '#AAA' : '#666',
+      marginTop: 4,
+    },
+    cardContent: {
+      flex: 1,
+      marginLeft: 12,
+    },
+    cardTitle: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: isDarkMode ? '#FFF' : '#000',
+    },
+    cardSubtitle: {
+      fontSize: 12,
+      color: isDarkMode ? '#AAA' : '#666',
+      marginTop: 4,
+    },
+    cardValue: {
+      color: isDarkMode ? '#00BFFF' : '#FF6B00',
+      fontSize: 16,
+      fontWeight: '600',
+    },
+  });
 
   return (
     <View style={themeStyles.container}>
-      <ScrollView style={{ padding: 20 }}>
-        <View style={[{ flexDirection: 'row', alignItems: 'center' }, themeStyles.navbar]}>
+      <ScrollView contentContainerStyle={themeStyles.contentContainer}>
+        {/* Header */}
+        <View style={themeStyles.header}>
           <TouchableOpacity onPress={() => navigation.openDrawer()}>
             <MaterialIcon name="menu" size={28} color={themeStyles.text.color} />
           </TouchableOpacity>
-          <Text style={[{ fontSize: 22, marginLeft: 15 }, themeStyles.text]}>Dashboard</Text>
+          <Text style={themeStyles.titleText}>Dashboard</Text>
         </View>
 
+        {/* Date Navigation */}
         <TouchableOpacity
           onPress={() => navigation.navigate('Calendar')}
-          style={[{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingVertical: 10,
-            paddingHorizontal: 15,
-            borderRadius: 10,
-            marginBottom: 20
-          }, themeStyles.navbar]}
+          style={themeStyles.dateNav}
         >
           <MaterialIcon name="chevron-left" size={28} color={themeStyles.text.color} />
-          <Text style={[{ fontSize: 18 }, themeStyles.text]}>Today</Text>
+          <Text style={[themeStyles.text, { fontSize: 16, fontWeight: '500' }]}>Today</Text>
           <MaterialIcon name="chevron-right" size={28} color={themeStyles.text.color} />
         </TouchableOpacity>
 
-        {/* Calorie Budget */}
+        {/* Calorie Budget Section */}
         <View style={themeStyles.section}>
-          <Text style={[{ textAlign: 'center', marginBottom: 10 }, themeStyles.text]}>
-            Calorie Budget
-          </Text>
-          <Text style={{
-            color: themeStyles.iconColor,
-            fontSize: 28,
-            textAlign: 'center',
-            marginBottom: 20,
-          }}>
-            {calories} kcal/day
+          <Text style={themeStyles.sectionTitle}>Calorie Budget</Text>
+          <Text style={themeStyles.highlightText}>
+            {calories.toLocaleString()} kcal/day
           </Text>
 
-          <View style={{ flexDirection: 'row', justifyContent: 'space-around', flexWrap: 'wrap' }}>
+          <View style={themeStyles.metricsContainer}>
             {[
-              { name: 'heartbeat', label: 'Exercise', value: `${exercise} kcal` },
-              { name: 'tint', label: 'Water', value: `${water} ml` },
-              { name: 'male', label: 'Steps', value: `${steps}` },
+              { name: 'heartbeat', label: 'Exercise', value: `${exercise.toLocaleString()} kcal` },
+              { name: 'tint', label: 'Water', value: `${water.toLocaleString()} ml` },
+              { name: 'male', label: 'Steps', value: steps.toLocaleString() },
               { name: 'pencil', label: 'Notes', value: '0' },
-              { name: 'cutlery', label: 'Food', value: `${food} kcal` },
+              { name: 'cutlery', label: 'Food', value: `${food.toLocaleString()} kcal` },
               { name: 'question-circle', label: 'Questions', value: '0' },
             ].map((item, index) => (
-              <View key={index} style={{ alignItems: 'center', width: '30%', marginBottom: 15 }}>
-                <Icon name={item.name} size={26} color={themeStyles.iconColor} />
-                <Text style={[themeStyles.text, { marginTop: 5, fontSize: 14 }]}>{item.label}</Text>
-                <Text style={themeStyles.text}>{item.value}</Text>
+              <View key={index} style={themeStyles.metricItem}>
+                <Icon 
+                  name={item.name} 
+                  size={24} 
+                  color={isDarkMode ? '#00BFFF' : '#FF6B00'} 
+                />
+                <Text style={themeStyles.metricValue}>{item.value}</Text>
+                <Text style={themeStyles.metricLabel}>{item.label}</Text>
               </View>
             ))}
           </View>
@@ -142,35 +232,43 @@ const DashboardScreen = () => {
           {
             name: 'balance-scale',
             text: 'Weight In',
-            value: weight,
-            subtext: 'Last recorded from onboarding',
+            value: weight ? `${weight} kg` : '--',
+            subtext: 'Last recorded weight',
             screen: 'WeightIn'
           },
-          { name: 'bullseye', text: 'My Weight Goal & Plan', screen: 'WeightGoal' },
-          { name: 'cutlery', text: 'Manage my Foods', screen: 'FoodManager', extraMargin: true },
+          { 
+            name: 'bullseye', 
+            text: 'My Weight Goal & Plan', 
+            subtext: 'Set and track your goals',
+            screen: 'WeightGoal' 
+          },
+          { 
+            name: 'cutlery', 
+            text: 'Manage my Foods', 
+            subtext: 'Track your nutrition',
+            screen: 'FoodManager' 
+          },
         ].map((item, index) => (
           <TouchableOpacity
             key={index}
             onPress={() => item.screen && navigation.navigate(item.screen)}
-            style={[{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: 15,
-              borderRadius: 12,
-              marginBottom: item.extraMargin ? 120 : 10,
-            }, { backgroundColor: themeStyles.cardBackground }]}
+            style={themeStyles.card}
+            activeOpacity={0.8}
           >
-            <Icon name={item.name} size={20} color={themeStyles.text.color} />
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={[{ fontSize: 16 }, themeStyles.text]}>{item.text}</Text>
+            <Icon 
+              name={item.name} 
+              size={20} 
+              color={isDarkMode ? '#00BFFF' : '#FF6B00'} 
+            />
+            <View style={themeStyles.cardContent}>
+              <Text style={themeStyles.cardTitle}>{item.text}</Text>
               {item.subtext && (
-                <Text style={[{ fontSize: 12, marginTop: 2 }, themeStyles.text]}>
-                  {item.subtext}
-                </Text>
+                <Text style={themeStyles.cardSubtitle}>{item.subtext}</Text>
               )}
             </View>
-            {item.value && <Text style={{ color: themeStyles.iconColor, fontSize: 16 }}>{item.value}</Text>}
+            {item.value && (
+              <Text style={themeStyles.cardValue}>{item.value}</Text>
+            )}
           </TouchableOpacity>
         ))}
       </ScrollView>

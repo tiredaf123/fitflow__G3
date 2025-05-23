@@ -32,3 +32,4 @@ router.put('/:id', protect, isAdmin, updateTrainer);
 router.delete('/:id', protect, isAdmin, deleteTrainer);
 
 export default router;
+//Adharsh Sapkota

@@ -27,24 +27,24 @@ const CalendarScreen = () => {
   const [countdown, setCountdown] = useState(null);
 
   useEffect(() => {
-    const loadToken = async () => {
+    const checkToken = async () => {
       const storedToken = await AsyncStorage.getItem('token');
       setToken(storedToken);
     };
-    loadToken();
+    checkToken();
   }, []);
 
   useEffect(() => {
     const fetchUserId = async () => {
       if (!token) return;
       try {
-        const res = await fetch('http://10.0.2.2:5000/api/auth/me', {
+        const res = await fetch('http://10.0.2.2:5000/api/profile/me', {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
         setUserId(data._id);
       } catch (err) {
-        console.error('Error fetching userId:', err);
+        console.log('Error fetching userId:', err);
       }
     };
     fetchUserId();
@@ -202,8 +202,7 @@ const CalendarScreen = () => {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDarkMode ? '#1a1a1a' : '#fff' }]}
-      contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView style={[styles.container, { backgroundColor: isDarkMode ? '#1a1a1a' : '#fff' }]}>
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <MaterialIcon name="arrow-back" size={28} color={isDarkMode ? '#fff' : '#000'} />
@@ -224,7 +223,7 @@ const CalendarScreen = () => {
 
       {selected && (
         <View style={styles.notesSection}>
-          <Text style={[styles.dateLabel, { color: isDarkMode ? '#fff' : '#000' }]}>Notes for {selected}</Text>
+          <Text style={{ color: isDarkMode ? '#fff' : '#000', fontSize: 16, fontWeight: '600' }}>Notes for {selected}</Text>
           <TextInput
             style={[styles.input, { backgroundColor: isDarkMode ? '#333' : '#f1f1f1', color: isDarkMode ? '#fff' : '#000' }]}
             placeholder="e.g., Upper body workout and cardio"
@@ -240,18 +239,11 @@ const CalendarScreen = () => {
             <Text style={styles.buttonText}>Save Note</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={handleDeleteNote}
-            style={[styles.button, { backgroundColor: 'red', marginTop: 10 }]}
-          >
-            <Text style={styles.buttonText}>Delete Note</Text>
-          </TouchableOpacity>
+          
         </View>
       )}
 
-      <Text style={[styles.membershipText, { color: isDarkMode ? '#ff6b6b' : '#cc0000' }]}>
-        {countdown === 'EXPIRED' ? 'Membership has expired' : `Membership expires in: ${countdown}`}
-      </Text>
+      
     </ScrollView>
   );
 };
@@ -299,10 +291,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
-  dateLabel: {
-    fontSize: 18,
-    fontWeight: '500',
-  },
 });
 
 export default CalendarScreen;
+//satya shrestha saves notes for the day

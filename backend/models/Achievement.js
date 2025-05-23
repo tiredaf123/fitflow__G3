@@ -1,28 +1,42 @@
-import express from 'express';
-import {
-  getAchievements,
-  addAchievement,
-  getAchievementsByUserId, // ✅ Add this line
-} from '../controllers/achievementController.js';
-import protect from '../middleware/authMiddleware.js';
+import mongoose from 'mongoose';
 
-const router = express.Router();
+const achievementSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  title: {
+    type: String,
+    required: true,
+  },
+  description: {
+    type: String,
+    required: true,
+  },
+  icon: {
+    type: String,
+    default: 'award',
+  },
+  isUnlocked: {
+    type: Boolean,
+    default: false,
+  },
+  unlockedAt: {
+    type: Date,
+    default: null,
+  },
+  type: {
+    type: String,
+    enum: ['streak', 'general', 'milestone'],
+    default: 'general',
+  },
+  requiredDays: {
+    type: Number,
+    default: 0,
+  },
+}, { timestamps: true });
 
-// GET achievements of the currently logged-in user
-router.get('/me', protect, async (req, res, next) => {
-  try {
-    const achs = await getAchievementsByUserId(req.user.id); // cleaner than req.userId
-    return res.json(achs);
-  } catch (err) {
-    next(err);
-  }
-});
+const Achievement = mongoose.model('Achievement', achievementSchema);
 
-
-// GET by explicit userId (optional route)
-router.get('/:userId', protect, getAchievements);
-
-// POST a new achievement
-router.post('/', protect, addAchievement);
-
-export { router };
+export default Achievement;

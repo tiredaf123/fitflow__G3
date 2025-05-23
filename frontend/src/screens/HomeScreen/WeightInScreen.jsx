@@ -9,7 +9,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import Toast from 'react-native-toast-message';
 import { BASE_URL } from '../../config/config';
-
+//satya
 const WeightInScreen = () => {
   const { isDarkMode } = useTheme();
   const navigation = useNavigation();

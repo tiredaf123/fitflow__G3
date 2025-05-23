@@ -114,6 +114,13 @@ const CustomDrawer = (props) => {
         screen="Nutrition"
         IconComponent={MaterialCommunityIcons}
       />
+      <MenuItem
+        iconName="food"
+        label="Food Recipe"
+        screen="HealthyFoodSuggestionScreen"
+        IconComponent={MaterialCommunityIcons}
+      />
+
 
       {/* Log Out */}
       <View style={styles.logoutSection}>

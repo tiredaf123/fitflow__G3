@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../../../navigation/ThemeProvider';
 import BottomTabBar from '../../../components/BottomTabBar';
-
+//Adharsh Sapkota added bootpm tab bar
 const NotificationScreen = () => {
   const { isDarkMode } = useTheme();
   const styles = getStyles(isDarkMode);

@@ -18,7 +18,11 @@ const workoutSchema = new mongoose.Schema(
     },
     imageUrl: {
       type: String, // e.g. Cloudinary URL or file path
-      default: '',   // Optional default value
+      default: '',
+    },
+    videoUrl: {
+      type: String, // new field for video URL
+      default: '',
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
