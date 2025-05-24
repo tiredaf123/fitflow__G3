@@ -37,6 +37,9 @@ const HomeScreen = ({ route }) => {
   const [selectedDate, setSelectedDate] = useState(moment());
   const [userName, setUserName] = useState('');
   const [userPhoto, setUserPhoto] = useState(null);
+  const [quoteText, setQuoteText] = useState('');
+  const [quoteAuthor, setQuoteAuthor] = useState('');
+
 
   const daysOfWeek = Array.from({ length: 7 }, (_, i) =>
     moment().clone().add(i, 'days')
@@ -63,6 +66,21 @@ const HomeScreen = ({ route }) => {
     };
     fetchUserProfile();
   }, []);
+  const fetchQuote = async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/quotes`);
+      const data = await res.json();
+      if (data) {
+        setQuoteText(data.text || '');
+        setQuoteAuthor(data.author || '');
+      }
+    } catch (err) {
+      console.error('Error fetching quote:', err);
+    }
+  };
+
+  fetchQuote();
+
 
   const themeStyles = StyleSheet.create({
     container: {
@@ -236,7 +254,37 @@ const HomeScreen = ({ route }) => {
             })}
           </ScrollView>
         </View>
-
+<View style={{
+          marginHorizontal: 24,
+          marginTop: 20,
+          marginBottom: 10,
+          backgroundColor: isDarkMode ? '#2D3436' : '#FFF',
+          padding: 16,
+          borderRadius: 12,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3
+        }}>
+          <Text style={{
+            fontSize: 16,
+            fontStyle: 'italic',
+            color: isDarkMode ? '#B2BEC3' : '#2D3436',
+            marginBottom: 6,
+          }}>
+            {quoteText}
+          </Text>
+          {quoteAuthor && (
+            <Text style={{
+              fontSize: 14,
+              textAlign: 'right',
+              color: isDarkMode ? '#B2BEC3' : '#636E72',
+            }}>
+              — {quoteAuthor}
+            </Text>
+          )}
+        </View>
         {/* Diet Plans */}
         <Text style={themeStyles.sectionTitle}>Recommended Meals</Text>
         <FlatList
@@ -286,7 +334,7 @@ const HomeScreen = ({ route }) => {
     };
 
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         onPress={() => handleFlip(item.id)}
         activeOpacity={0.9}
       >
@@ -318,7 +366,7 @@ const HomeScreen = ({ route }) => {
             ]}
           >
             <Text style={[styles.cardTitle, themeStyles.cardText, styles.backTitle]}>{item.name}</Text>
-            
+
             {/* Detailed Description */}
             <View style={styles.detailsContainer}>
               {item.description && (
@@ -326,7 +374,7 @@ const HomeScreen = ({ route }) => {
                   {item.description}
                 </Text>
               )}
-              
+
               {/* Dynamic details based on card type */}
               {item.calories && (
                 <View style={styles.detailRow}>
@@ -336,7 +384,7 @@ const HomeScreen = ({ route }) => {
                   </Text>
                 </View>
               )}
-              
+
               {item.protein && (
                 <View style={styles.detailRow}>
                   <Icon name="fitness-center" size={20} color="#00B894" />
@@ -345,7 +393,7 @@ const HomeScreen = ({ route }) => {
                   </Text>
                 </View>
               )}
-              
+
               {item.caloriesBurned && (
                 <View style={styles.detailRow}>
                   <Icon name="whatshot" size={20} color="#00B894" />
@@ -354,7 +402,7 @@ const HomeScreen = ({ route }) => {
                   </Text>
                 </View>
               )}
-              
+
               {item.duration && (
                 <View style={styles.detailRow}>
                   <Icon name="timer" size={20} color="#00B894" />
@@ -363,7 +411,7 @@ const HomeScreen = ({ route }) => {
                   </Text>
                 </View>
               )}
-              
+
               {item.difficulty && (
                 <View style={styles.detailRow}>
                   <Icon name="star" size={20} color="#00B894" />
@@ -372,7 +420,7 @@ const HomeScreen = ({ route }) => {
                   </Text>
                 </View>
               )}
-              
+
               {item.prepTime && (
                 <View style={styles.detailRow}>
                   <Icon name="access-time" size={20} color="#00B894" />
@@ -382,11 +430,14 @@ const HomeScreen = ({ route }) => {
                 </View>
               )}
             </View>
-            
-            
+
+
           </Animated.View>
         </View>
+        
+
       </TouchableOpacity>
+      
     );
   }
 };
@@ -410,7 +461,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     fontFamily: 'sans-serif-medium',
-  
+
     marginTop: -18,
   },
   profileWrapper: {
@@ -466,7 +517,7 @@ const styles = StyleSheet.create({
     height: CARD_WIDTH * 1.2,
     borderRadius: 20,
     overflow: 'hidden',
-   marginBottom: 60
+    marginBottom: 60
   },
   card: {
     width: '100%',
@@ -554,33 +605,33 @@ const styles = StyleSheet.create({
 });
 
 const workoutLibrary = [
-  { 
-    id: 'workout-1', 
-    name: 'Morning Yoga', 
-    goal: 'Improve Flexibility', 
-    image: require('../../assets/Images/yoga.png'), 
+  {
+    id: 'workout-1',
+    name: 'Morning Yoga',
+    goal: 'Improve Flexibility',
+    image: require('../../assets/Images/yoga.png'),
     description: 'Gentle yoga flow to awaken your body and mind, perfect for starting your day with energy and focus.',
     caloriesBurned: '100 kcal',
     duration: '20 min',
     difficulty: 'Beginner',
     benefits: 'Improves flexibility, reduces stress, enhances breathing'
   },
-  { 
-    id: 'workout-2', 
-    name: 'HIIT Training', 
-    goal: 'Lose Weight', 
-    image: require('../../assets/Images/hiit.png'), 
+  {
+    id: 'workout-2',
+    name: 'HIIT Training',
+    goal: 'Lose Weight',
+    image: require('../../assets/Images/hiit.png'),
     description: 'High intensity interval training that maximizes calorie burn and boosts metabolism for hours after.',
     caloriesBurned: '300 kcal',
     duration: '30 min',
     difficulty: 'Advanced',
     benefits: 'Burns fat, improves endurance, time-efficient'
   },
-  { 
-    id: 'workout-3', 
-    name: 'Strength Training', 
-    goal: 'Build Muscles', 
-    image: require('../../assets/Images/strength.png'), 
+  {
+    id: 'workout-3',
+    name: 'Strength Training',
+    goal: 'Build Muscles',
+    image: require('../../assets/Images/strength.png'),
     description: 'Compound exercises targeting all major muscle groups to build strength and definition.',
     caloriesBurned: '250 kcal',
     duration: '45 min',
@@ -590,32 +641,32 @@ const workoutLibrary = [
 ];
 
 const dietFoods = [
-  { 
-    id: 'diet-1', 
-    name: 'Salad Bowl', 
-    image: require('../../assets/Images/salad.png'), 
+  {
+    id: 'diet-1',
+    name: 'Salad Bowl',
+    image: require('../../assets/Images/salad.png'),
     description: 'Fresh and crunchy salad packed with nutrients and antioxidants to fuel your body.',
-    calories: 150, 
+    calories: 150,
     protein: '3g',
     prepTime: '10 min',
     benefits: 'Low calorie, high fiber, rich in vitamins'
   },
-  { 
-    id: 'diet-2', 
-    name: 'Grilled Chicken', 
-    image: require('../../assets/Images/chicken.png'), 
+  {
+    id: 'diet-2',
+    name: 'Grilled Chicken',
+    image: require('../../assets/Images/chicken.png'),
     description: 'Lean protein source with minimal fat, perfect for muscle recovery and growth.',
-    calories: 220, 
+    calories: 220,
     protein: '30g',
     prepTime: '20 min',
     benefits: 'High protein, low carb, versatile'
   },
-  { 
-    id: 'diet-3', 
-    name: 'Fruit Mix', 
-    image: require('../../assets/Images/fruits.png'), 
+  {
+    id: 'diet-3',
+    name: 'Fruit Mix',
+    image: require('../../assets/Images/fruits.png'),
     description: 'Natural sweetness with essential vitamins, minerals and fiber for healthy digestion.',
-    calories: 120, 
+    calories: 120,
     protein: '2g',
     prepTime: '5 min',
     benefits: 'Natural energy, hydrating, antioxidant-rich'

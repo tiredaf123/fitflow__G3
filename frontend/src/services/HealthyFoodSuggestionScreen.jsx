@@ -1,5 +1,5 @@
-//Adharsh Sapkota
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,12 @@ import {
   Modal,
   StyleSheet,
   FlatList,
+  TextInput,
+  ScrollView,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
-
-  const foodList = [
+ const foodList = [
     {
       "name": "Grilled Chicken Breast #1",
       "calories": 165,
@@ -1813,13 +1814,80 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
       "recipe": "Step 1: Cook oats in milk or water. Step 2: Top with sliced banana, almonds, and a sprinkle of cinnamon."
     }
   ];
-  const HealthyFoodSuggestionScreen = ({ navigation }) => {
+
+const allergyOptions = [
+  'Dairy',
+  'Eggs',
+  'Gluten',
+  'Peanuts',
+  'Tree Nuts',
+  'Soy',
+  'Fish',
+  'Shellfish',
+  'Sesame',
+  'None'
+];
+
+const HealthyFoodSuggestionScreen = ({ navigation }) => {
   const [selectedFood, setSelectedFood] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [allergies, setAllergies] = useState([]);
+  const [showAllergyModal, setShowAllergyModal] = useState(false);
+  const [filteredFoods, setFilteredFoods] = useState(foodList);
+
+  useEffect(() => {
+    filterFoods();
+  }, [allergies, searchQuery]);
+
+  const filterFoods = () => {
+    let result = [...foodList];
+    
+    // Filter by allergies
+    if (allergies.length > 0 && !allergies.includes('None')) {
+      result = result.filter(food => {
+        // This is a simple check - you might need to adjust based on your actual food data
+        const foodName = food.name.toLowerCase();
+        return !allergies.some(allergy => {
+          const allergyLower = allergy.toLowerCase();
+          return foodName.includes(allergyLower) || 
+                 (allergyLower === 'dairy' && (foodName.includes('milk') || foodName.includes('cheese') || foodName.includes('yogurt'))) ||
+                 (allergyLower === 'gluten' && (foodName.includes('wheat') || foodName.includes('bread') || foodName.includes('pasta')));
+        });
+      });
+    }
+    
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(food => 
+        food.name.toLowerCase().includes(query) ||
+        food.recipe.toLowerCase().includes(query)
+      );
+    }
+    
+    setFilteredFoods(result);
+  };
 
   const handlePress = (food) => {
     setSelectedFood(food);
     setModalVisible(true);
+  };
+
+  const toggleAllergy = (allergy) => {
+    if (allergy === 'None') {
+      setAllergies(['None']);
+    } else {
+      setAllergies(prev => {
+        if (prev.includes('None')) {
+          return [allergy];
+        }
+        if (prev.includes(allergy)) {
+          return prev.filter(a => a !== allergy);
+        }
+        return [...prev, allergy];
+      });
+    }
   };
 
   return (
@@ -1831,20 +1899,51 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
         <Text style={styles.header}>Healthy Food Suggestions</Text>
       </View>
 
-      <FlatList
-        data={foodList}
-        keyExtractor={(item, index) => `${item.name}-${index}`}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() => handlePress(item)}
-          >
-            <Text style={styles.itemText}>{item.name}</Text>
-          </TouchableOpacity>
-        )}
-        contentContainerStyle={{ paddingBottom: 20 }}
-      />
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search foods..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        <TouchableOpacity 
+          style={styles.filterButton}
+          onPress={() => setShowAllergyModal(true)}
+        >
+          <Ionicons name="filter" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
 
+      <View style={styles.allergyTags}>
+        {allergies.map(allergy => (
+          <View key={allergy} style={styles.tag}>
+            <Text style={styles.tagText}>{allergy}</Text>
+          </View>
+        ))}
+      </View>
+
+      {filteredFoods.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text>No foods match your filters.</Text>
+          <Text>Try adjusting your allergies or search term.</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredFoods}
+          keyExtractor={(item, index) => `${item.name}-${index}`}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() => handlePress(item)}
+            >
+              <Text style={styles.itemText}>{item.name}</Text>
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={{ paddingBottom: 20 }}
+        />
+      )}
+
+      {/* Food Details Modal */}
       <Modal
         visible={modalVisible}
         transparent
@@ -1854,22 +1953,59 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             {selectedFood && (
-              <>
+              <ScrollView>
                 <Text style={styles.modalTitle}>{selectedFood.name}</Text>
                 <Text>Calories: {selectedFood.calories}</Text>
                 <Text>Fat: {selectedFood.fat}</Text>
                 <Text>Protein: {selectedFood.protein}</Text>
                 <Text>Carbs: {selectedFood.carbs}</Text>
                 <Text>Vitamins: {selectedFood.vitamins}</Text>
-                <Text style={{ marginTop: 10 }}>Recipe:</Text>
+                <Text style={{ marginTop: 10, fontWeight: 'bold' }}>Recipe:</Text>
                 <Text>{selectedFood.recipe}</Text>
-              </>
+              </ScrollView>
             )}
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setModalVisible(false)}
             >
               <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Allergy Selection Modal */}
+      <Modal
+        visible={showAllergyModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAllergyModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent, { height: '70%' }]}>
+            <Text style={styles.modalTitle}>Select Your Allergies</Text>
+            <ScrollView>
+              {allergyOptions.map(allergy => (
+                <TouchableOpacity
+                  key={allergy}
+                  style={[
+                    styles.allergyOption,
+                    allergies.includes(allergy) && styles.selectedAllergy
+                  ]}
+                  onPress={() => toggleAllergy(allergy)}
+                >
+                  <Text>{allergy}</Text>
+                  {allergies.includes(allergy) && (
+                    <Ionicons name="checkmark" size={20} color="green" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowAllergyModal(false)}
+            >
+              <Text style={styles.closeButtonText}>Apply Filters</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1895,6 +2031,41 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 10,
   },
+  searchContainer: {
+    flexDirection: 'row',
+    marginBottom: 15,
+  },
+  searchInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
+    marginRight: 10,
+  },
+  filterButton: {
+    backgroundColor: '#2196F3',
+    borderRadius: 8,
+    padding: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  allergyTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 15,
+  },
+  tag: {
+    backgroundColor: '#e0e0e0',
+    borderRadius: 15,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  tagText: {
+    fontSize: 12,
+  },
   item: {
     padding: 15,
     marginBottom: 10,
@@ -1903,6 +2074,11 @@ const styles = StyleSheet.create({
   },
   itemText: {
     fontSize: 18,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalContainer: {
     flex: 1,
@@ -1915,11 +2091,24 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: 'white',
     borderRadius: 10,
+    maxHeight: '80%',
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  allergyOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  selectedAllergy: {
+    backgroundColor: '#f0f8ff',
   },
   closeButton: {
     marginTop: 20,

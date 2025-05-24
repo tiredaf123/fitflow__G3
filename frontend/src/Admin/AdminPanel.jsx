@@ -22,6 +22,11 @@ const AdminPanel = () => {
   const [activeUsers, setActiveUsers] = useState(0);
   const [trainers, setTrainers] = useState([]);
   const [creatingTrainer, setCreatingTrainer] = useState(false);
+  const [quoteText, setQuoteText] = useState('');
+  const [quoteAuthor, setQuoteAuthor] = useState('');
+  const [quoteId, setQuoteId] = useState(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [revenue] = useState(Math.floor(Math.random() * 2) + 12);
 
   // Supplement form state
   const [name, setName] = useState('');
@@ -38,7 +43,6 @@ const AdminPanel = () => {
   const [trainerBio, setTrainerBio] = useState('');
   const [trainerImage, setTrainerImage] = useState(null);
   const [trainerSpecialties, setTrainerSpecialties] = useState('');
-  const [revenue] = useState(Math.floor(Math.random() * 2) + 12);
 
   const navigation = useNavigation();
 
@@ -58,31 +62,28 @@ const AdminPanel = () => {
 
   // Update active users and chart data
   const updateMetrics = useCallback(() => {
-    setActiveUsers(Math.floor(Math.random() * 2) + 3); // Random between 50-100
+    setActiveUsers(Math.floor(Math.random() * 2) + 3);
     setChartData(generateChartData());
   }, [generateChartData]);
 
-  useEffect(() => {
-    updateMetrics();
-    fetchSupplements();
-    fetchTrainers();
-
-    const interval = setInterval(updateMetrics, 3 * 60 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [updateMetrics]);
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    updateMetrics();
-    fetchSupplements();
-    fetchTrainers();
-    setTimeout(() => setRefreshing(false), 1000);
-  }, [updateMetrics]);
-
-  const fetchSupplements = async () => {
-    setLoading(true);
-    const token = await AsyncStorage.getItem('token');
+  const fetchQuote = useCallback(async () => {
     try {
+      const res = await fetch(`${BASE_URL}/quotes`);
+      const data = await res.json();
+      if (data) {
+        setQuoteText(data.text || '');
+        setQuoteAuthor(data.author || '');
+        setQuoteId(data._id);
+      }
+    } catch (error) {
+      Toast.show({ type: 'error', text1: 'Failed to fetch quote' });
+    }
+  }, []);
+
+  const fetchSupplements = useCallback(async () => {
+    setLoading(true);
+    try {
+      const token = await AsyncStorage.getItem('token');
       const res = await fetch(`${BASE_URL}/supplements`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -93,11 +94,11 @@ const AdminPanel = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchTrainers = async () => {
-    const token = await AsyncStorage.getItem('token');
+  const fetchTrainers = useCallback(async () => {
     try {
+      const token = await AsyncStorage.getItem('token');
       const res = await fetch(`${BASE_URL}/trainers`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -106,7 +107,35 @@ const AdminPanel = () => {
     } catch (error) {
       Toast.show({ type: 'error', text1: 'Failed to fetch trainers' });
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const initializeData = async () => {
+      await updateMetrics();
+      await fetchSupplements();
+      await fetchTrainers();
+      await fetchQuote();
+    };
+
+    initializeData();
+
+    const interval = setInterval(updateMetrics, 3 * 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [updateMetrics, fetchSupplements, fetchTrainers, fetchQuote]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        updateMetrics(),
+        fetchSupplements(),
+        fetchTrainers(),
+        fetchQuote()
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [updateMetrics, fetchSupplements, fetchTrainers, fetchQuote]);
 
   const deleteTrainer = async (id) => {
     const token = await AsyncStorage.getItem('token');
@@ -180,26 +209,30 @@ const AdminPanel = () => {
 
     try {
       const url = editingId ? `${BASE_URL}/supplements/${editingId}` : `${BASE_URL}/supplements`;
-      await fetch(url, {
+      const response = await fetch(url, {
         method: editingId ? 'PUT' : 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
       });
 
+      if (!response.ok) {
+        throw new Error('Failed to save supplement');
+      }
+
       Toast.show({ type: 'success', text1: 'Supplement saved' });
       resetSupplementForm();
       fetchSupplements();
     } catch (error) {
-      Toast.show({ type: 'error', text1: 'Error saving supplement' });
+      Toast.show({ type: 'error', text1: error.message || 'Error saving supplement' });
     }
   };
 
   const handleSaveTrainer = async () => {
     if (!trainerUsername || !trainerPassword || !trainerFullName || !trainerSpecialties) {
-      Toast.show({ 
-        type: 'error', 
+      Toast.show({
+        type: 'error',
         text1: 'Missing required fields',
-        text2: 'Please fill all fields marked with *' 
+        text2: 'Please fill all fields marked with *'
       });
       return;
     }
@@ -207,7 +240,7 @@ const AdminPanel = () => {
     setCreatingTrainer(true);
     const token = await AsyncStorage.getItem('token');
     const formData = new FormData();
-    
+
     formData.append('username', trainerUsername);
     formData.append('password', trainerPassword);
     formData.append('fullName', trainerFullName);
@@ -226,7 +259,7 @@ const AdminPanel = () => {
     try {
       const response = await fetch(`${BASE_URL}/trainers`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         },
@@ -242,11 +275,10 @@ const AdminPanel = () => {
       resetTrainerForm();
       fetchTrainers();
     } catch (error) {
-      console.error('Error creating trainer:', error);
-      Toast.show({ 
-        type: 'error', 
+      Toast.show({
+        type: 'error',
         text1: 'Error creating trainer',
-        text2: error.message 
+        text2: error.message
       });
     } finally {
       setCreatingTrainer(false);
@@ -254,8 +286,8 @@ const AdminPanel = () => {
   };
 
   const handleLogout = async () => {
-    const token = await AsyncStorage.getItem('token');
     try {
+      const token = await AsyncStorage.getItem('token');
       await fetch(`${BASE_URL}/auth/logout`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
@@ -266,6 +298,68 @@ const AdminPanel = () => {
       Toast.show({ type: 'error', text1: 'Logout failed' });
     }
   };
+  const handleSaveQuote = async () => {
+  if (!quoteText.trim()) {
+    Toast.show({ type: 'error', text1: 'Quote cannot be empty' });
+    return;
+  }
+
+  setQuoteLoading(true);
+  try {
+    const token = await AsyncStorage.getItem('token');
+    const method = quoteId ? 'PUT' : 'POST';
+    const url = `${BASE_URL}/quotes${quoteId ? `/${quoteId}` : ''}`;
+
+    const res = await fetch(url, {
+      method,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: quoteText,
+        author: quoteAuthor,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || 'Failed to save quote');
+    }
+
+    Toast.show({ type: 'success', text1: 'Quote saved successfully' });
+    setQuoteId(data._id);
+  } catch (error) {
+    Toast.show({ type: 'error', text1: error.message || 'Error saving quote' });
+  } finally {
+    setQuoteLoading(false);
+  }
+};
+
+const handleDeleteQuote = async () => {
+  if (!quoteId) return;
+
+  try {
+    const token = await AsyncStorage.getItem('token');
+    const res = await fetch(`${BASE_URL}/quotes/${quoteId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) {
+      throw new Error('Failed to delete quote');
+    }
+
+    Toast.show({ type: 'success', text1: 'Quote deleted' });
+    setQuoteText('');
+    setQuoteAuthor('');
+    setQuoteId(null);
+  } catch (error) {
+    Toast.show({ type: 'error', text1: error.message });
+  }
+};
+
 
   const resetSupplementForm = () => {
     setName('');
@@ -505,59 +599,131 @@ const AdminPanel = () => {
           </TouchableOpacity>
         </View>
 
+        {/* Quote of the Day Section */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Inspirational Quote</Text>
+          <View style={[styles.quoteContainer, styles.elevatedCard]}>
+            {quoteText ? (
+              <>
+                <View style={styles.quoteContent}>
+                  <Icon2 name="format-quote-open" size={24} color="rgba(106, 17, 203, 0.3)" />
+                  <Text style={styles.quoteText}>{quoteText}</Text>
+                  <Icon2 name="format-quote-close" size={24} color="rgba(106, 17, 203, 0.3)"
+                    style={{ alignSelf: 'flex-end' }} />
+                </View>
+                {quoteAuthor && (
+                  <Text style={styles.quoteAuthor}>— {quoteAuthor}</Text>
+                )}
+              </>
+            ) : (
+              <Text style={styles.noQuoteText}>No quote set for today</Text>
+            )}
+
+            <View style={styles.quoteForm}>
+              <TextInput
+                style={[styles.input, styles.quoteInput]}
+                placeholder="Enter new inspirational quote *"
+                value={quoteText}
+                onChangeText={setQuoteText}
+                multiline
+                numberOfLines={3}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Author (optional)"
+                value={quoteAuthor}
+                onChangeText={setQuoteAuthor}
+              />
+
+              <View style={styles.quoteButtons}>
+                <TouchableOpacity
+                  style={[styles.quoteButton, styles.saveButton,
+                  (!quoteText || quoteLoading) && styles.disabledBtn]}
+                  onPress={handleSaveQuote}
+                  disabled={!quoteText || quoteLoading}
+                >
+                  {quoteLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <>
+                      <Icon name={quoteId ? 'refresh' : 'add'} size={18} color="#fff" />
+                      <Text style={styles.buttonText}>
+                        {quoteId ? 'Update' : 'Save'} Quote
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                {quoteId && (
+                  <TouchableOpacity
+                    style={[styles.quoteButton, styles.deleteButton]}
+                    onPress={handleDeleteQuote}
+                  >
+                    <Icon name="delete" size={18} color="#fff" />
+                    <Text style={styles.buttonText}>Delete</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          </View>
+        </View>
+
         {/* Trainers List */}
         <View style={styles.sectionHeader}>
           <Text style={styles.subSectionTitle}>Current Trainers</Text>
           <Text style={styles.trainerCount}>{trainers.length} trainers</Text>
         </View>
 
-        {trainers.map((trainer) => (
-          <View key={trainer._id} style={[styles.trainerCard, styles.elevatedCard]}>
-            <Image
-              source={{ uri: trainer.imageUrl ? `${BASE_URL}/${trainer.imageUrl}` : null }}// Fixed bug and image of trainer is shown
-
-              style={styles.trainerImage}
-            />
-            <View style={styles.trainerInfo}>
-              <View style={styles.trainerHeader}>
-                <Text style={styles.trainerName}>{trainer.fullName || trainer.username}</Text>
-                <TouchableOpacity
-                  onPress={() => toggleTrainerStatus(trainer._id, !trainer.isActive)}
-                  style={[
-                    styles.statusBtn,
-                    trainer.isActive ? styles.activeBtn : styles.inactiveBtn
-                  ]}
-                >
-                  <Text style={[
-                    styles.statusBtnText,
-                    trainer.isActive ? styles.activeBtnText : styles.inactiveBtnText
-                  ]}>
-                    {trainer.isActive ? 'Active' : 'Inactive'}
+        {loading ? (
+          <ActivityIndicator size="large" color="#6a11cb" />
+        ) : (
+          trainers.map((trainer) => (
+            <View key={trainer._id} style={[styles.trainerCard, styles.elevatedCard]}>
+              <Image
+                source={{ uri: trainer.imageUrl ? `${BASE_URL}/${trainer.imageUrl}` : 'https://via.placeholder.com/150' }}
+                style={styles.trainerImage}
+              />
+              <View style={styles.trainerInfo}>
+                <View style={styles.trainerHeader}>
+                  <Text style={styles.trainerName}>{trainer.fullName || trainer.username}</Text>
+                  <TouchableOpacity
+                    onPress={() => toggleTrainerStatus(trainer._id, !trainer.isActive)}
+                    style={[
+                      styles.statusBtn,
+                      trainer.isActive ? styles.activeBtn : styles.inactiveBtn
+                    ]}
+                  >
+                    <Text style={[
+                      styles.statusBtnText,
+                      trainer.isActive ? styles.activeBtnText : styles.inactiveBtnText
+                    ]}>
+                      {trainer.isActive ? 'Active' : 'Inactive'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.trainerUsername}>@{trainer.username}</Text>
+                <Text style={styles.trainerBio}>{trainer.bio}</Text>
+                <View style={styles.specialtiesContainer}>
+                  <Icon name="fitness-center" size={16} color="#6a11cb" />
+                  <Text style={styles.trainerSpecialties}>
+                    {Array.isArray(trainer.specialties)
+                      ? trainer.specialties.join(', ')
+                      : trainer.specialties}
                   </Text>
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.trainerUsername}>@{trainer.username}</Text>
-              <Text style={styles.trainerBio}>{trainer.bio}</Text>
-              <View style={styles.specialtiesContainer}>
-                <Icon name="fitness-center" size={16} color="#6a11cb" />
-                <Text style={styles.trainerSpecialties}>
-                  {Array.isArray(trainer.specialties)
-                    ? trainer.specialties.join(', ')
-                    : trainer.specialties}
-                </Text>
-              </View>
-              <View style={styles.trainerActions}>
-                <TouchableOpacity
-                  style={styles.deleteBtn}
-                  onPress={() => deleteTrainer(trainer._id)}
-                >
-                  <Icon name="delete" size={18} color="#dc3545" />
-                  <Text style={styles.deleteBtnText}>Delete</Text>
-                </TouchableOpacity>
+                </View>
+                <View style={styles.trainerActions}>
+                  <TouchableOpacity
+                    style={styles.deleteBtn}
+                    onPress={() => deleteTrainer(trainer._id)}
+                  >
+                    <Icon name="delete" size={18} color="#dc3545" />
+                    <Text style={styles.deleteBtnText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
-        ))}
+          ))
+        )}
       </View>
 
       <Toast />
@@ -885,6 +1051,77 @@ const styles = StyleSheet.create({
   },
   column: {
     width: '48%',
+  },
+  quoteContainer: {
+    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+  },
+  quoteContent: {
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: 'rgba(106, 17, 203, 0.05)',
+    borderRadius: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#6a11cb',
+  },
+  quoteText: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#333',
+    fontStyle: 'italic',
+    marginVertical: 10,
+    textAlign: 'center',
+  },
+  quoteAuthor: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'right',
+    marginBottom: 20,
+    fontStyle: 'italic',
+  },
+  noQuoteText: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    marginVertical: 15,
+    fontStyle: 'italic',
+  },
+  quoteForm: {
+    marginTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    paddingTop: 15,
+  },
+  quoteInput: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  quoteButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  quoteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  saveButton: {
+    backgroundColor: '#6a11cb',
+  },
+  deleteButton: {
+    backgroundColor: '#dc3545',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });
 

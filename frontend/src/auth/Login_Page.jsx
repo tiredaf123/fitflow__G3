@@ -1,5 +1,4 @@
-// Login_Page.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,11 +6,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  Image,
   ImageBackground,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
@@ -27,10 +26,55 @@ const Login_Page = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockTime, setLockTime] = useState(0);
+  const [remainingTime, setRemainingTime] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   const showToast = (type, text1, text2) => {
     Toast.show({ type, text1, text2 });
   };
+
+  // Check for existing lock status on component mount
+  useEffect(() => {
+    const checkLockStatus = async () => {
+      const storedLock = await AsyncStorage.getItem('login_lock');
+      if (storedLock) {
+        const { timestamp, attempts } = JSON.parse(storedLock);
+        const currentTime = Date.now();
+        const elapsedTime = (currentTime - timestamp) / 1000; // in seconds
+        
+        if (elapsedTime < 60) { // 1 minute lock
+          setIsLocked(true);
+          setFailedAttempts(attempts);
+          setLockTime(timestamp);
+          setRemainingTime(Math.ceil(60 - elapsedTime));
+        } else {
+          await AsyncStorage.removeItem('login_lock');
+        }
+      }
+    };
+    checkLockStatus();
+  }, []);
+
+  // Timer for lock countdown
+  useEffect(() => {
+    let interval;
+    if (isLocked && remainingTime > 0) {
+      interval = setInterval(() => {
+        setRemainingTime(prev => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            setIsLocked(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isLocked, remainingTime]);
 
   const updateLoginStreak = async () => {
     const today = new Date().toISOString().split('T')[0];
@@ -50,11 +94,18 @@ const Login_Page = () => {
   };
 
   const handleLogin = async () => {
+    if (isLocked) {
+      showToast('error', 'Account Locked', `Please wait ${remainingTime} seconds before trying again`);
+      return;
+    }
+
     if (!username || !password) {
       showToast('error', 'Missing Info', 'Please enter both username and password');
       return;
     }
 
+    setIsLoading(true);
+    
     try {
       const res = await fetch(`${BASE_URL}/auth/login`, {
         method: 'POST',
@@ -65,6 +116,10 @@ const Login_Page = () => {
       const data = await res.json();
 
       if (res.ok) {
+        // Reset failed attempts on successful login
+        setFailedAttempts(0);
+        await AsyncStorage.removeItem('login_lock');
+        
         await AsyncStorage.setItem('token', data.token);
 
         if (data.clientId) {
@@ -84,11 +139,30 @@ const Login_Page = () => {
           navigation.reset({ index: 0, routes: [{ name: 'HomeScreen' }] });
         }
       } else {
-        showToast('error', 'Login Failed', data.message || 'Incorrect credentials');
+        const newAttempts = failedAttempts + 1;
+        setFailedAttempts(newAttempts);
+
+        if (newAttempts >= 5) {
+          // Lock the account for 1 minute
+          const lockTimestamp = Date.now();
+          setIsLocked(true);
+          setLockTime(lockTimestamp);
+          setRemainingTime(60);
+          await AsyncStorage.setItem('login_lock', JSON.stringify({
+            timestamp: lockTimestamp,
+            attempts: newAttempts
+          }));
+          
+          showToast('error', 'Account Locked', 'Too many failed attempts. Please wait 1 minute.');
+        } else {
+          showToast('error', 'Login Failed', data.message || 'Incorrect credentials');
+        }
       }
     } catch (err) {
       console.error('Login error:', err);
       showToast('error', 'Network Error', 'Could not connect to the server.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -115,6 +189,14 @@ const Login_Page = () => {
               <Text style={styles.title}>Welcome Back</Text>
               <Text style={styles.subtitle}>Sign in to continue</Text>
 
+              {isLocked && (
+                <View style={styles.lockMessage}>
+                  <Text style={styles.lockText}>
+                    Account locked. Please try again in {remainingTime} seconds.
+                  </Text>
+                </View>
+              )}
+
               <View style={styles.inputContainer}>
                 <View style={styles.inputWrapper}>
                   <Icon name="person" size={20} color="#888" style={styles.inputIcon} />
@@ -125,6 +207,7 @@ const Login_Page = () => {
                     onChangeText={setUsername}
                     value={username}
                     autoCapitalize="none"
+                    editable={!isLocked}
                   />
                 </View>
 
@@ -137,36 +220,35 @@ const Login_Page = () => {
                     secureTextEntry={!showPassword}
                     onChangeText={setPassword}
                     value={password}
+                    editable={!isLocked}
                   />
                   <TouchableOpacity 
                     style={styles.eyeIcon}
                     onPress={() => setShowPassword(!showPassword)}
+                    disabled={isLocked}
                   >
                     <Icon name={showPassword ? 'visibility-off' : 'visibility'} size={20} color="#888" />
                   </TouchableOpacity>
                 </View>
               </View>
 
-              <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-                <Text style={styles.loginButtonText}>Login</Text>
+              <TouchableOpacity 
+                style={[styles.loginButton, isLocked && styles.disabledButton]} 
+                onPress={handleLogin}
+                disabled={isLocked || isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={styles.loginButtonText}>
+                    {isLocked ? 'Account Locked' : 'Login'}
+                  </Text>
+                )}
               </TouchableOpacity>
 
               <View style={styles.dividerContainer}>
                 <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or sign in with</Text>
                 <View style={styles.dividerLine} />
-              </View>
-
-              <View style={styles.socialContainer}>
-                <TouchableOpacity style={styles.socialButton}>
-                  <Image source={require('../assets/Images/google.png')} style={styles.socialIcon} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.socialButton}>
-                  <Image source={require('../assets/Images/apple.png')} style={styles.socialIcon} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.socialButton}>
-                  <Image source={require('../assets/Images/twitter.png')} style={styles.socialIcon} />
-                </TouchableOpacity>
               </View>
 
               <View style={styles.footer}>
@@ -226,10 +308,24 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  disabledButton: {
+    backgroundColor: '#999',
+  },
   loginButtonText: {
     color: '#FFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  lockMessage: {
+    backgroundColor: 'rgba(255, 0, 0, 0.2)',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 20,
+    width: '100%',
+  },
+  lockText: {
+    color: '#FFF',
+    textAlign: 'center',
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -242,19 +338,6 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'rgba(255,255,255,0.3)',
   },
-  dividerText: {
-    color: 'rgba(255,255,255,0.7)',
-    paddingHorizontal: 12,
-    fontSize: 14,
-  },
-  socialContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 8 },
-  socialButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    padding: 10,
-    borderRadius: 100,
-    marginHorizontal: 10,
-  },
-  socialIcon: { width: 40, height: 40, borderRadius: 100 },
   footer: { flexDirection: 'row', marginBottom: 16 },
   footerText: { color: 'rgba(255,255,255,0.7)', fontSize: 14 },
   footerLink: { color: '#FFA500', fontSize: 14, fontWeight: '600', marginLeft: 4 },

@@ -1,3 +1,5 @@
+// ✅ Add this to TrainerDashboard.js to fetch and display the Quote of the Day
+
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -27,11 +29,12 @@ const TrainerDashboard = () => {
   const [bookings, setBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [bookingsError, setBookingsError] = useState(null);
+  const [quoteText, setQuoteText] = useState('');
+  const [quoteAuthor, setQuoteAuthor] = useState('');
 
   const fetchTrainer = useCallback(async () => {
     setLoading(true);
     setError(null);
-
     try {
       const token = await AsyncStorage.getItem('token');
       if (!token) {
@@ -108,16 +111,30 @@ const TrainerDashboard = () => {
     }
   }, []);
 
+  const fetchQuote = useCallback(async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/quotes`);
+      const data = await res.json();
+      if (data) {
+        setQuoteText(data.text || '');
+        setQuoteAuthor(data.author || '');
+      }
+    } catch (err) {
+      console.error('Error fetching quote:', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchTrainer();
     fetchBookings();
-  }, [fetchTrainer, fetchBookings]);
+    fetchQuote();
+  }, [fetchTrainer, fetchBookings, fetchQuote]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([fetchTrainer(), fetchBookings()]);
+    await Promise.all([fetchTrainer(), fetchBookings(), fetchQuote()]);
     setRefreshing(false);
-  }, [fetchTrainer, fetchBookings]);
+  }, [fetchTrainer, fetchBookings, fetchQuote]);
 
   const handleLogout = async () => {
     Alert.alert('Logout', 'Are you sure you want to log out?', [
@@ -195,6 +212,18 @@ const TrainerDashboard = () => {
         </View>
       </View>
 
+      {/* Quote of the Day Section */}
+      {quoteText !== '' && (
+        <View style={{ marginHorizontal: 20, marginTop: 16, marginBottom: 10, padding: 16, backgroundColor: '#f0f0f0', borderRadius: 8 }}>
+          <Text style={{ fontSize: 16, fontStyle: 'italic', color: '#444', marginBottom: 4 }}>
+            “{quoteText}”
+          </Text>
+          {quoteAuthor && (
+            <Text style={{ fontSize: 14, textAlign: 'right', color: '#888' }}>— {quoteAuthor}</Text>
+          )}
+        </View>
+      )}
+
       <View style={styles.card}>
         <Text style={styles.cardTitle}>📅 Client Appointments</Text>
         {loadingBookings ? (
@@ -222,8 +251,6 @@ const TrainerDashboard = () => {
         >
           <Text style={styles.actionText}>📋 Clients</Text>
         </TouchableOpacity>
-
-       
       </View>
     </ScrollView>
   );

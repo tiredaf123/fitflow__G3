@@ -34,6 +34,7 @@ import bookingRoutes from './routes/bookingRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
 import trainerMessageRoutes from './routes/trainerMessageRoutes.js';
 import workoutRoutes from './routes/workoutRoutes.js';
+import quoteRoutes from './routes/quoteRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import stripeRoutes from './routes/stripeRoutes.js';
 
@@ -108,6 +109,8 @@ app.use('/api/messages/user', messageRoutes);
 app.use('/api/messages/trainer', trainerMessageRoutes);
 app.use('/api/workouts', workoutRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/quotes', quoteRoutes);
+
 app.use('/api/stripe', stripeRoutes);
 
 // Health Check
