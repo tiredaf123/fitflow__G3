@@ -97,13 +97,7 @@ const CustomDrawer = (props) => {
         screen="Challenge"
         IconComponent={MaterialCommunityIcons}
       />
-      <MenuItem
-        iconName="chart-line"
-        label="Progress"
-        screen="Progress"
-        IconComponent={MaterialCommunityIcons}
-      />
-
+      
       {/* Section: Health and Nutrition */}
       <Text style={[styles.sectionTitle, { color: textColor }]}>
         Health and Nutrition
