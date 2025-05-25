@@ -189,9 +189,7 @@ const HomeScreen = ({ route }) => {
         >
           <View style={styles.navbar}>
             <Text style={styles.title}>FitFlow</Text>
-            <TouchableOpacity>
-              <Icon name="notifications" size={26} color="#FFFFFF" />
-            </TouchableOpacity>
+          
           </View>
 
           <View style={styles.profileWrapper}>
@@ -461,8 +459,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     fontFamily: 'sans-serif-medium',
+   
 
-    marginTop: -18,
+    marginTop: 18,
   },
   profileWrapper: {
     flexDirection: 'row',
